@@ -768,7 +768,14 @@ def convert_to_pdf(docx_path: Path) -> Path | None:
         env["SAL_USE_VCLPLUGIN"] = "svp"
         try:
             return subprocess.run(
-                [exe, "--headless", "--convert-to", "pdf", "--outdir", str(tmp_dir), str(tmp_docx)],
+                [
+                    exe, 
+                    "-env:UserInstallation=file://" + str(tmp_dir / "profile"),
+                    "--headless", 
+                    "--convert-to", "pdf", 
+                    "--outdir", str(tmp_dir), 
+                    str(tmp_docx)
+                ],
                 env=env, capture_output=True, text=True, timeout=120,
             )
         except Exception as e:
