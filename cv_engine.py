@@ -308,111 +308,68 @@ def extract_template_format_rules(template_path: Path) -> dict:
 # ─── Template structure discovery ────────────────────────────────────────────
 
 def discover_template_sections(template_path: Path) -> dict:
-    """
-    Auto-discover every section and its bullet count from a DOCX template.
-    Requires NO prior knowledge of section names — reads the template structure directly.
-
-    Works for any CV template regardless of section count, naming, or layout.
-    Table-based sections (e.g. work experience) are identified by the first
-    significant cell text. Paragraph-based sections (e.g. side projects) are
-    identified by the non-bullet paragraph that precedes the bullet group.
-
-    Returns: {section_title: bullet_count}
-      e.g. {"Enprivacy": 5, "Fivetran": 5, "Executive AI Decision Support": 2, ...}
-    """
+    """"""
     with zipfile.ZipFile(template_path) as z:
         xml = z.read("word/document.xml")
     tree = etree.fromstring(xml)
-    body = tree.find(f"{{{WNS}}}body")
 
     slot_counts: dict[str, int] = {}
     cur_title: str | None = None
 
-    for child in body:
-        tag = child.tag.split("}")[-1]
+    for child in tree.iter(f"{{{WNS}}}p"):
+        pt = _para_text(child).strip()
+        if not pt:
+            continue
 
-        if tag == "tbl":
-            sig = _first_significant_text(child)
-            if sig:
-                cur_title = sig          # table section (company / institution)
+        pt_lower = pt.lower()
+        if pt_lower in _SECTION_RESETS or pt_lower.rstrip("s") in _SECTION_RESETS:
+            cur_title = None
+            continue
 
-        elif tag == "p":
-            pt = _para_text(child).strip()
-            if not pt:
-                continue
-
-            # Major section heading → reset (not a title we want to collect bullets under)
-            pt_lower = pt.lower()
-            if pt_lower in _SECTION_RESETS or pt_lower.rstrip("s") in _SECTION_RESETS:
-                cur_title = None
-                continue
-
-            if child.find(f".//{{{WNS}}}numPr") is not None:
-                # Bullet paragraph → count under current section
-                if cur_title:
-                    slot_counts[cur_title] = slot_counts.get(cur_title, 0) + 1
-            else:
-                # Non-bullet, non-heading paragraph → treat as a section title if short
-                if len(pt) <= 80:
-                    cur_title = pt
+        if child.find(f".//{{{WNS}}}numPr") is not None:
+            if cur_title:
+                slot_counts[cur_title] = slot_counts.get(cur_title, 0) + 1
+        else:
+            if len(pt) > 3 and len(pt) <= 80 and not re.fullmatch(r"[\d\s\u2013\-\–\/\.\(\),\|]+", pt):
+                cur_title = pt
 
     return slot_counts
 
 
 def read_template_slots(template_path: Path,
                         master_bank: dict | None = None) -> dict:
-    """
-    Return bullet slot counts per section from the DOCX template.
-
-    Template-first: sections are discovered from the DOCX itself, so swapping
-    the template file automatically changes the slot counts everywhere.
-
-    - Without master_bank: returns {discovered_title: count}
-      Pure template scan — zero assumptions about content.
-
-    - With master_bank: returns {section_key: count}
-      Uses full table text to match company anchors (reliable), and project_name
-      anchors for paragraph sections. Unmatched template sections fall through
-      with their discovered title as key.
-
-    Works for any user's template — no hardcoded section names.
-    """
+    """"""
     if not master_bank:
         return discover_template_sections(template_path)
 
-    # Build anchor → section_key lookup from bank
-    table_anchors, para_anchors = _build_anchors(master_bank)
+    all_anchors = _build_anchors(master_bank)
 
-    # Scan template using FULL table text (catches company name in any cell)
     slot_counts: dict[str, int] = {}
     cur_section: str | None     = None
 
     with zipfile.ZipFile(template_path) as z:
         xml = z.read("word/document.xml")
     tree = etree.fromstring(xml)
-    body = tree.find(f"{{{WNS}}}body")
 
-    for child in body:
-        tag = child.tag.split("}")[-1]
-        if tag == "tbl":
-            t = _table_text(child)   # full table text — company in any cell
-            for anchor, key in table_anchors.items():
-                if anchor in t:
-                    cur_section = key; break
-            # Unknown tables do NOT reset cur_section — an experience section may
-            # span multiple tables (company header, description, role title, bullets)
-        elif tag == "p":
-            pt = _para_text(child).strip()
-            matched_para = False
-            for anchor, key in para_anchors.items():
-                if anchor in pt:
-                    cur_section = key; matched_para = True; break
-            if not matched_para:
-                pt_lower = pt.lower()
-                if pt_lower in _SECTION_RESETS or pt_lower.rstrip("s") in _SECTION_RESETS:
-                    cur_section = None
-            if cur_section and pt and child.find(f".//{{{WNS}}}numPr") is not None:
+    for child in tree.iter(f"{{{WNS}}}p"):
+        pt = _para_text(child).strip()
+        if not pt:
+            continue
+
+        if child.find(f".//{{{WNS}}}numPr") is not None:
+            if cur_section:
                 slot_counts[cur_section] = slot_counts.get(cur_section, 0) + 1
+            continue
+
+        pt_lower = pt.lower()
+        if pt_lower in _SECTION_RESETS or pt_lower.rstrip("s") in _SECTION_RESETS:
+            cur_section = None
+            continue
+
+        for anchor, key in all_anchors:
+            if anchor.lower() in pt_lower:
+                cur_section = key
+                break
 
     return slot_counts
 
@@ -569,25 +526,12 @@ def _update_side_project_title(para, old_name: str, new_name: str,
 
 # ─── Generic section anchor builder ──────────────────────────────────────────
 
-def _build_anchors(master_bank: dict):
-    """
-    Builds two lookup dicts from the master bank:
-      table_anchors  — anchor_text → section_key  (employment sections live in tables)
-      para_anchors   — anchor_text → section_key  (project sections live in paragraphs)
-
-    Anchor priority per section:
-      1. template_anchor  — explicit override (set this if auto-detection fails)
-      2. company          — used if not already claimed by another section
-      3. role             — fallback when multiple sections share the same company
-      4. project_name     — for side projects (para-anchored)
-    """
-    table_anchors: dict[str, str] = {}
-    para_anchors:  dict[str, str] = {}
+def _build_anchors(master_bank: dict) -> list[tuple[str, str]]:
+    anchors_dict: dict[str, str] = {}
     for key, sec in master_bank.get("sections", {}).items():
-        # Explicit override always wins
         explicit = (sec.get("template_anchor") or "").strip()
         if explicit:
-            table_anchors[explicit] = key
+            anchors_dict[explicit] = key
             continue
 
         company = (sec.get("company") or "").strip()
@@ -595,13 +539,15 @@ def _build_anchors(master_bank: dict):
         role    = (sec.get("role") or "").strip()
 
         if company:
-            if company not in table_anchors:
-                table_anchors[company] = key      # first section with this company
-            elif role:
-                table_anchors[role] = key          # same company → use role as fallback
+            if company not in anchors_dict:
+                anchors_dict[company] = key
+            if role and role not in anchors_dict:
+                anchors_dict[role] = key
         elif project:
-            para_anchors[project] = key
-    return table_anchors, para_anchors
+            if project not in anchors_dict:
+                anchors_dict[project] = key
+                
+    return sorted(anchors_dict.items(), key=lambda x: len(x[0]), reverse=True)
 
 
 def _get_skills_header(master_bank: dict) -> str:
@@ -659,64 +605,48 @@ def modify_docx(
     children = list(body)
 
     # ── Build anchor lookups ──────────────────────────────────────────────────
-    # Layer 1: bank anchors (company / project_name → section_key)
-    table_anchors, para_anchors = _build_anchors(master_bank) if master_bank else ({}, {})
+    all_anchors = _build_anchors(master_bank) if master_bank else []
     skills_header = _get_skills_header(master_bank) if master_bank else "skills"
 
-    # Layer 2: direct key matching — for banks where section_key text appears
-    # in the template, or when no bank is provided (keys ARE the titles).
-    # Only add keys not already covered by bank anchors.
-    covered_keys = set(table_anchors.values()) | set(para_anchors.values())
+    covered_keys = {k for _, k in all_anchors}
     for key in sections:
         if key not in covered_keys:
-            # Try as both table and para anchor — detection logic will pick the right one
-            table_anchors.setdefault(key, key)
-            para_anchors.setdefault(key, key)
+            all_anchors.append((key, key))
+    
+    all_anchors.sort(key=lambda x: len(x[0]), reverse=True)
 
     # ── Map section keys → bullet paragraph indices ───────────────────────────
     bullet_map:     dict[str, list[int]] = {}
-    title_para_map: dict[str, int]       = {}   # side project title paragraph index
+    title_para_map: dict[str, int]       = {}
     cur_section:    str | None           = None
 
-    for idx, child in enumerate(children):
-        tag = child.tag.split("}")[-1]
+    all_paras = list(body.iter(f"{{{WNS}}}p"))
 
-        if tag == "tbl":
-            t = _table_text(child)
-            for anchor, key in table_anchors.items():
-                if anchor in t:
-                    cur_section = key
-                    break
-            # Unknown tables do NOT reset cur_section — experience sections commonly
-            # span multiple tables (company header, description, role title, bullets)
+    for idx, child in enumerate(all_paras):
+        pt = _para_text(child).strip()
+        if not pt:
+            continue
 
-        elif tag == "p":
-            pt = _para_text(child)
-            pt_lower = pt.strip().lower()
+        is_bullet = child.find(f".//{{{WNS}}}numPr") is not None
 
-            # Check para anchors (project / section titles) — record title para index
-            matched_para = False
-            for anchor, key in para_anchors.items():
-                if anchor in pt:
-                    cur_section = key
-                    title_para_map[key] = idx   # ← title para for this section
-                    matched_para = True
-                    break
-
-            if not matched_para:
-                # Section boundary / skills header → reset
-                if pt_lower in _SECTION_RESETS or pt_lower.rstrip("s") in _SECTION_RESETS:
-                    cur_section = None
-                if skills_header in pt_lower and pt.strip():
-                    cur_section = None
-
-            # Record bullet paragraphs
-            if (
-                cur_section
-                and pt.strip()
-                and child.find(f".//{{{WNS}}}numPr") is not None
-            ):
+        if is_bullet:
+            if cur_section:
                 bullet_map.setdefault(cur_section, []).append(idx)
+            continue
+
+        pt_lower = pt.lower()
+        if pt_lower in _SECTION_RESETS or pt_lower.rstrip("s") in _SECTION_RESETS:
+            cur_section = None
+            continue
+        if skills_header in pt_lower:
+            cur_section = None
+            continue
+
+        for anchor, key in all_anchors:
+            if anchor.lower() in pt_lower:
+                cur_section = key
+                title_para_map[key] = idx
+                break
 
     # ── Replace bullets ───────────────────────────────────────────────────────
     for section_key, new_bullets in sections.items():
@@ -725,36 +655,39 @@ def modify_docx(
             continue
 
         existing_idxs  = bullet_map[section_key]
-        template_para  = children[existing_idxs[0]]
+        template_para  = all_paras[existing_idxs[0]]
         new_paras      = [_clone_bullet(template_para, b) for b in new_bullets]
-        existing_paras = [children[i] for i in existing_idxs]
+        existing_paras = [all_paras[i] for i in existing_idxs]
         n_e, n_n       = len(existing_paras), len(new_paras)
+
+        parent = existing_paras[0].getparent()
 
         if n_n <= n_e:
             for i, np_ in enumerate(new_paras):
-                body.replace(existing_paras[i], np_)
+                ep = existing_paras[i]
+                ep.getparent().replace(ep, np_)
             for ep in existing_paras[n_n:]:
-                body.remove(ep)
+                ep.getparent().remove(ep)
         else:
             for i, ep in enumerate(existing_paras):
-                body.replace(ep, new_paras[i])
+                ep.getparent().replace(ep, new_paras[i])
+            
             anchor_para = new_paras[n_e - 1]
             for xp in new_paras[n_e:]:
-                body.insert(list(body).index(anchor_para) + 1, xp)
+                idx = parent.index(anchor_para)
+                parent.insert(idx + 1, xp)
                 anchor_para = xp
 
         print(f"  ✏️  {section_key}: {n_n} bullet{'s' if n_n != 1 else ''}")
 
     # ── Replace side project titles / dates ──────────────────────────────────
     if project_overrides:
-        # Refresh children after bullet insertions/removals
-        children = list(body)
         for slot_key, ov in project_overrides.items():
             if slot_key not in title_para_map:
                 print(f"  ⚠️  Title para for '{slot_key}' not found — skipping override")
                 continue
             _update_side_project_title(
-                children[title_para_map[slot_key]],
+                all_paras[title_para_map[slot_key]],
                 old_name     = ov["old_name"],
                 new_name     = ov["new_name"],
                 new_subtitle = ov.get("new_subtitle"),
@@ -769,9 +702,7 @@ def modify_docx(
     if skills_text:
         lines    = [ln.strip() for ln in skills_text.split("\n") if ln.strip()]
         in_hdr   = False
-        for child in body:
-            if child.tag.split("}")[-1] != "p":
-                continue
+        for child in all_paras:
             pt = _para_text(child).strip()
             if skills_header in pt.lower() and pt:
                 in_hdr = True
