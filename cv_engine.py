@@ -223,7 +223,7 @@ def extract_template_format_rules(template_path: Path) -> dict:
         if child.tag.split("}")[-1] != "p":
             continue
 
-        pt       = _para_text(child).strip()
+        pt       = (_para_text(child) or "").strip()
         pt_lower = pt.lower()
 
         # ── Section boundary detection ────────────────────────────────────────
@@ -317,7 +317,7 @@ def discover_template_sections(template_path: Path) -> dict:
     cur_title: str | None = None
 
     for child in tree.iter(f"{{{WNS}}}p"):
-        pt = _para_text(child).strip()
+        pt = (_para_text(child) or "").strip()
         if not pt:
             continue
 
@@ -352,7 +352,7 @@ def read_template_slots(template_path: Path,
     tree = etree.fromstring(xml)
 
     for child in tree.iter(f"{{{WNS}}}p"):
-        pt = _para_text(child).strip()
+        pt = (_para_text(child) or "").strip()
         if not pt:
             continue
 
@@ -423,7 +423,7 @@ def _fix_side_project_date_alignment(body) -> None:
         year_idx = None
         for i, r in enumerate(all_r):
             t = "".join(x.text or "" for x in r.findall(f"{{{WNS}}}t"))
-            if t.strip().isdigit() and len(t.strip()) == 4:
+            if (t or "").strip().isdigit() and len((t or "").strip()) == 4:
                 year_idx = i
                 break
         if year_idx is None:
@@ -432,7 +432,7 @@ def _fix_side_project_date_alignment(body) -> None:
         last_text_idx = 0
         for i in range(year_idx - 1, -1, -1):
             t = "".join(x.text or "" for x in all_r[i].findall(f"{{{WNS}}}t"))
-            if t.strip() and len(t.strip()) > 1:
+            if (t or "").strip() and len((t or "").strip()) > 1:
                 last_text_idx = i
                 break
 
@@ -450,7 +450,7 @@ def _fix_side_project_date_alignment(body) -> None:
 
         for i, el in enumerate(list(child)):
             t = "".join(x.text or "" for x in el.iter(f"{{{WNS}}}t"))
-            if t.strip().isdigit() and len(t.strip()) == 4:
+            if (t or "").strip().isdigit() and len((t or "").strip()) == 4:
                 child.insert(i, tab_r)
                 break
 
@@ -481,7 +481,7 @@ def _update_side_project_title(para, old_name: str, new_name: str,
       Slot with subtitle:    [NAME][" "]["- "][SUBTITLE][tabs…]["YEAR"][" - Suffix"]
       Slot without subtitle: [NAME][tabs…]["YEAR"][" - Suffix"]
     """
-    m = re.match(r'(\d{4})(.*)', new_date_str.strip())
+    m = re.match(r'(\d{4})(.*)', (new_date_str or "").strip())
     new_year       = m.group(1) if m else new_date_str
     raw_suffix     = m.group(2).strip() if m else ""
     new_suffix_run = (f" - {raw_suffix[2:].strip()}" if raw_suffix.startswith("- ")
@@ -714,7 +714,7 @@ def modify_docx(
         lines    = [ln.strip() for ln in skills_text.split("\n") if ln.strip()]
         in_hdr   = False
         for child in all_paras:
-            pt = _para_text(child).strip()
+            pt = (_para_text(child) or "").strip()
             if skills_header in pt.lower() and pt:
                 in_hdr = True
                 continue
