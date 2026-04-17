@@ -2158,12 +2158,17 @@ def settings_save():
     else:
         try:
             enc_key = encrypt_key(raw_key)
-        except EnvironmentError as e:
-            flash(str(e), "error")
+        except Exception as e:
+            flash(f"Encryption error (check ENCRYPT_KEY): {e}", "error")
             return redirect(url_for("settings_page"))
-    sb.save_ai_settings(user_id, provider, enc_key, model)
-    session.update({"has_ai": True, "ai_provider": provider, "ai_model": model})
-    flash("AI settings saved.", "success")
+            
+    try:
+        sb.save_ai_settings(user_id, provider, enc_key, model)
+        session.update({"has_ai": True, "ai_provider": provider, "ai_model": model})
+        flash("AI settings saved.", "success")
+    except Exception as e:
+        flash(f"Database error: {e}", "error")
+        
     return redirect(url_for("dashboard"))
 
 
