@@ -199,4 +199,36 @@ create policy "cv_sessions: own row" on public.cv_sessions
     using (auth.uid() = user_id)
     with check (auth.uid() = user_id);
 
--- Optional: CRON or trigger to clean up old sessions (not shown here)
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 7. STORAGE POLICIES: Generated CVs
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- Upload
+drop policy if exists "cv-templates: own generated upload" on storage.objects;
+create policy "cv-templates: own generated upload" on storage.objects
+    for insert to authenticated
+    with check (
+        bucket_id = 'cv-templates'
+        and (storage.foldername(name))[1] = 'generated'
+        and (storage.foldername(name))[2] = auth.uid()::text
+    );
+
+-- Read
+drop policy if exists "cv-templates: own generated read" on storage.objects;
+create policy "cv-templates: own generated read" on storage.objects
+    for select to authenticated
+    using (
+        bucket_id = 'cv-templates'
+        and (storage.foldername(name))[1] = 'generated'
+        and (storage.foldername(name))[2] = auth.uid()::text
+    );
+
+-- Delete
+drop policy if exists "cv-templates: own generated delete" on storage.objects;
+create policy "cv-templates: own generated delete" on storage.objects
+    for delete to authenticated
+    using (
+        bucket_id = 'cv-templates'
+        and (storage.foldername(name))[1] = 'generated'
+        and (storage.foldername(name))[2] = auth.uid()::text
+    );

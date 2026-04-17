@@ -418,3 +418,34 @@ def delete_cv_session(token: str) -> None:
         client.table("cv_sessions").delete().eq("token", token).execute()
     except Exception:
         pass
+def upload_generated_cv(user_id: str, token: str, file_path: Path) -> str:
+    """Upload a generated .docx or .pdf to Supabase Storage."""
+    client = get_client()
+    # Path: generated/{user_id}/{token}/{filename}
+    storage_path = f"generated/{user_id}/{token}/{file_path.name}"
+    
+    with open(file_path, "rb") as f:
+        file_bytes = f.read()
+
+    # Remove existing if any
+    try: client.storage.from_(BUCKET).remove([storage_path])
+    except Exception: pass
+
+    client.storage.from_(BUCKET).upload(
+        path=storage_path,
+        file=file_bytes,
+        file_options={"content-type": "application/octet-stream"}
+    )
+    return storage_path
+
+
+def download_generated_cv(user_id: str, token: str, filename: str, dest_path: Path) -> Path:
+    """Download a generated CV result back to local disk."""
+    client = get_client()
+    storage_path = f"generated/{user_id}/{token}/{filename}"
+    file_bytes   = client.storage.from_(BUCKET).download(storage_path)
+    
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(dest_path, "wb") as f:
+        f.write(file_bytes)
+    return dest_path

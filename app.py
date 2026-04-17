@@ -76,10 +76,11 @@ class CVStore:
                     try:
                         if key == "template_path":
                             sb.download_cv_template(data["user_id"], p)
-                        # docx/pdf are generated results; if missing, the user 
-                        # must re-generate since they aren't stored in Supabase Storage.
-                    except Exception:
-                        pass
+                        elif key in ["docx", "pdf"]:
+                            # These are generated results - download from storage
+                            sb.download_generated_cv(data["user_id"], token, p.name, p)
+                    except Exception as e:
+                        print(f"  ⚠️  Failed to restore missing {key} for token {token}: {e}")
                 data[key] = p
         return data
 
@@ -2645,6 +2646,11 @@ def review_confirm(token):
         print(f"  - Step 3: Verifying page count (PDF: {pdf_path})...")
         one_page = check_one_page(pdf_path)
         print("  - Step 4: Finalizing session...")
+
+        # Back up to Supabase Storage so any worker can serve the download
+        sb.upload_generated_cv(session["user_id"], token, docx_path)
+        if pdf_path:
+            sb.upload_generated_cv(session["user_id"], token, pdf_path)
 
         _generated[token] = {
             "docx":     docx_path,
