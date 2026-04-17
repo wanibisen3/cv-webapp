@@ -413,7 +413,7 @@ def _fernet() -> Fernet:
     Returns a Fernet cipher keyed from ENCRYPT_KEY env var.
     ENCRYPT_KEY must be a 32-byte URL-safe base64 string (generate with Fernet.generate_key()).
     """
-    raw = os.environ.get("ENCRYPT_KEY", "").strip()
+    raw = os.environ.get("ENCRYPT_KEY", "").strip().strip('"').strip("'")
     if not raw:
         raise EnvironmentError(
             "ENCRYPT_KEY is not set. Run: python -c \"from cryptography.fernet import Fernet; "
