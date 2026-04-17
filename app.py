@@ -2672,8 +2672,8 @@ def review_confirm(token):
             "safe":     safe,
             "one_page": one_page,
         }
-        # Clean up pending entry
-        _pending.pop(token, None)
+        # No pop needed here, as the row was already updated to the 'generated' mode
+        # _pending.pop(token, None)
 
         return render_template_string(
             _RESULT,
