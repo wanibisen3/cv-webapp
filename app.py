@@ -1427,7 +1427,7 @@ _BANK_CREATE = _BASE.replace("{% block content %}{% endblock %}", """
     <div class="cc-tab-pane" id="tab-file">
       <h6 style="font-weight:700;color:var(--navy);margin-bottom:.4rem;">Upload information to create your master bank</h6>
       <p style="color:var(--muted);font-size:.85rem;line-height:1.6;margin-bottom:1rem;">
-        Any format works: a Word doc of notes, a PDF, or a plain text file. Please upload your whole-life professional experience, extra side projects, extra certifications, and any other details not already on your CV that might be helpful to generate and tailor a new CV to a job description.
+        Any format works: a Word doc of notes, a PDF, or a plain text file. Please upload your whole-life professional experience, extra side projects, extra certifications, and any other details not already on your CV that might be helpful to generate and tailor a new CV to a job description (for example, you can upload your 10-page CV if you'd like!).
         AI will read it and extract every role, project, and skill automatically.
         Accepted: <strong>.docx &middot; .pdf &middot; .txt</strong>
       </p>
@@ -1450,7 +1450,7 @@ _BANK_CREATE = _BASE.replace("{% block content %}{% endblock %}", """
     <div class="cc-tab-pane" id="tab-text" style="display:none;">
       <h6 style="font-weight:700;color:var(--navy);margin-bottom:.4rem;">Paste your experience &mdash; any format works</h6>
       <p style="color:var(--muted);font-size:.85rem;line-height:1.6;margin-bottom:.75rem;">
-        Paste your LinkedIn text, rough bullet points, or a brain-dump of everything you've done.
+        Paste your LinkedIn text, rough bullet points, or a brain-dump of everything you've done (e.g. you can paste your 10-page CV if you'd like!).
         Don't worry about formatting &mdash; AI structures it all automatically.
       </p>
       <div class="star-guide mb-3">
