@@ -1,0 +1,22 @@
+# CV Tailor Web App — Python dependencies
+# Install: pip install -r requirements.txt
+
+# ── Web framework ─────────────────────────────────────────────────────────────
+flask>=3.0.0
+python-dotenv>=1.0.0
+gunicorn>=21.0.0          # for production deployment
+
+# ── Database / Auth ───────────────────────────────────────────────────────────
+supabase>=2.3.0
+
+# ── Security ──────────────────────────────────────────────────────────────────
+cryptography>=42.0.0      # Fernet encryption for user API keys
+
+# ── CV generation ─────────────────────────────────────────────────────────────
+lxml>=5.0.0               # DOCX XML manipulation
+pypdf>=4.0.0              # 1-page PDF verification (optional but recommended)
+
+# ── AI providers (install the ones you need) ─────────────────────────────────
+anthropic>=0.25.0         # Anthropic Claude
+openai>=1.30.0            # OpenAI GPT-4
+google-generativeai>=0.7.0  # Google Gemini
