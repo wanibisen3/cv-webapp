@@ -2615,13 +2615,13 @@ def review_confirm(token):
             b = request.form.get(f"bullet_{sec_key}_{i}")
             if b is None:
                 break
-            b = b.strip()
+            b = (b or "").strip()
             if b:
                 bullets.append(b)
         if bullets:
             sections[sec_key] = bullets
 
-    skills_text       = request.form.get("skills_text", "").strip()
+    skills_text       = (request.form.get("skills_text", "") or "").strip()
     project_overrides = result.get("project_overrides") or None
     company, role, safe = pending["company"], pending["role"], pending["safe"]
 

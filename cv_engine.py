@@ -625,7 +625,7 @@ def modify_docx(
     print(f"  📄  Total paragraphs in template: {len(all_paras)}")
 
     for idx, child in enumerate(all_paras):
-        pt = _para_text(child).strip()
+        pt = (_para_text(child) or "").strip()
         if not pt:
             continue
 
