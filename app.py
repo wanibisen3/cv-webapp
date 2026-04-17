@@ -58,31 +58,43 @@ class CVStore:
     def __setitem__(self, token, data):
         user_id = session.get("user_id")
         if user_id:
-            data["_store_mode"] = self.mode
-            sb.save_cv_session(user_id, token, data)
+            # Create a stringified version for the DB
+            db_data = {}
+            for k, v in data.items():
+                db_data[k] = str(v) if isinstance(v, Path) else v
+            db_data["_store_mode"] = self.mode
+            sb.save_cv_session(user_id, token, db_data)
 
     def get(self, token, default=None):
-        data = sb.get_cv_session(token)
-        if not data or data.get("_store_mode") != self.mode:
+        client = sb.get_client()
+        try:
+            res = client.table("cv_sessions").select("*").eq("token", token).execute()
+            if not res.data: return default
+            
+            row = res.data[0]
+            data = row["data"]
+            uid = row["user_id"]
+            
+            if data.get("_store_mode") != self.mode:
+                return default
+
+            # Restore Path objects
+            for key in ["template_path", "docx", "pdf"]:
+                if key in data and data[key]:
+                    p = Path(data[key])
+                    if not p.exists():
+                        try:
+                            if key == "template_path":
+                                sb.download_cv_template(uid, p)
+                            elif key in ["docx", "pdf"]:
+                                sb.download_generated_cv(uid, token, p.name, p)
+                        except Exception as e:
+                            print(f"  ⚠️  Restore failed for {key}: {e}")
+                    data[key] = p
+            return data
+        except Exception as e:
+            print(f"  ❌ CVStore access error: {e}")
             return default
-        
-        # Robust Path handling for cross-worker safety:
-        # If the worker that created the session is different, the local file 
-        # at 'template_path' or 'docx' might be missing. We re-download if needed.
-        for key in ["template_path", "docx", "pdf"]:
-            if key in data and data[key]:
-                p = Path(data[key])
-                if not p.exists():
-                    try:
-                        if key == "template_path":
-                            sb.download_cv_template(data["user_id"], p)
-                        elif key in ["docx", "pdf"]:
-                            # These are generated results - download from storage
-                            sb.download_generated_cv(data["user_id"], token, p.name, p)
-                    except Exception as e:
-                        print(f"  ⚠️  Failed to restore missing {key} for token {token}: {e}")
-                data[key] = p
-        return data
 
     def pop(self, token, default=None):
         val = self.get(token, default)
