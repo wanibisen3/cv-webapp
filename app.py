@@ -1407,7 +1407,6 @@ _BANK_CREATE = _BASE.replace("{% block content %}{% endblock %}", """
   <i class="bi bi-exclamation-triangle me-1"></i>
   <strong>API key needed for AI parsing.</strong>
   <a href="/settings" class="alert-link">Add your API key</a> first, then come back here.
-  You can also add sections manually without an API key.
 </div>
 {% endif %}
 
@@ -1419,9 +1418,6 @@ _BANK_CREATE = _BASE.replace("{% block content %}{% endblock %}", """
   <button class="cc-tab-btn" data-cc-tab="tab-text">
     <i class="bi bi-textarea-t"></i>Paste text
   </button>
-  <button class="cc-tab-btn" data-cc-tab="tab-manual">
-    <i class="bi bi-plus-circle"></i>Add manually
-  </button>
 </div>
 
 <div class="card" style="border-radius:0 0 var(--r16) var(--r16)!important;border-top:none;">
@@ -1429,9 +1425,9 @@ _BANK_CREATE = _BASE.replace("{% block content %}{% endblock %}", """
 
     <!-- File upload tab -->
     <div class="cc-tab-pane" id="tab-file">
-      <h6 style="font-weight:700;color:var(--navy);margin-bottom:.4rem;">Upload your CV or experience notes</h6>
+      <h6 style="font-weight:700;color:var(--navy);margin-bottom:.4rem;">Upload information to create your master bank</h6>
       <p style="color:var(--muted);font-size:.85rem;line-height:1.6;margin-bottom:1rem;">
-        Any format works: your current CV, a Word doc of notes, a PDF, or a plain text file.
+        Any format works: a Word doc of notes, a PDF, or a plain text file. Please upload your whole-life professional experience, extra side projects, extra certifications, and any other details not already on your CV that might be helpful to generate and tailor a new CV to a job description.
         AI will read it and extract every role, project, and skill automatically.
         Accepted: <strong>.docx &middot; .pdf &middot; .txt</strong>
       </p>
@@ -1454,7 +1450,7 @@ _BANK_CREATE = _BASE.replace("{% block content %}{% endblock %}", """
     <div class="cc-tab-pane" id="tab-text" style="display:none;">
       <h6 style="font-weight:700;color:var(--navy);margin-bottom:.4rem;">Paste your experience &mdash; any format works</h6>
       <p style="color:var(--muted);font-size:.85rem;line-height:1.6;margin-bottom:.75rem;">
-        Paste your CV, LinkedIn text, rough bullet points, or a brain-dump of everything you've done.
+        Paste your LinkedIn text, rough bullet points, or a brain-dump of everything you've done.
         Don't worry about formatting &mdash; AI structures it all automatically.
       </p>
       <div class="star-guide mb-3">
@@ -1489,66 +1485,7 @@ Certifications: ACCA Part-Qualified, Google Analytics" {{ 'disabled' if not has_
       </form>
     </div>
 
-    <!-- Manual tab -->
-    <div class="cc-tab-pane" id="tab-manual" style="display:none;">
-      <h6 style="font-weight:700;color:var(--navy);margin-bottom:.4rem;">Add a section manually</h6>
-      <p style="color:var(--muted);font-size:.85rem;line-height:1.6;margin-bottom:1rem;">
-        Add one role or project at a time. You can always add bullets to any section from the bank editor.
-      </p>
-      <form method="post" action="/bank/section/add">
-        <input type="hidden" name="is_first" value="{{ '1' if is_create else '0' }}">
-        <!-- Type toggle -->
-        <div style="display:flex;gap:.5rem;margin-bottom:.5rem;">
-          <input type="radio" class="btn-check" name="section_type" id="type-job" value="job" checked>
-          <label for="type-job" style="flex:1;padding:.6rem .9rem;border:2px solid var(--border);border-radius:var(--r10);cursor:pointer;text-align:center;font-weight:600;font-size:.84rem;color:var(--navy);background:var(--bg);transition:border-color .18s,background .18s;">
-            <i class="bi bi-briefcase me-1"></i>Role at an organisation
-          </label>
-          <input type="radio" class="btn-check" name="section_type" id="type-project" value="project">
-          <label for="type-project" style="flex:1;padding:.6rem .9rem;border:2px solid var(--border);border-radius:var(--r10);cursor:pointer;text-align:center;font-weight:600;font-size:.84rem;color:var(--navy);background:var(--bg);transition:border-color .18s,background .18s;">
-            <i class="bi bi-layers me-1"></i>Project / Activity
-          </label>
-        </div>
-        <div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem;">
-          <span id="type-hint-job">Job, internship, research position, volunteer role, leadership title — anything where you had a role at an organisation</span>
-          <span id="type-hint-project" style="display:none">Personal project, case competition, independent research, open-source, publication, hackathon, club activity</span>
-        </div>
-        <div class="row g-2">
-          <div class="col-md-6" id="company-field">
-            <label class="fl">Organisation</label>
-            <input name="company" class="form-control"
-              placeholder="e.g. Goldman Sachs, WHO, Harvard Lab">
-          </div>
-          <div class="col-md-6" id="role-field">
-            <label class="fl">Your title / role</label>
-            <input name="role" class="form-control"
-              placeholder="e.g. Summer Analyst, Research Assistant">
-          </div>
-          <div class="col-12" id="project-field" style="display:none">
-            <label class="fl">Project / activity name</label>
-            <input name="project_name" class="form-control"
-              placeholder="e.g. NLP Sentiment Analyser, HBS Case Competition">
-          </div>
-          <div class="col-md-6">
-            <label class="fl">Date range</label>
-            <input name="date" class="form-control"
-              placeholder="e.g. Jun 2024 – Aug 2024">
-          </div>
-          <div class="col-md-6">
-            <label class="fl">Bullet slots</label>
-            <input name="bullet_slots" type="number" min="1" max="6" value="4" class="form-control">
-            <div style="font-size:.73rem;color:var(--muted);margin-top:.3rem;">How many bullets on your CV</div>
-          </div>
-          <div class="col-12">
-            <label class="fl">First bullet (optional)</label>
-            <textarea name="first_bullet" class="form-control" rows="2"
-              placeholder="SubHeading: Achievement · metric · impact"></textarea>
-          </div>
-        </div>
-        <button type="submit" class="btn-success-custom w-100 mt-3" style="display:block;text-align:center;border-radius:var(--r10);padding:.65rem;">
-          <i class="bi bi-plus-circle me-1"></i>{{ 'Create Bank &amp; Add Section' if is_create else 'Add Section to Bank' }}
-        </button>
-      </form>
-    </div>
+
 
   </div>
 </div>
