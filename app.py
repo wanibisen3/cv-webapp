@@ -50,9 +50,41 @@ from cv_engine import (
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", os.urandom(24))
 
-# In-memory stores (keyed by UUID token)
-_pending:   dict[str, dict] = {}   # token → AI result awaiting user review
-_generated: dict[str, dict] = {}   # token → {docx, pdf, ...} ready for download
+import tempfile, pickle
+
+class PickleCache:
+    """A dict-like proxy that persists to the shared /tmp filesystem.
+    This resolves session-expired errors when running gunicorn with multiple workers."""
+    def __init__(self, prefix):
+        self.dir = Path(tempfile.gettempdir()) / f"cv_cache_{prefix}"
+        self.dir.mkdir(parents=True, exist_ok=True)
+        
+    def __setitem__(self, key, value):
+        with open(self.dir / f"{key}.pkl", "wb") as f:
+            pickle.dump(value, f)
+            
+    def get(self, key, default=None):
+        p = self.dir / f"{key}.pkl"
+        if p.exists():
+            try:
+                with open(p, "rb") as f:
+                    return pickle.load(f)
+            except Exception:
+                return default
+        return default
+        
+    def pop(self, key, default=None):
+        val = self.get(key, default)
+        p = self.dir / f"{key}.pkl"
+        if p.exists():
+            try:
+                p.unlink()
+            except Exception:
+                pass
+        return val
+
+_pending   = PickleCache("pending")
+_generated = PickleCache("generated")
 
 
 # ─── Auth decorator ───────────────────────────────────────────────────────────
