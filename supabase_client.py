@@ -36,7 +36,7 @@ def get_client() -> Client:
         key = os.environ.get("SUPABASE_KEY", "").strip()
         if not url or not key:
             raise EnvironmentError(
-                "SUPABASE_URL and SUPABASE_KEY must be set in .env"
+                "SUPABASE_URL and SUPABASE_KEY must be set (in .env or your deployment platform's environment variables)"
             )
         _client = create_client(url, key)
     return _client
