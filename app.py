@@ -2628,7 +2628,9 @@ def review_confirm(token):
     out_dir.mkdir(parents=True, exist_ok=True)
     docx_path = out_dir / "Tailored_CV.docx"
 
+    print(f"  🏁  Confirming CV generation for token: {token}")
     try:
+        print("  - Step 1: Modifying DOCX...")
         modify_docx(
             sections=sections,
             skills_text=skills_text,
@@ -2637,8 +2639,11 @@ def review_confirm(token):
             master_bank=master_bank,
             project_overrides=project_overrides,
         )
+        print("  - Step 2: Converting to PDF...")
         pdf_path = convert_to_pdf(docx_path)
+        print(f"  - Step 3: Verifying page count (PDF: {pdf_path})...")
         one_page = check_one_page(pdf_path)
+        print("  - Step 4: Finalizing session...")
 
         _generated[token] = {
             "docx":     docx_path,

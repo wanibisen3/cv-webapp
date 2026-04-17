@@ -615,12 +615,14 @@ def modify_docx(
     
     all_anchors.sort(key=lambda x: len(x[0]), reverse=True)
 
+    print(f"  🔍  Starting DOCX modification for {len(sections)} sections...")
     # ── Map section keys → bullet paragraph indices ───────────────────────────
     bullet_map:     dict[str, list[int]] = {}
     title_para_map: dict[str, int]       = {}
     cur_section:    str | None           = None
 
     all_paras = list(body.iter(f"{{{WNS}}}p"))
+    print(f"  📄  Total paragraphs in template: {len(all_paras)}")
 
     for idx, child in enumerate(all_paras):
         pt = _para_text(child).strip()
@@ -651,7 +653,6 @@ def modify_docx(
     # ── Replace bullets ───────────────────────────────────────────────────────
     for section_key, new_bullets in sections.items():
         if section_key not in bullet_map:
-            print(f"  ⚠️  '{section_key}' not found in template — skipping")
             continue
 
         existing_idxs  = bullet_map[section_key]
@@ -661,24 +662,34 @@ def modify_docx(
         n_e, n_n       = len(existing_paras), len(new_paras)
 
         parent = existing_paras[0].getparent()
+        if parent is None: continue # Safety skip
 
         if n_n <= n_e:
             for i, np_ in enumerate(new_paras):
                 ep = existing_paras[i]
-                ep.getparent().replace(ep, np_)
+                p = ep.getparent()
+                if p is not None:
+                    p.replace(ep, np_)
             for ep in existing_paras[n_n:]:
-                ep.getparent().remove(ep)
+                p = ep.getparent()
+                if p is not None:
+                    p.remove(ep)
         else:
+            # Inline insertion for growing lists
             for i, ep in enumerate(existing_paras):
-                ep.getparent().replace(ep, new_paras[i])
+                p = ep.getparent()
+                if p is not None:
+                    p.replace(ep, new_paras[i])
             
-            anchor_para = new_paras[n_e - 1]
+            anchor_p = new_paras[n_e - 1]
             for xp in new_paras[n_e:]:
-                idx = parent.index(anchor_para)
-                parent.insert(idx + 1, xp)
-                anchor_para = xp
+                p = anchor_p.getparent()
+                if p is not None:
+                    idx = p.index(anchor_p)
+                    p.insert(idx + 1, xp)
+                    anchor_p = xp
 
-        print(f"  ✏️  {section_key}: {n_n} bullet{'s' if n_n != 1 else ''}")
+    print(f"  📝  Successfully modified {len(sections)} sections in DOCX memory.")
 
     # ── Replace side project titles / dates ──────────────────────────────────
     if project_overrides:
@@ -745,6 +756,7 @@ def convert_to_pdf(docx_path: Path) -> Path | None:
     Returns the PDF path, or None on failure.
     Works both locally and in sandboxed/Docker environments.
     """
+    print(f"  🚀  Starting PDF conversion via LibreOffice: {docx_path.name}")
     pdf_path = docx_path.with_suffix(".pdf")
     tmp_dir  = Path(tempfile.mkdtemp())
     tmp_docx = tmp_dir / "cv.docx"
@@ -759,23 +771,28 @@ def convert_to_pdf(docx_path: Path) -> Path | None:
                 [exe, "--headless", "--convert-to", "pdf", "--outdir", str(tmp_dir), str(tmp_docx)],
                 env=env, capture_output=True, text=True, timeout=120,
             )
-        except (FileNotFoundError, subprocess.TimeoutExpired):
+        except Exception as e:
+            print(f"      ⚠️  Exec failed for {exe}: {e}")
             return None
 
     result = None
     for exe in ("soffice", "libreoffice", "/usr/bin/libreoffice",
                 "/Applications/LibreOffice.app/Contents/MacOS/soffice"):
         if shutil.which(exe) or Path(exe).exists():
+            print(f"  🔍  Trying {exe}...")
             result = _run(exe)
             if result and result.returncode == 0:
                 break
 
     if result and result.returncode == 0 and tmp_pdf.exists():
         shutil.copy2(tmp_pdf, pdf_path)
-        print(f"  ✅  PDF  → {pdf_path.name}")
+        print(f"  ✅  PDF conversion successful: {pdf_path.name}")
         return pdf_path
 
-    print("  ❌  PDF conversion failed — LibreOffice not found or conversion error")
+    print(f"  ❌  PDF conversion failed (RC: {result.returncode if result else 'N/A'})")
+    if result:
+        print(f"      STDOUT: {result.stdout}")
+        print(f"      STDERR: {result.stderr}")
     return None
 
 
