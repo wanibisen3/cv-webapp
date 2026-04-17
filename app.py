@@ -1881,7 +1881,8 @@ function showGenLoading() {
   document.getElementById('overlayTitle').textContent = 'Building your CV files\u2026';
   document.getElementById('overlaySub').textContent   = 'Injecting bullets into your template and converting to PDF';
   document.getElementById('loadingOverlay').style.display = 'flex';
-  document.getElementById('confirmBtn').disabled = true;
+  // Use a tiny timeout so the form actually submits before the button disables
+  setTimeout(() => { document.getElementById('confirmBtn').disabled = true; }, 10);
 }
 </script>
 """)
