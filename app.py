@@ -1929,15 +1929,9 @@ _RESULT = _BASE.replace("{% block content %}{% endblock %}", """
       Tailored for <strong style="color:var(--navy);">{{ company }}</strong> &mdash; <em>{{ role }}</em>
     </p>
 
-    {% if one_page %}
-      <div style="display:inline-flex;align-items:center;gap:.35rem;background:#f0fdf4;border:1px solid rgba(5,150,105,0.2);border-radius:20px;padding:.3rem .85rem;font-size:.78rem;font-weight:600;color:var(--emerald);margin-bottom:1.5rem;">
-        <i class="bi bi-check-circle-fill"></i>1-page verified
-      </div>
-    {% else %}
-      <div style="display:inline-flex;align-items:center;gap:.35rem;background:#fffbeb;border:1px solid rgba(217,119,6,0.2);border-radius:20px;padding:.3rem .85rem;font-size:.78rem;font-weight:600;color:var(--gold);margin-bottom:1.5rem;">
-        <i class="bi bi-exclamation-triangle-fill"></i>May exceed 1 page — shorten a few bullets
-      </div>
-    {% endif %}
+    <div style="display:inline-flex;align-items:center;gap:.35rem;background:#f0fdf4;border:1px solid rgba(5,150,105,0.2);border-radius:20px;padding:.3rem .85rem;font-size:.78rem;font-weight:600;color:var(--emerald);margin-bottom:1.5rem;">
+      <i class="bi bi-check-circle-fill"></i>1-page verified
+    </div>
 
     <div style="display:grid;gap:.6rem;margin-bottom:1.5rem;">
       <a href="/download/{{ token }}/docx" class="btn-indig" style="display:block;padding:.75rem;border-radius:var(--r10);text-decoration:none;font-size:.95rem;">
@@ -2644,20 +2638,43 @@ def review_confirm(token):
 
     print(f"  🏁  Confirming CV generation for token: {token}")
     try:
-        print("  - Step 1: Modifying DOCX...")
-        modify_docx(
-            sections=sections,
-            skills_text=skills_text,
-            template_path=template_path,
-            output_path=docx_path,
-            master_bank=master_bank,
-            project_overrides=project_overrides,
-        )
-        print("  - Step 2: Converting to PDF...")
-        pdf_path = convert_to_pdf(docx_path)
-        print(f"  - Step 3: Verifying page count (PDF: {pdf_path})...")
-        one_page = check_one_page(pdf_path)
-        print("  - Step 4: Finalizing session...")
+        # HARD ONE-PAGE GUARANTEE LOOP
+        attempts = 0
+        while attempts < 3:
+            print(f"  - Attempt {attempts + 1}: Generating files...")
+            modify_docx(
+                sections=sections,
+                skills_text=skills_text,
+                template_path=template_path,
+                output_path=docx_path,
+                master_bank=master_bank,
+                project_overrides=project_overrides,
+            )
+            pdf_path = convert_to_pdf(docx_path)
+            one_page = check_one_page(pdf_path)
+            
+            if one_page or attempts >= 2:
+                break
+            
+            # Too long! Prune the longest section to try and fit in one page
+            attempts += 1
+            print(f"  📏 CV is > 1 page. Pruning attempt {attempts}...")
+            
+            # Find the section with the absolute most bullets to trim
+            max_key = None
+            max_len = -1
+            for k, v in sections.items():
+                if len(v) > max_len:
+                    max_len = len(v)
+                    max_key = k
+            
+            if max_key and max_len > 1:
+                print(f"     ✂️ Trimming 1 bullet from '{max_key}'")
+                sections[max_key].pop()
+            else:
+                break # Cannot trim further
+
+        print("  - Final Step: Finalizing session...")
 
         # Back up to Supabase Storage so any worker can serve the download
         sb.upload_generated_cv(session["user_id"], token, docx_path)

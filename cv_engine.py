@@ -412,6 +412,9 @@ def _fix_side_project_date_alignment(body) -> None:
             continue
         if child.find(f".//{{{WNS}}}numPr") is not None:
             continue
+        # Also skip if it starts with a bullet symbol (safety)
+        if pt.startswith("•") or pt.startswith("-") or pt.startswith("*"):
+            continue
         pt = "".join(x.text or "" for x in child.iter(f"{{{WNS}}}t"))
         if not re.search(r'\b20\d{2}\b', pt):
             continue
@@ -630,6 +633,10 @@ def modify_docx(
             continue
 
         is_bullet = child.find(f".//{{{WNS}}}numPr") is not None
+        if not is_bullet:
+            # Fallback: check if the text starts with a bullet character
+            if pt.startswith("•") or pt.startswith("-") or pt.startswith("*"):
+                is_bullet = True
 
         if is_bullet:
             if cur_section:
