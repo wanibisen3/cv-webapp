@@ -374,3 +374,47 @@ def has_cv_template(user_id: str) -> bool:
         return bool(resp.data)
     except Exception:
         return False
+# ─── CV Sessions (for cross-worker persistence) ──────────────────────────────
+
+def save_cv_session(user_id: str, token: str, data: dict) -> None:
+    """
+    Store temporary CV generation state (AI result, template path, etc.) 
+    in the database so it can be retrieved by any worker process.
+    """
+    client = get_client()
+    # Ensure data is JSON serializable (convert Paths to strings)
+    serializable = json.loads(json.dumps(data, default=str))
+    client.table("cv_sessions").upsert({
+        "user_id": user_id,
+        "token":   token,
+        "data":    serializable
+    }, on_conflict="token").execute()
+
+
+def get_cv_session(token: str) -> dict | None:
+    """Retrieve a temporary CV session by token."""
+    try:
+        client = get_client()
+        resp = (
+            client.table("cv_sessions")
+            .select("data, user_id")
+            .eq("token", token)
+            .single()
+            .execute()
+        )
+        if resp.data:
+            data = resp.data["data"]
+            data["user_id"] = resp.data["user_id"] # ensure user_id is available
+            return data
+    except Exception:
+        pass
+    return None
+
+
+def delete_cv_session(token: str) -> None:
+    """Delete a CV session once completed or expired."""
+    try:
+        client = get_client()
+        client.table("cv_sessions").delete().eq("token", token).execute()
+    except Exception:
+        pass

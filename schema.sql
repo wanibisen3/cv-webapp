@@ -179,3 +179,24 @@ create policy "cv-templates: own delete" on storage.objects
 -- v2 → v3: adds format_rules column to cv_templates
 --   alter table public.cv_templates add column if not exists format_rules jsonb default null;
 -- =============================================================================
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 6. CV SESSIONS (Temporary storage for generation state)
+--    Used to persist AI results and tokens across different server workers.
+-- ─────────────────────────────────────────────────────────────────────────────
+create table if not exists public.cv_sessions (
+    id           uuid primary key default uuid_generate_v4(),
+    user_id      uuid not null references public.profiles(id) on delete cascade,
+    token        text not null,
+    data         jsonb not null,
+    created_at   timestamptz default now(),
+    unique (token)
+);
+
+alter table public.cv_sessions enable row level security;
+
+create policy "cv_sessions: own row" on public.cv_sessions
+    for all to authenticated
+    using (auth.uid() = user_id)
+    with check (auth.uid() = user_id);
+
+-- Optional: CRON or trigger to clean up old sessions (not shown here)

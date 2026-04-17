@@ -50,41 +50,47 @@ from cv_engine import (
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", os.urandom(24))
 
-import tempfile, pickle
+# In-memory session proxy (now backed by Supabase for multi-worker safety)
+class CVStore:
+    def __init__(self, mode="pending"):
+        self.mode = mode
 
-class PickleCache:
-    """A dict-like proxy that persists to the shared /tmp filesystem.
-    This resolves session-expired errors when running gunicorn with multiple workers."""
-    def __init__(self, prefix):
-        self.dir = Path(tempfile.gettempdir()) / f"cv_cache_{prefix}"
-        self.dir.mkdir(parents=True, exist_ok=True)
+    def __setitem__(self, token, data):
+        user_id = session.get("user_id")
+        if user_id:
+            data["_store_mode"] = self.mode
+            sb.save_cv_session(user_id, token, data)
+
+    def get(self, token, default=None):
+        data = sb.get_cv_session(token)
+        if not data or data.get("_store_mode") != self.mode:
+            return default
         
-    def __setitem__(self, key, value):
-        with open(self.dir / f"{key}.pkl", "wb") as f:
-            pickle.dump(value, f)
-            
-    def get(self, key, default=None):
-        p = self.dir / f"{key}.pkl"
-        if p.exists():
-            try:
-                with open(p, "rb") as f:
-                    return pickle.load(f)
-            except Exception:
-                return default
-        return default
-        
-    def pop(self, key, default=None):
-        val = self.get(key, default)
-        p = self.dir / f"{key}.pkl"
-        if p.exists():
-            try:
-                p.unlink()
-            except Exception:
-                pass
+        # Robust Path handling for cross-worker safety:
+        # If the worker that created the session is different, the local file 
+        # at 'template_path' or 'docx' might be missing. We re-download if needed.
+        for key in ["template_path", "docx", "pdf"]:
+            if key in data and data[key]:
+                p = Path(data[key])
+                if not p.exists():
+                    try:
+                        if key == "template_path":
+                            sb.download_cv_template(data["user_id"], p)
+                        # docx/pdf are generated results; if missing, the user 
+                        # must re-generate since they aren't stored in Supabase Storage.
+                    except Exception:
+                        pass
+                data[key] = p
+        return data
+
+    def pop(self, token, default=None):
+        val = self.get(token, default)
+        sb.delete_cv_session(token)
         return val
 
-_pending   = PickleCache("pending")
-_generated = PickleCache("generated")
+_pending   = CVStore("pending")
+_generated = CVStore("generated")
+
 
 
 # ─── Auth decorator ───────────────────────────────────────────────────────────

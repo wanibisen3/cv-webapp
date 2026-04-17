@@ -35,3 +35,5 @@ build/
 
 # Uploaded files (never commit user data)
 uploads/
+# Claude
+.claude/
