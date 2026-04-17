@@ -76,7 +76,7 @@ _BASE = r"""<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}ClarityCV{% endblock %}</title>
+  <title>{% block title %}My INSEAD CV{% endblock %}</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -538,7 +538,7 @@ _BASE = r"""<!doctype html>
 <nav class="cc-nav">
   <a class="cc-brand" href="/">
     <div class="cc-brand-icon"><i class="bi bi-file-earmark-text"></i></div>
-    Clarity<span class="cc-brand-cv">CV</span>
+    My INSEAD <span class="cc-brand-cv">CV</span>
   </a>
   {% if session.user_id %}
   <div class="cc-nav-links">
@@ -581,7 +581,7 @@ _INDEX = r"""<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ClarityCV — Get shortlisted, every time</title>
+  <title>My INSEAD CV — Get shortlisted, every time</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -836,7 +836,7 @@ _INDEX = r"""<!doctype html>
 <nav class="cc-nav">
   <a class="cc-brand" href="/">
     <div class="cc-brand-icon"><i class="bi bi-file-earmark-text"></i></div>
-    Clarity<span class="cc-brand-cv">CV</span>
+    My INSEAD <span class="cc-brand-cv">CV</span>
   </a>
   <div class="cc-nav-links">
     <a class="cc-nav-pill outline" href="#signin">Sign in</a>
