@@ -1992,8 +1992,22 @@ def signup():
     password = request.form["password"]
     name     = request.form.get("name", "").strip()
     try:
-        sb.sign_up(email, password, name=name)
-        flash("Account created! Check your email to confirm, then sign in.", "success")
+        user_id = sb.sign_up(email, password, name=name)
+        # Since email confirmation is off, auto-login using the same logic as signin()
+        profile = sb.get_profile(user_id)
+        ai_cfg  = sb.load_ai_settings(user_id)
+        session.update({
+            "user_id":      user_id,
+            "email":        email,
+            "name":         profile.get("name", email.split("@")[0]),
+            "has_bank":     sb.has_master_bank(user_id),
+            "has_template": sb.has_cv_template(user_id),
+            "has_ai":       bool(ai_cfg.get("api_key_enc")),
+            "ai_provider":  ai_cfg.get("provider", ""),
+            "ai_model":     ai_cfg.get("model", ""),
+        })
+        flash("Account created! Welcome.", "success")
+        return redirect(url_for("dashboard"))
     except Exception as e:
         flash(f"Sign-up failed: {e}", "error")
     return redirect(url_for("index"))
