@@ -2631,6 +2631,22 @@ def review_confirm(token):
     project_overrides = result.get("project_overrides") or None
     company, role, safe = pending["company"], pending["role"], pending["safe"]
 
+    # Hard-cap bullet length to what fits in this user's template.
+    # The AI prompt requests this but sometimes overshoots — truncate at the
+    # last word boundary to keep bullets readable and stay within one page.
+    fmt_rules        = master_bank.get("format_rules", {})
+    max_bullet_chars = int(fmt_rules.get("max_bullet_chars", 215))
+    for sec_key in sections:
+        capped = []
+        for b in sections[sec_key]:
+            if len(b) <= max_bullet_chars:
+                capped.append(b)
+            else:
+                truncated = b[:max_bullet_chars].rsplit(" ", 1)[0].rstrip(",;: ")
+                capped.append(truncated)
+                print(f"  ✂️  Bullet capped ({len(b)}→{len(truncated)} chars) in '{sec_key}'")
+        sections[sec_key] = capped
+
     tmp_dir  = template_path.parent
     out_dir  = tmp_dir / safe
     out_dir.mkdir(parents=True, exist_ok=True)

@@ -412,10 +412,10 @@ def _fix_side_project_date_alignment(body) -> None:
             continue
         if child.find(f".//{{{WNS}}}numPr") is not None:
             continue
+        pt = "".join(x.text or "" for x in child.iter(f"{{{WNS}}}t"))
         # Also skip if it starts with a bullet symbol (safety)
         if pt.startswith("•") or pt.startswith("-") or pt.startswith("*"):
             continue
-        pt = "".join(x.text or "" for x in child.iter(f"{{{WNS}}}t"))
         if not re.search(r'\b20\d{2}\b', pt):
             continue
         if len(pt) > 120:
@@ -619,31 +619,63 @@ def modify_docx(
     all_anchors.sort(key=lambda x: len(x[0]), reverse=True)
 
     print(f"  🔍  Starting DOCX modification for {len(sections)} sections...")
-    # ── Map section keys → bullet paragraph indices ───────────────────────────
+
+    # ── Build working lists ───────────────────────────────────────────────────
+    # We only detect and replace bullets that are DIRECT children of <w:body>.
+    # Table cells may contain paragraphs too, but replacing those would corrupt
+    # the column layout (e.g. overwrite dates or role text).
+    # Tables are still scanned for anchor text (company/role names live there).
+    body_children = list(body)  # direct children: <w:p>, <w:tbl>, <w:sectPr> …
+    body_paras    = [c for c in body_children if c.tag == f"{{{WNS}}}p"]
+    para_pos      = {id(p): i for i, p in enumerate(body_paras)}  # element→index
+
+    # ── Map section keys → bullet paragraph indices (in body_paras) ──────────
     bullet_map:     dict[str, list[int]] = {}
     title_para_map: dict[str, int]       = {}
     cur_section:    str | None           = None
 
-    all_paras = list(body.iter(f"{{{WNS}}}p"))
-    print(f"  📄  Total paragraphs in template: {len(all_paras)}")
+    print(f"  📄  Direct body children: {len(body_children)} ({len(body_paras)} paragraphs)")
 
-    for idx, child in enumerate(all_paras):
+    for child in body_children:
+        tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+
+        if tag == "tbl":
+            # Tables hold company names / role titles — use for anchor matching only.
+            tt = (_first_significant_text(child) or _table_text(child)[:120]).strip()
+            if not tt:
+                continue
+            tt_lower = tt.lower()
+            if tt_lower in _SECTION_RESETS or tt_lower.rstrip("s") in _SECTION_RESETS:
+                cur_section = None
+                continue
+            if skills_header in tt_lower:
+                cur_section = None
+                continue
+            for anchor, key in all_anchors:
+                if anchor.lower() in tt_lower:
+                    cur_section = key
+                    break
+            continue
+
+        if tag != "p":
+            continue  # sectPr, bookmarkStart, etc.
+
         pt = (_para_text(child) or "").strip()
         if not pt:
             continue
 
+        pt_lower = pt.lower()
+
         is_bullet = child.find(f".//{{{WNS}}}numPr") is not None
         if not is_bullet:
-            # Fallback: check if the text starts with a bullet character
-            if pt.startswith("•") or pt.startswith("-") or pt.startswith("*"):
+            if pt.startswith("•") or pt.startswith("–") or pt.startswith("-") or pt.startswith("*"):
                 is_bullet = True
 
         if is_bullet:
             if cur_section:
-                bullet_map.setdefault(cur_section, []).append(idx)
+                bullet_map.setdefault(cur_section, []).append(para_pos[id(child)])
             continue
 
-        pt_lower = pt.lower()
         if pt_lower in _SECTION_RESETS or pt_lower.rstrip("s") in _SECTION_RESETS:
             cur_section = None
             continue
@@ -654,58 +686,61 @@ def modify_docx(
         for anchor, key in all_anchors:
             if anchor.lower() in pt_lower:
                 cur_section = key
-                title_para_map[key] = idx
+                title_para_map[key] = para_pos[id(child)]
                 break
 
+    print(f"  🗂️  Sections mapped: {list(bullet_map.keys())}")
+
     # ── Replace bullets ───────────────────────────────────────────────────────
+    replaced = 0
     for section_key, new_bullets in sections.items():
         if section_key not in bullet_map:
+            print(f"  ⚠️  Section '{section_key}' not found in template — skipping")
             continue
 
-        existing_idxs  = bullet_map[section_key]
-        template_para  = all_paras[existing_idxs[0]]
+        existing_idxs = bullet_map[section_key]
+
+        # STRICT CAP: never insert more bullets than the template already has.
+        # Extra AI bullets beyond the template's slot count would push content
+        # onto page 2 and break the one-page constraint.
+        if len(new_bullets) > len(existing_idxs):
+            print(f"  ✂️  '{section_key}': AI gave {len(new_bullets)} bullets, "
+                  f"template has {len(existing_idxs)} slots — trimming")
+            new_bullets = new_bullets[:len(existing_idxs)]
+
+        template_para  = body_paras[existing_idxs[0]]
         new_paras      = [_clone_bullet(template_para, b) for b in new_bullets]
-        existing_paras = [all_paras[i] for i in existing_idxs]
+        existing_paras = [body_paras[i] for i in existing_idxs]
         n_e, n_n       = len(existing_paras), len(new_paras)
 
-        parent = existing_paras[0].getparent()
-        if parent is None: continue # Safety skip
+        # Replace first n_n slots in-place, remove any leftover template slots.
+        # All elements are direct body children so body.replace/remove is safe.
+        for i, np_ in enumerate(new_paras):
+            body.replace(existing_paras[i], np_)
+        for ep in existing_paras[n_n:]:
+            body.remove(ep)
 
-        if n_n <= n_e:
-            for i, np_ in enumerate(new_paras):
-                ep = existing_paras[i]
-                p = ep.getparent()
-                if p is not None:
-                    p.replace(ep, np_)
-            for ep in existing_paras[n_n:]:
-                p = ep.getparent()
-                if p is not None:
-                    p.remove(ep)
-        else:
-            # Inline insertion for growing lists
-            for i, ep in enumerate(existing_paras):
-                p = ep.getparent()
-                if p is not None:
-                    p.replace(ep, new_paras[i])
-            
-            anchor_p = new_paras[n_e - 1]
-            for xp in new_paras[n_e:]:
-                p = anchor_p.getparent()
-                if p is not None:
-                    idx = p.index(anchor_p)
-                    p.insert(idx + 1, xp)
-                    anchor_p = xp
+        # Refresh body_paras after structural changes so later sections still work.
+        body_paras = [c for c in body if c.tag == f"{{{WNS}}}p"]
+        para_pos   = {id(p): i for i, p in enumerate(body_paras)}
 
-    print(f"  📝  Successfully modified {len(sections)} sections in DOCX memory.")
+        replaced += 1
+
+    print(f"  📝  Replaced bullets in {replaced}/{len(sections)} sections.")
 
     # ── Replace side project titles / dates ──────────────────────────────────
     if project_overrides:
+        # Rebuild body_paras once more (bullet replacement may have shifted things)
+        body_paras = [c for c in body if c.tag == f"{{{WNS}}}p"]
         for slot_key, ov in project_overrides.items():
             if slot_key not in title_para_map:
                 print(f"  ⚠️  Title para for '{slot_key}' not found — skipping override")
                 continue
+            idx = title_para_map[slot_key]
+            if idx >= len(body_paras):
+                continue
             _update_side_project_title(
-                all_paras[title_para_map[slot_key]],
+                body_paras[idx],
                 old_name     = ov["old_name"],
                 new_name     = ov["new_name"],
                 new_subtitle = ov.get("new_subtitle"),
@@ -718,18 +753,22 @@ def modify_docx(
 
     # ── Update skills paragraph ───────────────────────────────────────────────
     if skills_text:
-        lines    = [ln.strip() for ln in skills_text.split("\n") if ln.strip()]
-        in_hdr   = False
-        for child in all_paras:
+        lines  = [ln.strip() for ln in skills_text.split("\n") if ln.strip()]
+        in_hdr = False
+        # Search direct body paragraphs only (skills are never inside tables)
+        for child in body:
+            if child.tag != f"{{{WNS}}}p":
+                continue
             pt = (_para_text(child) or "").strip()
-            if skills_header in pt.lower() and pt:
+            if not pt:
+                continue
+            if skills_header in pt.lower():
                 in_hdr = True
                 continue
-            if in_hdr and pt:
-                # Remove existing runs
+            if in_hdr:
+                # Remove existing runs and re-inject with template font
                 for r in child.findall(f"{{{WNS}}}r"):
                     child.remove(r)
-                # Re-inject skill lines with the font extracted from this user's template
                 for i, line in enumerate(lines):
                     add_br = i > 0
                     if ":" in line:

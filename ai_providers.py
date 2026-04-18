@@ -75,7 +75,7 @@ Rules:
 - Body = the action + relevant context (team size, methodology, geography — if mentioned in the JD)
 - Result = concrete outcome: $value, %, ×, rank, or a directional outcome when no metric exists in the bank
 - NEVER invent facts, numbers, or experiences absent from the candidate's bank
-- Max MAX_BULLET_CHARS characters per bullet — the exact limit is given in the user message as MAX_BULLET_CHARS; stay strictly under it
+- Max MAX_BULLET_CHARS characters per bullet — the exact limit is given in the user message as MAX_BULLET_CHARS; stay STRICTLY under it. Count characters before writing. If a draft exceeds the limit, shorten the Result clause first, then the Body — never sacrifice the SubHeading or Verb.
 
 STAR worked examples (the candidate's background does not matter — apply the same logic to any field):
   JD: "data-driven marketing · campaign optimisation · A/B testing"
