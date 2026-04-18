@@ -1108,7 +1108,7 @@ _INDEX = r"""<!doctype html>
     <div class="text-center mb-4">
       <div class="section-eyebrow mb-3">The workflow</div>
       <h2 class="how-heading">Invest once.<br>Apply forever.</h2>
-      <p class="how-sub">Spend an hour building your master bank once. After that, every tailored CV is just a job description away.</p>
+      <p class="how-sub">Build your master bank once. After that, every tailored CV is just a job description away.</p>
     </div>
     <div class="row g-4 position-relative">
       <div class="col-md-4 step-connector">
@@ -1116,7 +1116,7 @@ _INDEX = r"""<!doctype html>
           <div class="step-icon-circle ic-indigo"><i class="bi bi-database-fill"></i></div>
           <div class="step-num">Step 01 &nbsp;·&nbsp; One-time effort</div>
           <div class="step-title">Build your master bank</div>
-          <div class="step-desc">Invest an hour to collate every role, project, and achievement you've ever had. Upload your CV or paste raw experience — AI structures it into a reusable bank of bullets that powers every future application.</div>
+          <div class="step-desc">Take the time to collate every role, project, and achievement you've ever had. Upload your CV or paste raw experience — AI structures it into a reusable bank of bullets that powers every future application.</div>
         </div>
       </div>
       <div class="col-md-4 step-connector">
