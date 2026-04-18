@@ -774,6 +774,82 @@ _INDEX = r"""<!doctype html>
     }
     .step-desc { font-size: .86rem; line-height: 1.7; color: rgba(255,255,255,0.5); }
 
+    /* ── INSEAD pledge section ── */
+    .insead-pledge {
+      background: linear-gradient(180deg, #0d1117 0%, #060918 100%);
+      padding: 5rem 0 6rem; position: relative; overflow: hidden;
+    }
+    .insead-pledge::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(124,58,237,0.18), transparent 55%),
+        radial-gradient(circle at 80% 70%, rgba(217,119,6,0.15), transparent 55%);
+    }
+    .pledge-card {
+      position: relative; z-index: 1;
+      max-width: 860px; margin: 0 auto;
+      background: linear-gradient(135deg, rgba(79,70,229,0.15), rgba(124,58,237,0.10), rgba(217,119,6,0.10));
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 28px;
+      padding: 3.25rem 2.75rem;
+      text-align: center;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .pledge-card::after {
+      content: ''; position: absolute; inset: -1px; border-radius: 28px;
+      background: linear-gradient(135deg, var(--violet), var(--amber), var(--indigo));
+      z-index: -1; filter: blur(24px); opacity: 0.22;
+    }
+    .pledge-badge {
+      display: inline-flex; align-items: center;
+      background: rgba(245,158,11,0.14); border: 1px solid rgba(245,158,11,0.35);
+      color: var(--amber-l); padding: .4rem 1.1rem; border-radius: 24px;
+      font-size: .72rem; font-weight: 800; letter-spacing: .08em;
+      text-transform: uppercase; margin-bottom: 1.25rem;
+    }
+    .pledge-heading {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900;
+      font-size: clamp(2.3rem, 5vw, 3.4rem); color: #fff;
+      letter-spacing: -.05em; line-height: 1.05; margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff 40%, var(--amber-l) 100%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .pledge-sub {
+      font-size: 1rem; line-height: 1.75; color: rgba(255,255,255,0.72);
+      max-width: 620px; margin: 0 auto 2rem;
+    }
+    .pledge-sub strong { color: var(--amber-l); font-weight: 700; }
+    .pledge-pills {
+      display: flex; flex-wrap: wrap; gap: .6rem;
+      justify-content: center; margin-bottom: 2.2rem;
+    }
+    .pledge-pill {
+      display: inline-flex; align-items: center; gap: .45rem;
+      font-size: .78rem; font-weight: 600; color: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      padding: .5rem 1rem; border-radius: 100px;
+      transition: background .2s, border-color .2s, transform .2s;
+    }
+    .pledge-pill:hover {
+      background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.22);
+      transform: translateY(-1px);
+    }
+    .pledge-pill i { color: var(--amber-l); }
+    .pledge-cta {
+      display: inline-flex; align-items: center; gap: .55rem;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      color: #fff; padding: .85rem 1.9rem; border-radius: 14px;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .95rem;
+      text-decoration: none; box-shadow: 0 10px 30px rgba(79,70,229,0.45);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .pledge-cta:hover {
+      transform: translateY(-2px); color: #fff;
+      box-shadow: 0 14px 40px rgba(79,70,229,0.6);
+    }
+
     /* ── Auth section ── */
     .auth-section { background: var(--bg); padding: 6rem 0; }
     .auth-heading {
@@ -881,19 +957,19 @@ _INDEX = r"""<!doctype html>
   <div class="container hero-inner" style="width:100%;">
     <div class="row align-items-center g-5">
       <div class="col-lg-6">
-        <div class="hero-badge"><i class="bi bi-stars"></i>&#10022; AI-Powered CV Tailoring</div>
+        <div class="hero-badge"><i class="bi bi-mortarboard-fill"></i>&nbsp;Free forever for INSEADers</div>
         <h1 class="hero-h1">Land interviews,<br><em>every time.</em></h1>
-        <p class="hero-sub">Paste any job description. Get a tailored, ATS-optimised CV in 60 seconds — your template, your format, zero hallucination.</p>
+        <p class="hero-sub">Build your master bank <strong style="color:#fff;">once</strong> — then paste any job description and get a tailored, ATS-optimised CV in 60 seconds. Your template, your words, zero hallucination.</p>
         <div class="hero-cta-row">
           <a href="#signup" class="btn-hero-primary"><i class="bi bi-rocket-takeoff"></i>Start for free</a>
           <a href="#signin" class="btn-hero-outline"><i class="bi bi-box-arrow-in-right"></i>Sign in</a>
         </div>
         <div class="hero-trust">
-          <i class="bi bi-lock-fill"></i>Bring your own API key
+          <i class="bi bi-key-fill"></i>Bring your own API key
           <span style="color:rgba(255,255,255,0.15);">|</span>
           <i class="bi bi-shield-check"></i>Zero data stored
           <span style="color:rgba(255,255,255,0.15);">|</span>
-          <i class="bi bi-clock"></i>60 sec per CV
+          <i class="bi bi-infinity"></i>Unlimited tailored CVs
         </div>
       </div>
       <div class="col-lg-6">
@@ -962,16 +1038,16 @@ _INDEX = r"""<!doctype html>
   <div class="container">
     <div class="text-center mb-5">
       <div class="section-eyebrow mb-3">The workflow</div>
-      <h2 class="how-heading">Three steps to your<br>next interview</h2>
-      <p class="how-sub">Used by MBA candidates at INSEAD, HBS, and LBS to land roles at top firms.</p>
+      <h2 class="how-heading">Invest once.<br>Apply forever.</h2>
+      <p class="how-sub">Spend an hour building your master bank once. After that, every tailored CV is just a job description away.</p>
     </div>
     <div class="row g-4 position-relative">
       <div class="col-md-4 step-connector">
         <div class="step-card">
           <div class="step-icon-circle ic-indigo"><i class="bi bi-database-fill"></i></div>
-          <div class="step-num">Step 01</div>
-          <div class="step-title">Build your experience bank</div>
-          <div class="step-desc">Upload your CV or paste your full experience. AI extracts every role, bullet, and skill — structured and ready for tailoring.</div>
+          <div class="step-num">Step 01 &nbsp;·&nbsp; One-time effort</div>
+          <div class="step-title">Build your master bank</div>
+          <div class="step-desc">Invest an hour to collate every role, project, and achievement you've ever had. Upload your CV or paste raw experience — AI structures it into a reusable bank of bullets that powers every future application.</div>
         </div>
       </div>
       <div class="col-md-4 step-connector">
@@ -989,6 +1065,34 @@ _INDEX = r"""<!doctype html>
           <div class="step-title">Download your tailored CV</div>
           <div class="step-desc">Get a Word + PDF with bullets rewritten in STAR format using the JD's exact language. Same template, perfect fit.</div>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- For INSEADers — free-forever pledge -->
+<section class="insead-pledge">
+  <div class="container">
+    <div class="pledge-card">
+      <div class="pledge-inner">
+        <div class="pledge-badge">
+          <i class="bi bi-mortarboard-fill"></i>&nbsp;For INSEADers
+        </div>
+        <h2 class="pledge-heading">Free. Forever.</h2>
+        <p class="pledge-sub">
+          This tool will <strong>always</strong> be free for INSEADers. Bring your own API key,
+          build your master bank once, and tailor unlimited CVs to land your dream role — from
+          McKinsey to Google to your own startup.
+        </p>
+        <div class="pledge-pills">
+          <span class="pledge-pill"><i class="bi bi-infinity"></i>Unlimited generations</span>
+          <span class="pledge-pill"><i class="bi bi-key-fill"></i>Your own API key</span>
+          <span class="pledge-pill"><i class="bi bi-shield-lock-fill"></i>Your data, your control</span>
+          <span class="pledge-pill"><i class="bi bi-heart-fill"></i>Built by an INSEADer</span>
+        </div>
+        <a href="#signup" class="pledge-cta">
+          <i class="bi bi-rocket-takeoff"></i>Create your free account
+        </a>
       </div>
     </div>
   </div>
@@ -1065,7 +1169,7 @@ _INDEX = r"""<!doctype html>
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
       <div>
         <div class="footer-brand">My INSEAD <span>CV</span></div>
-        <div class="footer-tag">AI-powered CV tailoring for ambitious professionals</div>
+        <div class="footer-tag">AI-powered CV tailoring &mdash; free forever for INSEADers</div>
       </div>
       <div class="footer-lock">
         <i class="bi bi-shield-check"></i> Your data stays yours — always.
@@ -1193,7 +1297,7 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
 <!-- Greeting -->
 <div class="mb-4" style="padding-top:.75rem;">
   <h2 class="dash-greeting">Welcome back, {{ name }} &#128075;</h2>
-  <p class="dash-sub">Ready to apply? Let's build something great.</p>
+  <p class="dash-sub">Your master bank is ready — paste a JD below and land your next interview.</p>
 </div>
 
 {% if not (has_bank and has_template and has_ai) %}
