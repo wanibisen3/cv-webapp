@@ -453,6 +453,45 @@ _BASE = r"""<!doctype html>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ── Global loading overlay helper ────────────────────────────────────────────
+function showLoading(title, sub) {
+  const ov = document.getElementById('loadingOverlay');
+  if (!ov) return;
+  if (title) document.getElementById('overlayTitle').textContent = title;
+  if (sub)   document.getElementById('overlaySub').textContent   = sub;
+  ov.style.display = 'flex';
+}
+
+// ── Universal data-loading forms ─────────────────────────────────────────────
+// Add data-loading to any <form> to get an automatic spinner on submit.
+// Optionally set data-loading-title and data-loading-sub for custom text.
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('form[data-loading]').forEach(form => {
+    form.addEventListener('submit', function() {
+      showLoading(
+        this.dataset.loadingTitle || 'Saving…',
+        this.dataset.loadingSub   || 'Just a moment…'
+      );
+      // Disable every submit button in this form to prevent double-submits
+      this.querySelectorAll('[type="submit"]').forEach(b => b.disabled = true);
+    });
+  });
+
+  // ── Inline quick-action buttons (bank edit/delete/add) ────────────────────
+  // Buttons with data-quick-action get a subtle in-place spinner instead of
+  // the full overlay (fast DB writes don't need the heavy overlay).
+  document.querySelectorAll('[data-quick-action]').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const orig = this.innerHTML;
+      this.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:ccSpin .7s linear infinite;vertical-align:middle;"></span>';
+      this.disabled = true;
+      // Restore if the form fails (navigation will clear state on success)
+      setTimeout(() => { this.innerHTML = orig; this.disabled = false; }, 8000);
+    });
+  });
+});
+</script>
 {% block scripts %}{% endblock %}
 </body></html>"""
 
@@ -1059,15 +1098,19 @@ const obs = new IntersectionObserver(entries => {
 }, { threshold: 0.1 });
 document.querySelectorAll('.step-card').forEach(c => obs.observe(c));
 
-// Make loading overlay show if it exists (it doesn't on index, but keep for safety)
-function showLoading(title, sub) {
-  const ov = document.getElementById('loadingOverlay');
-  if (!ov) return;
-  if (title) document.getElementById('overlayTitle').textContent = title;
-  if (sub) document.getElementById('overlaySub').textContent = sub;
-  ov.style.display = 'flex';
-}
+// Sign-in / Sign-up: swap button text to a spinner on submit
+document.querySelectorAll('form[action="/signin"], form[action="/signup"]').forEach(form => {
+  form.addEventListener('submit', function() {
+    const btn = this.querySelector('[type="submit"]');
+    if (!btn) return;
+    btn.disabled = true;
+    btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:authSpin .7s linear infinite;vertical-align:middle;margin-right:6px;"></span>Signing in…';
+  });
+});
 </script>
+<style>
+@keyframes authSpin { to { transform: rotate(360deg); } }
+</style>
 </body>
 </html>"""
 
@@ -1322,7 +1365,10 @@ _UPLOAD_TPL = _BASE.replace("{% block content %}{% endblock %}", """
       <strong>Tip:</strong> Make sure your template has bullet points under each role — the app auto-detects
       how many bullet slots to fill per section. No hardcoding required.
     </div>
-    <form method="post" action="/upload-template" enctype="multipart/form-data">
+    <form method="post" action="/upload-template" enctype="multipart/form-data"
+          data-loading
+          data-loading-title="Uploading & analysing template…"
+          data-loading-sub="Extracting font, bullet slots and formatting rules — ~10 seconds">
       <div class="mb-4">
         <label class="fl">CV template (.docx)</label>
         <div class="import-zone" onclick="document.getElementById('tplFileInput').click()">
@@ -1376,7 +1422,10 @@ _SETTINGS = _BASE.replace("{% block content %}{% endblock %}", """
       <br><span style="opacity:.7;">Haiku / Flash models are cheapest but slightly weaker on CV rewriting.</span>
     </div>
 
-    <form method="post" action="/settings">
+    <form method="post" action="/settings"
+          data-loading
+          data-loading-title="Saving AI settings…"
+          data-loading-sub="Encrypting and storing your API key securely">
       <!-- Provider selector cards -->
       <div class="mb-4">
         <label class="fl">AI Provider</label>
@@ -1731,7 +1780,8 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
       {% endif %}
     </div>
     <div id="skills-edit" style="display:none">
-      <form method="post" action="/bank/skills">
+      <form method="post" action="/bank/skills"
+            data-loading data-loading-title="Saving skills…" data-loading-sub="Updating your master bank">
         <label class="fl mt-1">Skills (one category per line)</label>
         <div style="font-size:.75rem;color:var(--muted);margin-bottom:.4rem;">Format: <code style="background:#eef2ff;color:var(--indigo);border-radius:4px;padding:.1rem .3rem;">Category: skill &middot; skill &middot; skill</code></div>
         <textarea name="skills_text" class="form-control mb-2" rows="6"
@@ -1744,7 +1794,8 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
           value="{{ bank.skills_header or 'skills' }}"
           placeholder="e.g. Skills & Additional Information">
         <div class="d-flex gap-2">
-          <button class="btn-indig" style="font-size:.82rem;padding:.4rem .9rem;border-radius:var(--r10);">Save</button>
+          <button class="btn-indig" style="font-size:.82rem;padding:.4rem .9rem;border-radius:var(--r10);"
+                  data-quick-action>Save</button>
           <button type="button" class="btn-ghost" style="font-size:.82rem;padding:.4rem .9rem;border-radius:var(--r10);"
             onclick="toggleEdit('skills-edit')">Cancel</button>
         </div>
@@ -1783,16 +1834,19 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
             onclick="showEditBullet('{{ key }}','{{ b.id }}')">Edit</button>
           <form method="post" action="/bank/section/{{ key }}/bullet/{{ b.id }}/delete"
             onsubmit="return confirm('Delete this bullet?')" style="display:inline">
-            <button class="btn btn-xs" style="padding:.2rem .5rem;font-size:.73rem;border-radius:6px;background:transparent;border:1px solid rgba(220,38,38,0.3);color:#dc2626;cursor:pointer;">&times;</button>
+            <button class="btn btn-xs" style="padding:.2rem .5rem;font-size:.73rem;border-radius:6px;background:transparent;border:1px solid rgba(220,38,38,0.3);color:#dc2626;cursor:pointer;"
+                    data-quick-action>&times;</button>
           </form>
         </div>
       </div>
       <div id="edit-{{ b.id }}" style="display:none;margin-top:.5rem;">
-        <form method="post" action="/bank/section/{{ key }}/bullet/{{ b.id }}/update">
+        <form method="post" action="/bank/section/{{ key }}/bullet/{{ b.id }}/update"
+              data-loading data-loading-title="Saving bullet…" data-loading-sub="Updating your master bank">
           <textarea name="text" class="form-control mb-2" rows="2"
             style="font-size:.82rem;">{{ b.text }}</textarea>
           <div class="d-flex gap-2">
-            <button class="btn-indig" style="font-size:.78rem;padding:.3rem .75rem;border-radius:8px;">Save</button>
+            <button class="btn-indig" style="font-size:.78rem;padding:.3rem .75rem;border-radius:8px;"
+                    data-quick-action>Save</button>
             <button type="button" class="btn-ghost" style="font-size:.78rem;padding:.3rem .75rem;border-radius:8px;"
               onclick="document.getElementById('edit-{{ b.id }}').style.display='none';
                        document.getElementById('view-{{ b.id }}').style.display='flex'">Cancel</button>
@@ -1804,12 +1858,14 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
 
     <!-- Add bullet -->
     <div class="mt-2" id="add-area-{{ key }}" style="display:none">
-      <form method="post" action="/bank/section/{{ key }}/bullet/add">
+      <form method="post" action="/bank/section/{{ key }}/bullet/add"
+            data-loading data-loading-title="Adding bullet…" data-loading-sub="Updating your master bank">
         <textarea name="text" class="form-control mb-2" rows="2"
           placeholder="SubHeading: Led [what you did + context], [result with $/%/metric]"
           style="font-size:.82rem;" required></textarea>
         <div class="d-flex gap-2">
-          <button class="btn-success-custom" style="font-size:.78rem;padding:.3rem .75rem;border-radius:8px;">+ Add bullet</button>
+          <button class="btn-success-custom" style="font-size:.78rem;padding:.3rem .75rem;border-radius:8px;"
+                  data-quick-action>+ Add bullet</button>
           <button type="button" class="btn-ghost" style="font-size:.78rem;padding:.3rem .75rem;border-radius:8px;"
             onclick="document.getElementById('add-area-{{ key }}').style.display='none'">Cancel</button>
         </div>
@@ -1826,7 +1882,8 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
       <label style="color:var(--muted);margin:0;white-space:nowrap;">Bullet slots for AI:</label>
       <input name="slots" type="number" min="1" max="8" value="{{ sec.bullet_slots or 3 }}"
         class="form-control form-control-sm" style="width:60px;">
-      <button class="btn-ghost" style="font-size:.76rem;padding:.25rem .65rem;border-radius:8px;">Update</button>
+      <button class="btn-ghost" style="font-size:.76rem;padding:.25rem .65rem;border-radius:8px;"
+              data-quick-action>Update</button>
     </form>
   </div>
 </div>
@@ -2193,8 +2250,14 @@ def settings_save():
             
     try:
         sb.save_ai_settings(user_id, provider, enc_key, model)
-        session.update({"has_ai": True, "ai_provider": provider, "ai_model": model})
-        flash("AI settings saved.", "success")
+        ai_label = PROVIDERS.get(provider, {}).get("label", provider)
+        session.update({
+            "has_ai":    True,
+            "ai_provider": provider,
+            "ai_model":  model,
+            "ai_label":  ai_label,
+        })
+        flash(f"✓ AI settings saved — {ai_label} ({model})", "success")
     except Exception as e:
         flash(f"Database error: {e}", "error")
         
