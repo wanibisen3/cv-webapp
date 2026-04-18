@@ -128,459 +128,292 @@ _BASE = r"""<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}My INSEAD CV{% endblock %}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <style>
     :root {
+      --deep: #060918;
       --navy: #0f172a;
       --navy-80: #1e293b;
       --indigo: #4f46e5;
       --indigo-l: #6366f1;
+      --violet: #7c3aed;
+      --violet-l: #a78bfa;
+      --amber: #d97706;
+      --amber-l: #f59e0b;
       --gold: #d97706;
       --gold-l: #f59e0b;
       --emerald: #059669;
       --surface: #ffffff;
       --bg: #f8fafc;
-      --border: rgba(15,23,42,0.09);
+      --border: rgba(15,23,42,0.08);
       --text: #0f172a;
       --muted: #64748b;
-      --r16: 16px;
-      --r10: 10px;
-      --shadow: 0 2px 16px rgba(15,23,42,0.07);
-      --shadow-md: 0 8px 32px rgba(15,23,42,0.12);
-      --shadow-lg: 0 20px 56px rgba(15,23,42,0.18);
+      --r20: 20px; --r16: 16px; --r12: 12px; --r10: 10px;
+      --shadow: 0 1px 3px rgba(15,23,42,0.04), 0 4px 16px rgba(15,23,42,0.06);
+      --shadow-md: 0 4px 6px rgba(15,23,42,0.04), 0 12px 32px rgba(15,23,42,0.10);
+      --shadow-lg: 0 8px 16px rgba(15,23,42,0.06), 0 24px 56px rgba(15,23,42,0.16);
     }
     *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       background: var(--bg);
       font-family: 'Inter', system-ui, sans-serif;
-      font-size: .92rem;
-      color: var(--text);
+      font-size: .92rem; color: var(--text);
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     /* ── Navbar ── */
     .cc-nav {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      background: rgba(15,23,42,0.97);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding: .75rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      position: sticky; top: 0; z-index: 1000; height: 60px;
+      background: rgba(6,9,24,0.96);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem;
+    }
+    .cc-nav::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--indigo), var(--violet), var(--amber));
+      opacity: 0.55;
     }
     .cc-brand {
-      display: flex;
-      align-items: center;
-      gap: .6rem;
-      text-decoration: none;
-      font-weight: 700;
-      font-size: 1.05rem;
-      color: #fff;
-      letter-spacing: -.3px;
+      display: flex; align-items: center; gap: .65rem; text-decoration: none;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;
+      font-size: 1.05rem; color: #fff; letter-spacing: -.3px;
     }
     .cc-brand-icon {
-      width: 30px; height: 30px;
-      background: linear-gradient(135deg, var(--indigo), var(--indigo-l));
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: .9rem; color: #fff;
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      border-radius: 9px; display: flex; align-items: center; justify-content: center;
+      font-size: .9rem; color: #fff; box-shadow: 0 4px 14px rgba(79,70,229,0.5);
     }
-    .cc-brand-cv { color: var(--gold-l); }
-    .cc-nav-links { display: flex; align-items: center; gap: .5rem; }
+    .cc-brand-cv { color: var(--amber-l); }
+    .cc-nav-links { display: flex; align-items: center; gap: .4rem; }
     .cc-nav-pill {
-      padding: .35rem .85rem;
-      border-radius: 20px;
-      font-size: .82rem;
-      font-weight: 500;
-      color: rgba(255,255,255,0.75);
-      text-decoration: none;
-      transition: background .18s, color .18s;
-      border: 1px solid transparent;
+      padding: .35rem .9rem; border-radius: 22px; font-size: .8rem; font-weight: 500;
+      color: rgba(255,255,255,0.65); text-decoration: none;
+      transition: background .18s, color .18s; border: 1px solid transparent;
+      display: flex; align-items: center; gap: .35rem;
     }
-    .cc-nav-pill:hover {
-      background: rgba(255,255,255,0.09);
-      color: #fff;
-    }
-    .cc-nav-pill.outline {
-      border-color: rgba(255,255,255,0.2);
-      color: rgba(255,255,255,0.8);
-    }
-    .cc-nav-pill.outline:hover {
-      border-color: rgba(255,255,255,0.45);
-      color: #fff;
-    }
+    .cc-nav-pill:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.95); }
+    .cc-nav-pill.outline { border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.7); }
+    .cc-nav-pill.outline:hover { border-color: rgba(255,255,255,0.35); color: #fff; background: rgba(255,255,255,0.05); }
     .cc-email-badge {
-      font-size: .75rem;
-      color: rgba(255,255,255,0.4);
-      padding: .3rem .7rem;
-      background: rgba(255,255,255,0.05);
-      border-radius: 12px;
+      font-size: .73rem; color: rgba(255,255,255,0.35);
+      padding: .28rem .7rem; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07); border-radius: 14px;
     }
 
     /* ── Loading overlay ── */
-    #loadingOverlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(15,23,42,0.82);
-      z-index: 9999;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-    }
     .ov-card {
-      background: #fff;
-      border-radius: var(--r16);
-      padding: 2.5rem 3rem;
-      text-align: center;
-      box-shadow: var(--shadow-lg);
-      min-width: 280px;
+      background: rgba(255,255,255,0.98); border-radius: var(--r20);
+      padding: 2.75rem 3.5rem; text-align: center;
+      box-shadow: var(--shadow-lg); min-width: 300px;
     }
-    .cc-ring {
-      width: 48px; height: 48px;
-      border: 4px solid rgba(79,70,229,0.15);
-      border-top-color: var(--indigo);
-      border-radius: 50%;
-      animation: ccSpin .8s linear infinite;
-      margin: 0 auto;
+    .cc-dual-ring {
+      display: inline-block; width: 52px; height: 52px;
+      position: relative; margin: 0 auto 1.25rem;
     }
-    @keyframes ccSpin { to { transform: rotate(360deg); } }
+    .cc-dual-ring::before, .cc-dual-ring::after {
+      content: ''; position: absolute; border-radius: 50%;
+      border: 3.5px solid transparent;
+      animation: dualSpin 1.2s cubic-bezier(.5,0,.5,1) infinite;
+    }
+    .cc-dual-ring::before {
+      inset: 0; border-top-color: var(--indigo); border-right-color: var(--indigo);
+    }
+    .cc-dual-ring::after {
+      inset: 8px; border-bottom-color: var(--violet); border-left-color: var(--violet);
+      animation-direction: reverse; animation-duration: .9s;
+    }
+    @keyframes dualSpin { to { transform: rotate(360deg); } }
     .spinner-text {
-      margin-top: 1.1rem;
-      font-weight: 700;
-      font-size: 1rem;
-      color: var(--navy);
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;
+      font-size: 1.05rem; color: var(--navy);
     }
-    .spinner-sub {
-      color: var(--muted);
-      font-size: .82rem;
-      margin-top: .3rem;
-    }
+    .spinner-sub { color: var(--muted); font-size: .82rem; margin-top: .4rem; }
 
-    /* ── Alert overrides ── */
+    /* ── Alerts ── */
     .alert {
-      border-radius: var(--r10);
-      border: none;
-      border-left: 4px solid;
-      font-size: .875rem;
-      font-weight: 500;
+      border-radius: var(--r12); border: none; border-left: 4px solid;
+      font-size: .875rem; font-weight: 500; padding: .85rem 1.1rem;
     }
     .alert-success  { border-color: var(--emerald); background: #f0fdf4; color: #14532d; }
     .alert-danger   { border-color: #dc2626;        background: #fef2f2; color: #7f1d1d; }
-    .alert-warning  { border-color: var(--gold);    background: #fffbeb; color: #78350f; }
+    .alert-warning  { border-color: var(--amber);   background: #fffbeb; color: #78350f; }
     .alert-info     { border-color: var(--indigo);  background: #eef2ff; color: #312e81; }
 
-    /* ── Card base ── */
-    .card-base {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r16);
-      box-shadow: var(--shadow);
-    }
-    .card-hover {
-      transition: transform .22s ease, box-shadow .22s ease;
-    }
-    .card-hover:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-md);
-    }
-    /* Bootstrap card overrides */
+    /* ── Cards ── */
+    .card-base { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r20); box-shadow: var(--shadow); }
+    .card-hover { transition: transform .22s ease, box-shadow .22s ease; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
     .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r16) !important;
-      box-shadow: var(--shadow);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r20) !important; box-shadow: var(--shadow);
     }
     .card-header {
-      border-radius: var(--r16) var(--r16) 0 0 !important;
-      font-weight: 600;
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      padding: .85rem 1.25rem;
+      border-radius: var(--r20) var(--r20) 0 0 !important; font-weight: 600;
+      background: var(--bg); border-bottom: 1px solid var(--border); padding: .9rem 1.35rem;
     }
 
     /* ── Buttons ── */
     .btn-indig {
       background: linear-gradient(135deg, var(--indigo), var(--indigo-l));
-      color: #fff;
-      border: none;
-      border-radius: var(--r10);
-      font-weight: 600;
-      padding: .55rem 1.4rem;
-      transition: opacity .18s, transform .14s;
-      box-shadow: 0 4px 14px rgba(79,70,229,0.35);
+      color: #fff; border: none; border-radius: var(--r10); font-weight: 600;
+      padding: .6rem 1.4rem; transition: opacity .18s, transform .14s, box-shadow .18s;
+      box-shadow: 0 4px 14px rgba(79,70,229,0.35); cursor: pointer;
     }
-    .btn-indig:hover { opacity: .9; transform: translateY(-1px); color: #fff; }
+    .btn-indig:hover { opacity: .88; transform: translateY(-1px); color: #fff; box-shadow: 0 8px 24px rgba(79,70,229,0.42); }
     .btn-indig:active { transform: translateY(0); }
     .btn-ghost {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: var(--r10);
-      font-weight: 500;
-      padding: .5rem 1.2rem;
-      transition: background .18s, border-color .18s;
+      background: transparent; border: 1.5px solid var(--border); color: var(--text);
+      border-radius: var(--r10); font-weight: 500; padding: .5rem 1.2rem;
+      transition: background .18s, border-color .18s, color .18s; cursor: pointer;
     }
-    .btn-ghost:hover { background: var(--bg); border-color: rgba(15,23,42,0.18); }
+    .btn-ghost:hover { background: var(--bg); border-color: rgba(15,23,42,0.18); color: var(--navy); }
     .btn-success-custom {
-      background: linear-gradient(135deg, #059669, #10b981);
-      color: #fff;
-      border: none;
-      border-radius: var(--r10);
-      font-weight: 600;
-      padding: .55rem 1.4rem;
-      transition: opacity .18s, transform .14s;
-      box-shadow: 0 4px 14px rgba(5,150,105,0.3);
+      background: linear-gradient(135deg, #059669, #10b981); color: #fff; border: none;
+      border-radius: var(--r10); font-weight: 600; padding: .6rem 1.4rem;
+      transition: opacity .18s, transform .14s; box-shadow: 0 4px 14px rgba(5,150,105,0.3); cursor: pointer;
     }
-    .btn-success-custom:hover { opacity: .9; transform: translateY(-1px); color: #fff; }
+    .btn-success-custom:hover { opacity: .88; transform: translateY(-1px); color: #fff; }
     .btn-gold {
-      background: linear-gradient(135deg, var(--gold), var(--gold-l));
-      color: #fff;
-      border: none;
-      border-radius: var(--r10);
-      font-weight: 700;
-      padding: .55rem 1.4rem;
-      transition: opacity .18s, transform .14s;
-      box-shadow: 0 4px 14px rgba(217,119,6,0.35);
+      background: linear-gradient(135deg, var(--amber), var(--amber-l)); color: #fff;
+      border: none; border-radius: var(--r10); font-weight: 700; padding: .6rem 1.4rem;
+      transition: opacity .18s, transform .14s; box-shadow: 0 4px 14px rgba(217,119,6,0.35); cursor: pointer;
     }
-    .btn-gold:hover { opacity: .9; transform: translateY(-1px); color: #fff; }
-    .btn-xs {
-      padding: .2rem .55rem;
-      font-size: .73rem;
-      font-weight: 500;
-      border-radius: 6px;
-    }
+    .btn-gold:hover { opacity: .88; transform: translateY(-1px); color: #fff; }
+    .btn-xs { padding: .22rem .6rem; font-size: .73rem; font-weight: 500; border-radius: 7px; }
 
     /* ── Form controls ── */
     .fc {
-      width: 100%;
-      padding: .6rem .9rem;
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      border-radius: var(--r10);
-      font-family: 'Inter', sans-serif;
-      font-size: .875rem;
-      color: var(--text);
-      transition: border-color .18s, box-shadow .18s;
-      outline: none;
+      width: 100%; padding: .65rem 1rem; background: #fff;
+      border: 1.5px solid var(--border); border-radius: var(--r10);
+      font-family: 'Inter', sans-serif; font-size: .875rem; color: var(--text);
+      transition: border-color .18s, box-shadow .18s; outline: none;
     }
-    .fc:focus {
-      border-color: var(--indigo);
-      box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
-      background: #fff;
-    }
+    .fc:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
     .fl {
-      display: block;
-      font-size: .8rem;
-      font-weight: 600;
-      color: var(--navy-80);
-      margin-bottom: .35rem;
-      text-transform: uppercase;
-      letter-spacing: .04em;
+      display: block; font-size: .75rem; font-weight: 700; color: var(--navy);
+      margin-bottom: .4rem; text-transform: uppercase; letter-spacing: .05em;
     }
-    /* Override bootstrap form-control */
     .form-control, .form-select {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      border-radius: var(--r10);
-      font-size: .875rem;
-      color: var(--text);
-      transition: border-color .18s, box-shadow .18s;
+      font-family: 'Inter', sans-serif; background: #fff;
+      border: 1.5px solid var(--border); border-radius: var(--r10);
+      font-size: .875rem; color: var(--text); transition: border-color .18s, box-shadow .18s;
     }
     .form-control:focus, .form-select:focus {
-      border-color: var(--indigo);
-      box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
-      background: #fff;
+      border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); background: #fff;
     }
-    textarea.form-control { font-family: 'Inter', sans-serif; font-size: .84rem; }
+    textarea.form-control { font-family: 'Inter', sans-serif; font-size: .84rem; line-height: 1.65; }
 
     /* ── Status dots ── */
-    .sdot {
-      width: 9px; height: 9px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 6px;
-      flex-shrink: 0;
-    }
-    .sdot-ok { background: var(--emerald); box-shadow: 0 0 0 3px rgba(5,150,105,0.18); }
+    .sdot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; flex-shrink: 0; }
+    .sdot-ok { background: var(--emerald); box-shadow: 0 0 0 3px rgba(5,150,105,0.2); }
     .sdot-no { background: #cbd5e1; }
-    /* Legacy compat */
-    .status-dot { width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:6px; }
-    .dot-ok { background: var(--emerald); box-shadow: 0 0 0 3px rgba(5,150,105,0.18); }
+    .status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
+    .dot-ok { background: var(--emerald); box-shadow: 0 0 0 3px rgba(5,150,105,0.2); }
     .dot-no { background: #cbd5e1; }
 
     /* ── Step badge ── */
     .step-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 26px; height: 26px;
-      border-radius: 50%;
-      font-size: .72rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, var(--indigo), var(--indigo-l));
-      color: #fff;
-      flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(79,70,229,0.3);
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 50%; font-size: .72rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      color: #fff; flex-shrink: 0; box-shadow: 0 2px 10px rgba(79,70,229,0.35);
     }
 
     /* ── Import zone ── */
     .import-zone {
-      border: 2px dashed var(--border);
-      border-radius: var(--r16);
-      padding: 2.5rem 2rem;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color .2s, background .2s;
-      background: #f8fafc;
+      border: 2px dashed rgba(79,70,229,0.2); border-radius: var(--r16);
+      padding: 2.75rem 2rem; text-align: center; cursor: pointer;
+      transition: border-color .2s, background .2s; background: #fafbff;
     }
-    .import-zone:hover, .import-zone.drag-over {
-      border-color: var(--indigo);
-      background: #eef2ff;
-    }
+    .import-zone:hover, .import-zone.drag-over { border-color: var(--indigo); background: #eef2ff; }
 
     /* ── STAR guide ── */
     .star-guide {
-      background: #eef2ff;
-      border: 1px solid rgba(79,70,229,0.2);
-      border-radius: var(--r10);
-      padding: .75rem 1.1rem;
-      font-size: .8rem;
-      color: #312e81;
+      background: #eef2ff; border: 1px solid rgba(79,70,229,0.15);
+      border-radius: var(--r10); padding: .8rem 1.1rem; font-size: .8rem;
+      color: #312e81; line-height: 1.6;
     }
     .star-guide code {
-      background: rgba(79,70,229,0.12);
-      border-radius: 4px;
-      padding: .1rem .35rem;
-      font-size: .77rem;
-      color: var(--indigo);
+      background: rgba(79,70,229,0.12); border-radius: 4px;
+      padding: .1rem .35rem; font-size: .77rem; color: var(--indigo);
     }
 
     /* ── Bullet row ── */
     .bullet-row {
-      border-left: 3px solid var(--border);
-      padding-left: .85rem;
-      margin-bottom: .45rem;
-      border-radius: 0 8px 8px 0;
-      transition: border-color .15s, background .15s;
+      border-left: 3px solid var(--border); padding-left: .85rem; margin-bottom: .45rem;
+      border-radius: 0 8px 8px 0; transition: border-color .15s, background .15s;
     }
-    .bullet-row:hover {
-      border-left-color: var(--indigo);
-      background: #f8f9ff;
-    }
+    .bullet-row:hover { border-left-color: var(--indigo); background: #f8f9ff; }
 
     /* ── Review bullet ── */
     .review-bullet {
-      background: #fff;
-      border: 1.5px solid var(--border);
-      border-radius: var(--r10);
-      padding: .6rem .9rem;
-      margin-bottom: .55rem;
-      transition: border-color .18s;
+      background: #fff; border: 1.5px solid var(--border); border-radius: var(--r10);
+      padding: .65rem .95rem; margin-bottom: .55rem; transition: border-color .18s, box-shadow .18s;
     }
-    .review-bullet:focus-within {
-      border-color: var(--indigo);
-      box-shadow: 0 0 0 3px rgba(79,70,229,0.08);
-    }
+    .review-bullet:focus-within { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,0.08); }
 
     /* ── Badge pill ── */
-    .badge-pill {
-      padding: .3rem .75rem;
-      border-radius: 20px;
-      font-size: .75rem;
-      font-weight: 600;
-      letter-spacing: .02em;
-    }
-    .badge-indigo { background: #eef2ff; color: var(--indigo); border: 1px solid rgba(79,70,229,0.2); }
-    .badge-navy   { background: rgba(15,23,42,0.08); color: var(--navy); border: 1px solid var(--border); }
-    .badge-gold   { background: #fffbeb; color: var(--gold); border: 1px solid rgba(217,119,6,0.2); }
+    .badge-pill { padding: .3rem .75rem; border-radius: 20px; font-size: .73rem; font-weight: 600; letter-spacing: .02em; }
+    .badge-indigo  { background: #eef2ff; color: var(--indigo); border: 1px solid rgba(79,70,229,0.2); }
+    .badge-navy    { background: rgba(15,23,42,0.06); color: var(--navy); border: 1px solid var(--border); }
+    .badge-gold    { background: #fffbeb; color: var(--amber); border: 1px solid rgba(217,119,6,0.2); }
     .badge-emerald { background: #f0fdf4; color: var(--emerald); border: 1px solid rgba(5,150,105,0.2); }
 
-    /* ── Tab navigation ── */
-    .cc-tabs {
-      display: flex;
-      gap: 0;
-      border-bottom: 2px solid var(--border);
-      margin-bottom: 0;
-    }
+    /* ── Tabs ── */
+    .cc-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 0; }
     .cc-tab-btn {
-      padding: .7rem 1.3rem;
-      font-size: .84rem;
-      font-weight: 600;
-      color: var(--muted);
-      background: transparent;
-      border: none;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -2px;
-      cursor: pointer;
-      transition: color .18s, border-color .18s;
-      display: flex;
-      align-items: center;
-      gap: .4rem;
+      padding: .75rem 1.4rem; font-size: .84rem; font-weight: 600; color: var(--muted);
+      background: transparent; border: none; border-bottom: 2px solid transparent;
+      margin-bottom: -2px; cursor: pointer; transition: color .18s, border-color .18s;
+      display: flex; align-items: center; gap: .4rem;
     }
     .cc-tab-btn:hover { color: var(--navy); }
     .cc-tab-btn.active { color: var(--indigo); border-bottom-color: var(--indigo); }
     .tab-pane { padding-top: 1.25rem; }
 
-    /* ── Section card borders by type ── */
+    /* ── Section card borders ── */
     .section-card { margin-bottom: 1rem; }
     .section-card.type-company { border-left: 4px solid var(--indigo) !important; }
     .section-card.type-project { border-left: 4px solid var(--emerald) !important; }
 
-    /* ── Generate shimmer button ── */
+    /* ── Shimmer ── */
     @keyframes shimmer {
       0%   { background-position: -200% center; }
       100% { background-position: 200% center; }
     }
+
+    /* ── Generate button ── */
     .btn-generate {
-      background: linear-gradient(90deg, var(--indigo) 0%, var(--indigo-l) 30%, #818cf8 50%, var(--indigo-l) 70%, var(--indigo) 100%);
-      background-size: 200% auto;
-      color: #fff;
-      border: none;
-      border-radius: var(--r10);
-      font-weight: 700;
-      font-size: 1rem;
-      padding: .85rem 2rem;
-      width: 100%;
-      cursor: pointer;
-      transition: transform .14s, box-shadow .18s;
-      box-shadow: 0 6px 20px rgba(79,70,229,0.4);
+      background: linear-gradient(90deg, var(--indigo) 0%, var(--violet) 25%, #818cf8 50%, var(--violet) 75%, var(--indigo) 100%);
+      background-size: 200% auto; color: #fff; border: none; border-radius: var(--r12);
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.05rem;
+      padding: 1rem 2.5rem; width: 100%; cursor: pointer;
+      transition: transform .18s, box-shadow .2s; box-shadow: 0 6px 24px rgba(79,70,229,0.45);
     }
     .btn-generate:hover {
-      animation: shimmer 1.6s linear infinite;
-      transform: translateY(-2px);
-      box-shadow: 0 10px 28px rgba(79,70,229,0.45);
-      color: #fff;
+      animation: shimmer 1.8s linear infinite; transform: translateY(-3px);
+      box-shadow: 0 14px 36px rgba(79,70,229,0.52); color: #fff;
     }
+    .btn-generate:active { transform: translateY(-1px); }
 
-    /* Provider card selectors */
+    /* ── Provider cards ── */
     .provider-card {
-      border: 2px solid var(--border);
-      border-radius: var(--r10);
-      padding: .75rem 1rem;
-      cursor: pointer;
-      transition: border-color .18s, background .18s;
-      background: var(--bg);
+      border: 2px solid var(--border); border-radius: var(--r12); padding: .8rem 1.1rem;
+      cursor: pointer; transition: border-color .18s, background .18s, box-shadow .18s; background: var(--bg);
     }
     .provider-card:hover { border-color: var(--indigo-l); background: #eef2ff; }
     .provider-card.selected { border-color: var(--indigo); background: #eef2ff; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
 
-    /* ── Misc layout ── */
-    .cc-page { max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
-    .section-eyebrow {
-      font-size: .7rem;
-      font-weight: 700;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: var(--gold);
-    }
+    /* ── Layout ── */
+    .cc-page { max-width: 880px; margin: 0 auto; padding: 2.25rem 1.5rem 5rem; }
+    .section-eyebrow { font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); }
   </style>
 </head>
 <body>
@@ -589,22 +422,22 @@ _BASE = r"""<!doctype html>
 <nav class="cc-nav">
   <a class="cc-brand" href="/">
     <div class="cc-brand-icon"><i class="bi bi-file-earmark-text"></i></div>
-    My INSEAD <span class="cc-brand-cv">CV</span>
+    My INSEAD&nbsp;<span class="cc-brand-cv">CV</span>
   </a>
   {% if session.user_id %}
   <div class="cc-nav-links">
     <span class="cc-email-badge d-none d-md-inline">{{ session.email }}</span>
-    <a class="cc-nav-pill" href="/bank"><i class="bi bi-database me-1"></i>Bank</a>
-    <a class="cc-nav-pill" href="/settings"><i class="bi bi-gear me-1"></i>Settings</a>
+    <a class="cc-nav-pill" href="/bank"><i class="bi bi-database"></i>Bank</a>
+    <a class="cc-nav-pill" href="/settings"><i class="bi bi-gear"></i>Settings</a>
     <a class="cc-nav-pill outline" href="/signout">Sign out</a>
   </div>
   {% endif %}
 </nav>
 
 <!-- Loading overlay -->
-<div id="loadingOverlay">
+<div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(6,9,24,0.85);backdrop-filter:blur(8px);z-index:9999;justify-content:center;align-items:center;flex-direction:column;">
   <div class="ov-card">
-    <div class="cc-ring"></div>
+    <div class="cc-dual-ring"></div>
     <div class="spinner-text" id="overlayTitle">Working on it…</div>
     <div class="spinner-sub" id="overlaySub">This usually takes 20–40 seconds</div>
   </div>
@@ -621,8 +454,7 @@ _BASE = r"""<!doctype html>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 {% block scripts %}{% endblock %}
-</body>
-</html>"""
+</body></html>"""
 
 
 # ── Landing / index ───────────────────────────────────────────────────────────
@@ -632,253 +464,349 @@ _INDEX = r"""<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>My INSEAD CV — Get shortlisted, every time</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <title>My INSEAD CV — Land interviews, every time</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <style>
     :root {
-      --navy: #0f172a; --navy-80: #1e293b;
+      --deep: #060918; --navy: #0f172a; --navy-80: #1e293b;
       --indigo: #4f46e5; --indigo-l: #6366f1;
-      --gold: #d97706; --gold-l: #f59e0b;
+      --violet: #7c3aed; --violet-l: #a78bfa;
+      --amber: #d97706; --amber-l: #f59e0b;
       --emerald: #059669;
       --surface: #ffffff; --bg: #f8fafc;
-      --border: rgba(15,23,42,0.09);
+      --border: rgba(15,23,42,0.08);
       --text: #0f172a; --muted: #64748b;
-      --r16: 16px; --r10: 10px;
-      --shadow: 0 2px 16px rgba(15,23,42,0.07);
-      --shadow-md: 0 8px 32px rgba(15,23,42,0.12);
-      --shadow-lg: 0 20px 56px rgba(15,23,42,0.18);
+      --r20: 20px; --r16: 16px; --r12: 12px; --r10: 10px;
+      --shadow: 0 1px 3px rgba(15,23,42,0.04), 0 4px 16px rgba(15,23,42,0.06);
+      --shadow-md: 0 4px 6px rgba(15,23,42,0.04), 0 12px 32px rgba(15,23,42,0.10);
+      --shadow-lg: 0 8px 16px rgba(15,23,42,0.06), 0 24px 56px rgba(15,23,42,0.16);
     }
-    *, *::before, *::after { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; }
+    html { scroll-behavior: smooth; }
     body {
-      margin: 0; padding: 0;
       font-family: 'Inter', system-ui, sans-serif;
-      font-size: .92rem;
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
-      background: var(--bg);
+      font-size: .92rem; color: var(--text);
+      -webkit-font-smoothing: antialiased; background: var(--bg);
     }
 
-    /* Navbar */
+    /* ── Navbar ── */
     .cc-nav {
-      position: sticky; top: 0; z-index: 1000;
-      background: rgba(15,23,42,0.97);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding: .75rem 2rem;
-      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 1000; height: 60px;
+      background: rgba(6,9,24,0.96);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      display: flex; align-items: center; justify-content: space-between; padding: 0 2rem;
+    }
+    .cc-nav::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--indigo), var(--violet), var(--amber)); opacity: 0.55;
     }
     .cc-brand {
-      display: flex; align-items: center; gap: .6rem;
-      text-decoration: none; font-weight: 700; font-size: 1.05rem;
-      color: #fff; letter-spacing: -.3px;
+      display: flex; align-items: center; gap: .65rem; text-decoration: none;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;
+      font-size: 1.05rem; color: #fff; letter-spacing: -.3px;
     }
     .cc-brand-icon {
-      width: 30px; height: 30px;
-      background: linear-gradient(135deg, var(--indigo), var(--indigo-l));
-      border-radius: 8px; display: flex; align-items: center;
-      justify-content: center; font-size: .9rem; color: #fff;
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      border-radius: 9px; display: flex; align-items: center; justify-content: center;
+      font-size: .9rem; color: #fff; box-shadow: 0 4px 14px rgba(79,70,229,0.5);
     }
-    .cc-brand-cv { color: var(--gold-l); }
+    .cc-brand-cv { color: var(--amber-l); }
     .cc-nav-links { display: flex; align-items: center; gap: .5rem; }
     .cc-nav-pill {
-      padding: .35rem .85rem; border-radius: 20px; font-size: .82rem; font-weight: 500;
-      color: rgba(255,255,255,0.75); text-decoration: none;
+      padding: .35rem .9rem; border-radius: 22px; font-size: .8rem; font-weight: 500;
+      color: rgba(255,255,255,0.65); text-decoration: none;
       transition: background .18s, color .18s; border: 1px solid transparent;
     }
-    .cc-nav-pill:hover { background: rgba(255,255,255,0.09); color: #fff; }
-    .cc-nav-pill.outline {
-      border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.8);
-    }
-    .cc-nav-pill.outline:hover { border-color: rgba(255,255,255,0.45); color: #fff; }
+    .cc-nav-pill:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.95); }
+    .cc-nav-pill.outline { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.75); }
+    .cc-nav-pill.outline:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
 
-    /* Hero */
+    /* ── Alert ── */
+    .alert { border-radius: var(--r12); border: none; border-left: 4px solid; font-size: .875rem; font-weight: 500; padding: .85rem 1.1rem; }
+    .alert-success  { border-color: var(--emerald); background: #f0fdf4; color: #14532d; }
+    .alert-danger   { border-color: #dc2626; background: #fef2f2; color: #7f1d1d; }
+    .alert-warning  { border-color: var(--amber); background: #fffbeb; color: #78350f; }
+
+    /* ── Hero ── */
     .hero {
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #0c1128 100%);
-      position: relative;
-      overflow: hidden;
-      padding: 6rem 0 5rem;
+      background: var(--deep);
+      position: relative; overflow: hidden;
+      padding: 7rem 0 6rem;
+      min-height: 92vh; display: flex; align-items: center;
     }
+    /* Grid texture */
     .hero::before {
-      content: '';
-      position: absolute; inset: 0;
+      content: ''; position: absolute; inset: 0; pointer-events: none;
       background-image:
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-      background-size: 64px 64px;
-      pointer-events: none;
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 72px 72px;
     }
-    .hero::after {
-      content: '';
-      position: absolute; inset: 0;
-      background: radial-gradient(ellipse at 30% 50%, rgba(79,70,229,0.15) 0%, transparent 60%);
-      pointer-events: none;
+    /* Aurora orbs */
+    .aurora-orb {
+      position: absolute; border-radius: 50%; filter: blur(80px);
+      opacity: 0.35; pointer-events: none;
+    }
+    .orb-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, var(--indigo) 0%, transparent 70%);
+      top: -15%; left: -10%;
+      animation: orbFloat1 18s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, var(--violet) 0%, transparent 70%);
+      bottom: -20%; right: -5%;
+      animation: orbFloat2 14s ease-in-out infinite;
+    }
+    .orb-3 {
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, #1e40af 0%, transparent 70%);
+      top: 40%; left: 40%;
+      animation: orbFloat3 20s ease-in-out infinite;
+    }
+    @keyframes orbFloat1 {
+      0%, 100% { transform: translate(0, 0); }
+      33% { transform: translate(60px, 40px); }
+      66% { transform: translate(-30px, 60px); }
+    }
+    @keyframes orbFloat2 {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(-80px, -50px); }
+    }
+    @keyframes orbFloat3 {
+      0%, 100% { transform: translate(0, 0); }
+      33% { transform: translate(50px, -40px); }
+      66% { transform: translate(-60px, 30px); }
     }
     .hero-inner { position: relative; z-index: 1; }
     .hero-badge {
-      display: inline-flex; align-items: center; gap: .4rem;
-      background: rgba(217,119,6,0.15);
-      border: 1px solid rgba(217,119,6,0.35);
-      border-radius: 20px;
-      padding: .3rem .85rem;
-      font-size: .73rem; font-weight: 700;
-      letter-spacing: .06em; text-transform: uppercase;
-      color: var(--gold-l); margin-bottom: 1.5rem;
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 24px; padding: .35rem 1rem;
+      font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+      color: var(--amber-l); margin-bottom: 1.75rem;
     }
     .hero-h1 {
-      font-weight: 900; font-size: clamp(2.2rem, 5vw, 3.2rem);
-      line-height: 1.08; color: #fff;
-      letter-spacing: -.04em; margin-bottom: 1.2rem;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900;
+      font-size: clamp(2.6rem, 5.5vw, 3.75rem); line-height: 1.06;
+      color: #fff; letter-spacing: -.05em; margin-bottom: 1.3rem;
     }
+    .hero-h1 em { font-style: normal; color: var(--amber-l); }
     .hero-sub {
-      font-size: 1.05rem; line-height: 1.7;
-      color: rgba(255,255,255,0.65);
-      max-width: 480px; margin-bottom: 2rem;
+      font-size: 1.05rem; line-height: 1.72; color: rgba(255,255,255,0.6);
+      max-width: 460px; margin-bottom: 2.25rem;
     }
-    .hero-cta-row { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .hero-cta-row { display: flex; gap: .85rem; flex-wrap: wrap; margin-bottom: 1.75rem; }
+    .btn-hero-primary {
+      padding: .75rem 1.75rem; border-radius: var(--r12);
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .95rem;
+      text-decoration: none; border: none; box-shadow: 0 6px 22px rgba(79,70,229,0.5);
+      transition: transform .18s, box-shadow .18s; display: inline-flex; align-items: center; gap: .5rem;
+    }
+    .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(79,70,229,0.55); color: #fff; }
     .btn-hero-outline {
-      padding: .65rem 1.5rem; border-radius: var(--r10);
-      border: 1.5px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.88);
-      font-weight: 600; font-size: .9rem; text-decoration: none;
-      transition: border-color .18s, background .18s;
-      background: transparent; display: inline-block;
+      padding: .75rem 1.75rem; border-radius: var(--r12);
+      border: 1.5px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.85);
+      font-weight: 600; font-size: .95rem; text-decoration: none;
+      transition: border-color .18s, background .18s; background: rgba(255,255,255,0.04);
+      display: inline-flex; align-items: center; gap: .5rem;
     }
-    .btn-hero-outline:hover { border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.06); color: #fff; }
-    .btn-hero-gold {
-      padding: .65rem 1.5rem; border-radius: var(--r10);
-      background: linear-gradient(135deg, var(--gold), var(--gold-l));
-      color: #fff; font-weight: 700; font-size: .9rem;
-      text-decoration: none; border: none;
-      box-shadow: 0 4px 18px rgba(217,119,6,0.4);
-      transition: opacity .18s, transform .14s; display: inline-block;
-    }
-    .btn-hero-gold:hover { opacity: .9; transform: translateY(-1px); color: #fff; }
+    .btn-hero-outline:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); color: #fff; }
     .hero-trust {
-      font-size: .78rem; color: rgba(255,255,255,0.4);
-      display: flex; align-items: center; gap: .4rem;
+      font-size: .77rem; color: rgba(255,255,255,0.35);
+      display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
     }
+    .hero-trust i { color: rgba(255,255,255,0.25); }
 
-    /* Floating CV card */
+    /* ── CV mockup ── */
     .cv-mockup-wrap { display: flex; justify-content: center; align-items: center; padding: 2rem 1rem; }
     .cv-mockup {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-      width: 260px;
-      padding: 1.5rem;
-      position: relative;
-      animation: floatCV 3.8s ease-in-out infinite;
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1);
+      width: 270px; padding: 1.75rem; position: relative;
+      animation: floatCV 4.5s ease-in-out infinite;
+      transform-origin: center;
     }
     @keyframes floatCV {
-      0%, 100% { transform: translateY(0) rotate(-1.5deg); box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
-      50% { transform: translateY(-14px) rotate(0.5deg); box-shadow: 0 34px 80px rgba(0,0,0,0.5); }
+      0%, 100% { transform: translateY(0px) rotate(-1.8deg); box-shadow: 0 32px 80px rgba(0,0,0,0.5); }
+      50% { transform: translateY(-18px) rotate(0.5deg); box-shadow: 0 48px 100px rgba(0,0,0,0.6); }
     }
-    .cv-mock-name { font-weight: 800; font-size: .95rem; color: #0f172a; margin-bottom: .15rem; }
-    .cv-mock-contact { font-size: .6rem; color: #94a3b8; margin-bottom: .85rem; }
-    .cv-mock-section { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #4f46e5; margin-bottom: .4rem; border-bottom: 1px solid #e2e8f0; padding-bottom: .25rem; }
-    .cv-mock-line {
-      height: 7px; border-radius: 4px;
-      background: linear-gradient(90deg, #e2e8f0, #f1f5f9);
-      margin-bottom: .35rem;
+    .cv-glow {
+      position: absolute; inset: -2px; border-radius: 18px; z-index: -1;
+      background: linear-gradient(135deg, var(--indigo), var(--violet), var(--amber));
+      filter: blur(16px); opacity: 0.5;
+      animation: glowPulse 4.5s ease-in-out infinite;
     }
-    .cv-mock-skills { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .4rem; }
-    .cv-mock-skill { height: 7px; border-radius: 4px; background: linear-gradient(90deg, #e2e8f0, #f1f5f9); }
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.4; filter: blur(16px); }
+      50% { opacity: 0.65; filter: blur(22px); }
+    }
     .cv-ai-badge {
-      position: absolute; top: -.6rem; right: -.6rem;
-      background: linear-gradient(135deg, var(--indigo), var(--indigo-l));
-      color: #fff; font-size: .65rem; font-weight: 700;
-      padding: .25rem .6rem; border-radius: 20px;
-      box-shadow: 0 4px 12px rgba(79,70,229,0.4);
-      animation: pulseBadge 2s ease-in-out infinite;
+      position: absolute; top: -.65rem; right: -.65rem;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      color: #fff; font-size: .62rem; font-weight: 700; padding: .3rem .7rem;
+      border-radius: 20px; box-shadow: 0 4px 14px rgba(79,70,229,0.5);
+      animation: pulseBadge 2.5s ease-in-out infinite;
     }
     @keyframes pulseBadge {
-      0%, 100% { box-shadow: 0 4px 12px rgba(79,70,229,0.4); }
-      50% { box-shadow: 0 4px 24px rgba(79,70,229,0.7); }
+      0%, 100% { box-shadow: 0 4px 14px rgba(79,70,229,0.5); }
+      50% { box-shadow: 0 4px 28px rgba(79,70,229,0.8); }
+    }
+    .cv-mock-name { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: .9rem; color: #0f172a; margin-bottom: .12rem; }
+    .cv-mock-contact { font-size: .56rem; color: #94a3b8; margin-bottom: .9rem; line-height: 1.5; }
+    .cv-mock-section { font-size: .58rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--indigo); margin-bottom: .4rem; border-bottom: 1.5px solid #e2e8f0; padding-bottom: .25rem; }
+    .cv-mock-line { height: 7px; border-radius: 4px; background: linear-gradient(90deg, #e2e8f0, #f1f5f9); margin-bottom: .3rem; }
+    .cv-mock-role { font-size: .65rem; font-weight: 700; color: #334155; margin-bottom: .25rem; }
+    .cv-mock-company { font-size: .58rem; color: #64748b; margin-bottom: .5rem; }
+    .cv-mock-skills { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .4rem; }
+    .cv-mock-skill-pill {
+      font-size: .5rem; font-weight: 600; padding: .2rem .5rem; border-radius: 10px;
+      background: #eef2ff; color: var(--indigo); border: 1px solid rgba(79,70,229,0.2);
     }
 
-    /* How it works */
-    .how-section { background: #fff; padding: 5rem 0; }
+    /* ── Stats bar ── */
+    .stats-bar {
+      background: rgba(15,23,42,0.9); backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 1.5rem 0;
+    }
+    .stat-item { text-align: center; padding: .5rem 1.5rem; }
+    .stat-item:not(:last-child) { border-right: 1px solid rgba(255,255,255,0.08); }
+    .stat-number {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900;
+      font-size: 1.75rem; color: #fff; line-height: 1; letter-spacing: -.03em;
+      margin-bottom: .3rem;
+    }
+    .stat-number span { color: var(--amber-l); }
+    .stat-label { font-size: .72rem; color: rgba(255,255,255,0.45); font-weight: 500; letter-spacing: .03em; }
+
+    /* ── How it works ── */
+    .how-section { background: #0d1117; padding: 6rem 0; }
+    .how-heading {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900;
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem); color: #fff;
+      letter-spacing: -.04em; margin-bottom: .75rem; line-height: 1.1;
+    }
+    .how-sub { font-size: .95rem; color: rgba(255,255,255,0.45); max-width: 480px; margin: 0 auto; }
+    /* Connecting line between cards */
+    .step-connector { position: relative; }
+    .step-connector::before {
+      content: '';
+      position: absolute; top: 38px; left: calc(50% + 130px); right: calc(-50% + 130px);
+      height: 1px; border-top: 2px dashed rgba(255,255,255,0.1); z-index: 0;
+      display: none;
+    }
+    @media (min-width: 768px) { .step-connector::before { display: block; } }
     .step-card {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: var(--r16);
-      padding: 2rem 1.5rem;
-      box-shadow: var(--shadow);
-      cursor: default;
-      transition: transform .22s ease, box-shadow .22s ease;
-      opacity: 0;
-      transform: translateY(28px);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.09);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border-radius: var(--r20); padding: 2.25rem 1.75rem;
+      cursor: default; position: relative; z-index: 1;
+      opacity: 0; transform: translateY(32px);
+      transition: opacity .5s ease, transform .5s ease, box-shadow .25s;
     }
-    .step-card.visible { opacity: 1; transform: translateY(0); transition: opacity .45s ease, transform .45s ease; }
+    .step-card.visible { opacity: 1; transform: translateY(0); }
+    .step-card:hover { box-shadow: 0 20px 48px rgba(0,0,0,0.4); }
     .step-icon-circle {
-      width: 52px; height: 52px; border-radius: 14px;
+      width: 56px; height: 56px; border-radius: 16px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.3rem; color: #fff;
-      margin-bottom: 1.1rem;
+      font-size: 1.35rem; color: #fff; margin-bottom: 1.2rem;
     }
-    .ic-indigo { background: linear-gradient(135deg, var(--indigo), var(--indigo-l)); box-shadow: 0 4px 16px rgba(79,70,229,0.35); }
-    .ic-purple { background: linear-gradient(135deg, #7c3aed, #a78bfa); box-shadow: 0 4px 16px rgba(124,58,237,0.35); }
-    .ic-emerald { background: linear-gradient(135deg, var(--emerald), #10b981); box-shadow: 0 4px 16px rgba(5,150,105,0.3); }
+    .ic-indigo { background: linear-gradient(135deg, var(--indigo), var(--indigo-l)); box-shadow: 0 6px 20px rgba(79,70,229,0.45); }
+    .ic-violet { background: linear-gradient(135deg, var(--violet), var(--violet-l)); box-shadow: 0 6px 20px rgba(124,58,237,0.45); }
+    .ic-emerald { background: linear-gradient(135deg, var(--emerald), #10b981); box-shadow: 0 6px 20px rgba(5,150,105,0.4); }
     .step-num {
-      font-size: .7rem; font-weight: 800; letter-spacing: .06em;
-      text-transform: uppercase; color: var(--muted); margin-bottom: .5rem;
+      font-size: .65rem; font-weight: 800; letter-spacing: .1em;
+      text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: .55rem;
     }
-    .step-title { font-size: 1.1rem; font-weight: 700; color: var(--navy); margin-bottom: .55rem; }
-    .step-desc { font-size: .85rem; line-height: 1.65; color: var(--muted); }
+    .step-title {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.05rem; font-weight: 800;
+      color: #fff; margin-bottom: .6rem; letter-spacing: -.02em;
+    }
+    .step-desc { font-size: .86rem; line-height: 1.7; color: rgba(255,255,255,0.5); }
 
-    /* Auth section */
-    .auth-section { background: var(--bg); padding: 5rem 0; }
-    .auth-card {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: var(--r16);
-      padding: 2.25rem;
-      box-shadow: var(--shadow);
-      transition: transform .22s, box-shadow .22s;
+    /* ── Auth section ── */
+    .auth-section { background: var(--bg); padding: 6rem 0; }
+    .auth-heading {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900;
+      font-size: clamp(1.8rem, 3.5vw, 2.4rem); color: var(--navy);
+      letter-spacing: -.04em; margin-bottom: .65rem;
     }
-    .auth-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
-    .auth-card-title { font-size: 1.1rem; font-weight: 700; color: var(--navy); margin-bottom: 1.4rem; display: flex; align-items: center; gap: .5rem; }
-    .auth-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .9rem; color: #fff; }
-    .ic-sign-in { background: linear-gradient(135deg, var(--indigo), var(--indigo-l)); }
-    .ic-sign-up { background: linear-gradient(135deg, var(--emerald), #10b981); }
-    .auth-label { display: block; font-size: .75rem; font-weight: 700; color: var(--navy-80); margin-bottom: .35rem; text-transform: uppercase; letter-spacing: .04em; }
+    .auth-sub { font-size: .95rem; color: var(--muted); }
+    .auth-card {
+      background: #fff; border-radius: var(--r20);
+      box-shadow: 0 4px 24px rgba(15,23,42,0.08), 0 1px 3px rgba(15,23,42,0.04);
+      overflow: hidden; transition: transform .25s, box-shadow .25s;
+    }
+    .auth-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(15,23,42,0.12); }
+    .auth-card-top {
+      height: 3px;
+    }
+    .auth-card-top.signin { background: linear-gradient(90deg, var(--indigo), var(--violet)); }
+    .auth-card-top.signup { background: linear-gradient(90deg, var(--amber), var(--emerald)); }
+    .auth-card-body { padding: 2rem 2.25rem 2.25rem; }
+    .auth-card-title {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 800;
+      color: var(--navy); margin-bottom: 1.5rem; display: flex; align-items: center; gap: .55rem;
+      letter-spacing: -.02em;
+    }
+    .auth-icon {
+      width: 34px; height: 34px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: .9rem; color: #fff;
+    }
+    .ic-sign-in { background: linear-gradient(135deg, var(--indigo), var(--violet)); }
+    .ic-sign-up { background: linear-gradient(135deg, var(--amber), var(--emerald)); }
+    .auth-label {
+      display: block; font-size: .72rem; font-weight: 700; color: var(--navy);
+      margin-bottom: .4rem; text-transform: uppercase; letter-spacing: .06em;
+    }
     .auth-input {
-      width: 100%; padding: .6rem .9rem;
-      background: var(--bg); border: 1.5px solid var(--border);
-      border-radius: var(--r10); font-family: 'Inter', sans-serif;
-      font-size: .875rem; color: var(--text); transition: border-color .18s, box-shadow .18s;
-      outline: none;
+      width: 100%; padding: .7rem 1rem; background: var(--bg);
+      border: 1.5px solid var(--border); border-radius: var(--r10);
+      font-family: 'Inter', sans-serif; font-size: .875rem; color: var(--text);
+      transition: border-color .18s, box-shadow .18s; outline: none;
     }
     .auth-input:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); background: #fff; }
-    .auth-mb { margin-bottom: .85rem; }
-    .btn-auth-indigo {
-      width: 100%; padding: .65rem 1rem;
-      background: linear-gradient(135deg, var(--indigo), var(--indigo-l));
+    .auth-input.signup-focus:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(217,119,6,0.12); }
+    .auth-mb { margin-bottom: .95rem; }
+    .btn-auth-signin {
+      width: 100%; padding: .75rem 1rem;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
       color: #fff; border: none; border-radius: var(--r10);
-      font-weight: 700; font-size: .9rem; cursor: pointer;
-      box-shadow: 0 4px 14px rgba(79,70,229,0.35);
-      transition: opacity .18s, transform .14s;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .9rem; cursor: pointer;
+      box-shadow: 0 6px 20px rgba(79,70,229,0.4); transition: opacity .18s, transform .15s;
     }
-    .btn-auth-indigo:hover { opacity: .9; transform: translateY(-1px); }
-    .btn-auth-gold {
-      width: 100%; padding: .65rem 1rem;
-      background: linear-gradient(135deg, var(--gold), var(--gold-l));
+    .btn-auth-signin:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-auth-signup {
+      width: 100%; padding: .75rem 1rem;
+      background: linear-gradient(135deg, var(--amber), var(--emerald));
       color: #fff; border: none; border-radius: var(--r10);
-      font-weight: 700; font-size: .9rem; cursor: pointer;
-      box-shadow: 0 4px 14px rgba(217,119,6,0.35);
-      transition: opacity .18s, transform .14s;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .9rem; cursor: pointer;
+      box-shadow: 0 6px 20px rgba(217,119,6,0.35); transition: opacity .18s, transform .15s;
     }
-    .btn-auth-gold:hover { opacity: .9; transform: translateY(-1px); }
-    .security-note { text-align: center; font-size: .77rem; color: var(--muted); margin-top: 1.5rem; display: flex; align-items: center; justify-content: center; gap: .4rem; }
+    .btn-auth-signup:hover { opacity: .88; transform: translateY(-1px); }
 
-    /* Alerts */
-    .alert { border-radius: var(--r10); border: none; border-left: 4px solid; font-size: .875rem; font-weight: 500; }
-    .alert-success  { border-color: var(--emerald); background: #f0fdf4; color: #14532d; }
-    .alert-danger   { border-color: #dc2626;        background: #fef2f2; color: #7f1d1d; }
-    .alert-warning  { border-color: var(--gold);    background: #fffbeb; color: #78350f; }
-    .section-eyebrow { font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin-bottom: .6rem; }
+    /* ── Footer ── */
+    .site-footer {
+      background: var(--deep); border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 2.5rem 0;
+    }
+    .footer-brand {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;
+      font-size: 1rem; color: #fff; margin-bottom: .4rem;
+    }
+    .footer-brand span { color: var(--amber-l); }
+    .footer-tag { font-size: .78rem; color: rgba(255,255,255,0.3); }
+    .footer-lock { font-size: .75rem; color: rgba(255,255,255,0.25); display: flex; align-items: center; gap: .4rem; }
+
+    .section-eyebrow { font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); }
   </style>
 </head>
 <body>
@@ -887,11 +815,11 @@ _INDEX = r"""<!doctype html>
 <nav class="cc-nav">
   <a class="cc-brand" href="/">
     <div class="cc-brand-icon"><i class="bi bi-file-earmark-text"></i></div>
-    My INSEAD <span class="cc-brand-cv">CV</span>
+    My INSEAD&nbsp;<span class="cc-brand-cv">CV</span>
   </a>
   <div class="cc-nav-links">
     <a class="cc-nav-pill outline" href="#signin">Sign in</a>
-    <a class="cc-nav-pill" style="background:linear-gradient(135deg,var(--gold),var(--gold-l));color:#fff;font-weight:700;" href="#signup">Get started free</a>
+    <a class="cc-nav-pill" style="background:linear-gradient(135deg,var(--indigo),var(--violet));color:#fff;font-weight:700;box-shadow:0 4px 14px rgba(79,70,229,0.4);" href="#signup">Get started free</a>
   </div>
 </nav>
 
@@ -905,50 +833,83 @@ _INDEX = r"""<!doctype html>
 
 <!-- Hero -->
 <section class="hero">
-  <div class="container hero-inner">
+  <div class="aurora-orb orb-1"></div>
+  <div class="aurora-orb orb-2"></div>
+  <div class="aurora-orb orb-3"></div>
+  <div class="container hero-inner" style="width:100%;">
     <div class="row align-items-center g-5">
-      <!-- Left column -->
       <div class="col-lg-6">
-        <div class="hero-badge"><i class="bi bi-stars"></i>AI-Powered CV Tailoring</div>
-        <h1 class="hero-h1">Get shortlisted,<br>every time.</h1>
-        <p class="hero-sub">Paste any job description. Get a tailored, ATS-optimised CV in 60 seconds. Your template, your format, zero hallucination.</p>
+        <div class="hero-badge"><i class="bi bi-stars"></i>&#10022; AI-Powered CV Tailoring</div>
+        <h1 class="hero-h1">Land interviews,<br><em>every time.</em></h1>
+        <p class="hero-sub">Paste any job description. Get a tailored, ATS-optimised CV in 60 seconds — your template, your format, zero hallucination.</p>
         <div class="hero-cta-row">
-          <a href="#signin" class="btn-hero-outline"><i class="bi bi-box-arrow-in-right me-1"></i>Sign in</a>
-          <a href="#signup" class="btn-hero-gold">Create free account &rarr;</a>
+          <a href="#signup" class="btn-hero-primary"><i class="bi bi-rocket-takeoff"></i>Start for free</a>
+          <a href="#signin" class="btn-hero-outline"><i class="bi bi-box-arrow-in-right"></i>Sign in</a>
         </div>
         <div class="hero-trust">
-          <i class="bi bi-lock-fill"></i>
-          Free to use &nbsp;&middot;&nbsp; Bring your own API key &nbsp;&middot;&nbsp; Your data stays yours
+          <i class="bi bi-lock-fill"></i>Bring your own API key
+          <span style="color:rgba(255,255,255,0.15);">|</span>
+          <i class="bi bi-shield-check"></i>Zero data stored
+          <span style="color:rgba(255,255,255,0.15);">|</span>
+          <i class="bi bi-clock"></i>60 sec per CV
         </div>
       </div>
-      <!-- Right column: floating CV card -->
       <div class="col-lg-6">
         <div class="cv-mockup-wrap">
-          <div class="cv-mockup">
-            <div class="cv-ai-badge">&#10024; AI Tailored</div>
-            <div class="cv-mock-name">Alexandra Chen</div>
-            <div class="cv-mock-contact">alexandra@email.com &nbsp;&bull;&nbsp; linkedin.com/in/achen &nbsp;&bull;&nbsp; London, UK</div>
-            <div class="cv-mock-section">Experience</div>
-            <div class="cv-mock-line" style="width:90%"></div>
-            <div class="cv-mock-line" style="width:80%"></div>
-            <div class="cv-mock-line" style="width:95%"></div>
-            <div class="cv-mock-line" style="width:70%"></div>
-            <div class="cv-mock-line" style="width:85%"></div>
-            <br>
-            <div class="cv-mock-section">Education</div>
-            <div class="cv-mock-line" style="width:75%"></div>
-            <div class="cv-mock-line" style="width:60%"></div>
-            <br>
-            <div class="cv-mock-section">Skills</div>
-            <div class="cv-mock-skills">
-              <div class="cv-mock-skill" style="width:55px"></div>
-              <div class="cv-mock-skill" style="width:40px"></div>
-              <div class="cv-mock-skill" style="width:65px"></div>
-              <div class="cv-mock-skill" style="width:48px"></div>
-              <div class="cv-mock-skill" style="width:72px"></div>
+          <div style="position:relative;">
+            <div class="cv-glow"></div>
+            <div class="cv-mockup">
+              <div class="cv-ai-badge">&#10024; AI Tailored</div>
+              <div class="cv-mock-name">Alexandra Chen</div>
+              <div class="cv-mock-contact">alexandra.chen@email.com &nbsp;&bull;&nbsp; London, UK<br>linkedin.com/in/alexandra-chen &nbsp;&bull;&nbsp; +44 7700 000000</div>
+              <div class="cv-mock-section">Experience</div>
+              <div class="cv-mock-role">Strategy Manager</div>
+              <div class="cv-mock-company">McKinsey &amp; Company &nbsp;&middot;&nbsp; 2022–Present</div>
+              <div class="cv-mock-line" style="width:95%"></div>
+              <div class="cv-mock-line" style="width:80%"></div>
+              <div class="cv-mock-line" style="width:88%"></div>
+              <div style="margin-top:.6rem;"></div>
+              <div class="cv-mock-role">Associate Consultant</div>
+              <div class="cv-mock-company">Bain &amp; Company &nbsp;&middot;&nbsp; 2020–2022</div>
+              <div class="cv-mock-line" style="width:90%"></div>
+              <div class="cv-mock-line" style="width:75%"></div>
+              <div style="margin-top:.75rem;"></div>
+              <div class="cv-mock-section">Education</div>
+              <div class="cv-mock-role">MBA — INSEAD</div>
+              <div class="cv-mock-line" style="width:70%"></div>
+              <div style="margin-top:.75rem;"></div>
+              <div class="cv-mock-section">Skills</div>
+              <div class="cv-mock-skills">
+                <span class="cv-mock-skill-pill">Strategy</span>
+                <span class="cv-mock-skill-pill">P&amp;L</span>
+                <span class="cv-mock-skill-pill">M&amp;A</span>
+                <span class="cv-mock-skill-pill">Python</span>
+                <span class="cv-mock-skill-pill">SQL</span>
+                <span class="cv-mock-skill-pill">Leadership</span>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats bar -->
+<section class="stats-bar">
+  <div class="container">
+    <div class="row g-0 justify-content-center">
+      <div class="col-auto stat-item">
+        <div class="stat-number"><span>60</span> sec</div>
+        <div class="stat-label">Per CV Generation</div>
+      </div>
+      <div class="col-auto stat-item">
+        <div class="stat-number"><span>Zero</span></div>
+        <div class="stat-label">Data Stored</div>
+      </div>
+      <div class="col-auto stat-item">
+        <div class="stat-number"><span>Any</span> AI</div>
+        <div class="stat-label">Your Own API Key</div>
       </div>
     </div>
   </div>
@@ -958,33 +919,33 @@ _INDEX = r"""<!doctype html>
 <section class="how-section">
   <div class="container">
     <div class="text-center mb-5">
-      <div class="section-eyebrow">The workflow</div>
-      <h2 style="font-size:2rem;font-weight:800;color:var(--navy);letter-spacing:-.03em;margin-bottom:.6rem;">Three steps to your next interview</h2>
-      <p style="color:var(--muted);font-size:.95rem;">Used by MBA candidates at top business schools worldwide</p>
+      <div class="section-eyebrow mb-3">The workflow</div>
+      <h2 class="how-heading">Three steps to your<br>next interview</h2>
+      <p class="how-sub">Used by MBA candidates at INSEAD, HBS, and LBS to land roles at top firms.</p>
     </div>
-    <div class="row g-4">
-      <div class="col-md-4">
+    <div class="row g-4 position-relative">
+      <div class="col-md-4 step-connector">
         <div class="step-card">
-          <div class="step-icon-circle ic-indigo"><i class="bi bi-database"></i></div>
-          <div class="step-num">01</div>
+          <div class="step-icon-circle ic-indigo"><i class="bi bi-database-fill"></i></div>
+          <div class="step-num">Step 01</div>
           <div class="step-title">Build your experience bank</div>
-          <div class="step-desc">Upload your CV or paste your experience. AI extracts every role, bullet and skill — structured and ready to use.</div>
+          <div class="step-desc">Upload your CV or paste your full experience. AI extracts every role, bullet, and skill — structured and ready for tailoring.</div>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-4 step-connector">
         <div class="step-card">
-          <div class="step-icon-circle ic-purple"><i class="bi bi-file-earmark-text"></i></div>
-          <div class="step-num">02</div>
+          <div class="step-icon-circle ic-violet"><i class="bi bi-file-earmark-text-fill"></i></div>
+          <div class="step-num">Step 02</div>
           <div class="step-title">Paste any job description</div>
-          <div class="step-desc">Copy-paste any JD from any company. Our AI reads the language, identifies key priorities and matches your strongest experience.</div>
+          <div class="step-desc">Copy-paste any JD from any company. Our AI reads its language, identifies key priorities, and selects your strongest matching experience.</div>
         </div>
       </div>
       <div class="col-md-4">
         <div class="step-card">
           <div class="step-icon-circle ic-emerald"><i class="bi bi-download"></i></div>
-          <div class="step-num">03</div>
+          <div class="step-num">Step 03</div>
           <div class="step-title">Download your tailored CV</div>
-          <div class="step-desc">Get a Word + PDF file with bullets rewritten in STAR format using the JD's exact language. Same template, perfect fit.</div>
+          <div class="step-desc">Get a Word + PDF with bullets rewritten in STAR format using the JD's exact language. Same template, perfect fit.</div>
         </div>
       </div>
     </div>
@@ -994,58 +955,82 @@ _INDEX = r"""<!doctype html>
 <!-- Auth -->
 <section class="auth-section" id="signin">
   <div class="container">
-    <div class="row g-4 justify-content-center" style="max-width:860px;margin:0 auto;">
-      <!-- Sign in -->
+    <div class="text-center mb-5">
+      <div class="section-eyebrow mb-3">Get started</div>
+      <h2 class="auth-heading">Start in 30 seconds</h2>
+      <p class="auth-sub">No credit card. Bring your own API key. Your data stays yours.</p>
+    </div>
+    <div class="row g-4 justify-content-center" style="max-width:820px;margin:0 auto;">
       <div class="col-md-6">
         <div class="auth-card">
-          <div class="auth-card-title">
-            <div class="auth-icon ic-sign-in"><i class="bi bi-box-arrow-in-right"></i></div>
-            Sign in
+          <div class="auth-card-top signin"></div>
+          <div class="auth-card-body">
+            <div class="auth-card-title">
+              <div class="auth-icon ic-sign-in"><i class="bi bi-box-arrow-in-right"></i></div>
+              Sign in
+            </div>
+            <form method="post" action="/signin">
+              <div class="auth-mb">
+                <label class="auth-label">Email</label>
+                <input name="email" type="email" class="auth-input" required autocomplete="email" placeholder="you@email.com">
+              </div>
+              <div class="auth-mb">
+                <label class="auth-label">Password</label>
+                <input name="password" type="password" class="auth-input" required autocomplete="current-password" placeholder="••••••••">
+              </div>
+              <button type="submit" class="btn-auth-signin">Sign in &rarr;</button>
+            </form>
           </div>
-          <form method="post" action="/signin">
-            <div class="auth-mb">
-              <label class="auth-label">Email</label>
-              <input name="email" type="email" class="auth-input" required autocomplete="email" placeholder="you@email.com">
-            </div>
-            <div class="auth-mb">
-              <label class="auth-label">Password</label>
-              <input name="password" type="password" class="auth-input" required autocomplete="current-password" placeholder="••••••••">
-            </div>
-            <button type="submit" class="btn-auth-indigo">Sign in &rarr;</button>
-          </form>
         </div>
       </div>
-      <!-- Create account -->
       <div class="col-md-6" id="signup">
         <div class="auth-card">
-          <div class="auth-card-title">
-            <div class="auth-icon ic-sign-up"><i class="bi bi-person-plus"></i></div>
-            Create your account
+          <div class="auth-card-top signup"></div>
+          <div class="auth-card-body">
+            <div class="auth-card-title">
+              <div class="auth-icon ic-sign-up"><i class="bi bi-person-plus-fill"></i></div>
+              Create your account
+            </div>
+            <form method="post" action="/signup">
+              <div class="auth-mb">
+                <label class="auth-label">Full name</label>
+                <input name="name" class="auth-input signup-focus" required placeholder="Your full name">
+              </div>
+              <div class="auth-mb">
+                <label class="auth-label">Email</label>
+                <input name="email" type="email" class="auth-input signup-focus" required autocomplete="email" placeholder="you@email.com">
+              </div>
+              <div class="auth-mb">
+                <label class="auth-label">Password</label>
+                <input name="password" type="password" class="auth-input signup-focus" required autocomplete="new-password" minlength="8" placeholder="Min. 8 characters">
+              </div>
+              <button type="submit" class="btn-auth-signup">Create free account &rarr;</button>
+            </form>
           </div>
-          <form method="post" action="/signup">
-            <div class="auth-mb">
-              <label class="auth-label">Full name</label>
-              <input name="name" class="auth-input" required placeholder="Your full name">
-            </div>
-            <div class="auth-mb">
-              <label class="auth-label">Email</label>
-              <input name="email" type="email" class="auth-input" required autocomplete="email" placeholder="you@email.com">
-            </div>
-            <div class="auth-mb">
-              <label class="auth-label">Password</label>
-              <input name="password" type="password" class="auth-input" required autocomplete="new-password" minlength="8" placeholder="Min. 8 characters">
-            </div>
-            <button type="submit" class="btn-auth-gold">Create free account &rarr;</button>
-          </form>
         </div>
       </div>
     </div>
-    <div class="security-note">
-      <i class="bi bi-shield-lock"></i>
+    <div style="text-align:center;font-size:.77rem;color:var(--muted);margin-top:2rem;display:flex;align-items:center;justify-content:center;gap:.5rem;">
+      <i class="bi bi-shield-lock-fill" style="color:var(--emerald);"></i>
       Your API key is encrypted at rest and only used for CV generation. We never store your CV content.
     </div>
   </div>
 </section>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div>
+        <div class="footer-brand">My INSEAD <span>CV</span></div>
+        <div class="footer-tag">AI-powered CV tailoring for ambitious professionals</div>
+      </div>
+      <div class="footer-lock">
+        <i class="bi bi-shield-check"></i> Your data stays yours — always.
+      </div>
+    </div>
+  </div>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -1054,26 +1039,34 @@ document.querySelectorAll('.step-card').forEach(card => {
   card.addEventListener('mousemove', e => {
     const r = card.getBoundingClientRect();
     const x = e.clientX - r.left, y = e.clientY - r.top;
-    const rx = ((y - r.height/2) / r.height) * -10;
-    const ry = ((x - r.width/2) / r.width) * 10;
-    card.style.transform = `perspective(700px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-8px)`;
-    card.style.boxShadow = '0 24px 56px rgba(15,23,42,0.2)';
+    const rx = ((y - r.height/2) / r.height) * -12;
+    const ry = ((x - r.width/2) / r.width) * 12;
+    card.style.transform = `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-6px)`;
   });
   card.addEventListener('mouseleave', () => {
-    card.style.transform = '';
-    card.style.boxShadow = '';
+    card.style.transform = card.classList.contains('visible') ? '' : 'translateY(0)';
   });
 });
 
-// Scroll slide-in
-const observer = new IntersectionObserver(entries => {
+// Scroll reveal with staggered 150ms delay
+const obs = new IntersectionObserver(entries => {
   entries.forEach((e, i) => {
     if (e.isIntersecting) {
-      setTimeout(() => e.target.classList.add('visible'), i * 120);
+      setTimeout(() => e.target.classList.add('visible'), i * 150);
+      obs.unobserve(e.target);
     }
   });
-}, { threshold: 0.15 });
-document.querySelectorAll('.step-card').forEach(c => observer.observe(c));
+}, { threshold: 0.1 });
+document.querySelectorAll('.step-card').forEach(c => obs.observe(c));
+
+// Make loading overlay show if it exists (it doesn't on index, but keep for safety)
+function showLoading(title, sub) {
+  const ov = document.getElementById('loadingOverlay');
+  if (!ov) return;
+  if (title) document.getElementById('overlayTitle').textContent = title;
+  if (sub) document.getElementById('overlaySub').textContent = sub;
+  ov.style.display = 'flex';
+}
 </script>
 </body>
 </html>"""
@@ -1082,53 +1075,123 @@ document.querySelectorAll('.step-card').forEach(c => observer.observe(c));
 # ── Dashboard ──────────────────────────────────────────────────────────────────
 
 _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
+<style>
+  .dash-greeting { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2rem; letter-spacing: -.04em; color: var(--navy); margin-bottom: .3rem; line-height: 1.2; }
+  .dash-sub { color: var(--muted); font-size: .95rem; }
+  .setup-card {
+    background: var(--navy); border-radius: 20px;
+    border-left: 4px solid var(--amber); padding: 2rem;
+    box-shadow: 0 8px 32px rgba(15,23,42,0.18), 0 0 0 1px rgba(255,255,255,0.03);
+    margin-bottom: 1.75rem;
+  }
+  .setup-eyebrow { font-size: .65rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--amber-l); margin-bottom: .6rem; }
+  .setup-heading { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.1rem; color: #fff; margin-bottom: 1.4rem; letter-spacing: -.02em; }
+  .setup-step { display: flex; align-items: flex-start; gap: .85rem; margin-bottom: 1.1rem; }
+  .setup-step:last-child { margin-bottom: 0; }
+  .setup-step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%; font-size: .72rem; font-weight: 800; flex-shrink: 0; margin-top: .1rem;
+    background: linear-gradient(135deg, var(--indigo), var(--violet)); color: #fff; box-shadow: 0 2px 10px rgba(79,70,229,0.4);
+  }
+  .setup-step-num.done { background: linear-gradient(135deg, var(--emerald), #10b981); box-shadow: 0 2px 10px rgba(5,150,105,0.4); }
+  .setup-step-title { font-weight: 700; font-size: .9rem; color: #fff; }
+  .setup-step-title.done { color: rgba(255,255,255,0.4); text-decoration: line-through; }
+  .setup-step-desc { font-size: .78rem; color: rgba(255,255,255,0.38); margin-top: .2rem; line-height: 1.55; }
+
+  .status-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.75rem; }
+  @media (max-width: 640px) { .status-cards { grid-template-columns: 1fr; } }
+  .status-card {
+    background: #fff; border-radius: 20px; padding: 1.4rem 1.35rem;
+    border: 1px solid var(--border); box-shadow: var(--shadow);
+    transition: transform .22s, box-shadow .22s;
+    display: flex; flex-direction: column;
+  }
+  .status-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+  .status-card-top { display: flex; align-items: center; gap: .8rem; margin-bottom: .7rem; }
+  .status-icon {
+    width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff;
+  }
+  .si-bank { background: linear-gradient(135deg, var(--indigo), var(--indigo-l)); box-shadow: 0 4px 12px rgba(79,70,229,0.35); }
+  .si-tpl  { background: linear-gradient(135deg, var(--emerald), #10b981); box-shadow: 0 4px 12px rgba(5,150,105,0.3); }
+  .si-key  { background: linear-gradient(135deg, var(--amber), var(--amber-l)); box-shadow: 0 4px 12px rgba(217,119,6,0.35); }
+  .status-card-name { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: .95rem; color: var(--navy); letter-spacing: -.02em; }
+  .status-dot-row { display: flex; align-items: center; gap: .3rem; margin-top: .18rem; }
+  .sdot2 { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .sdot2-ok { background: var(--emerald); box-shadow: 0 0 0 3px rgba(5,150,105,0.18); }
+  .sdot2-no { background: #cbd5e1; }
+  .status-card-desc { font-size: .8rem; color: var(--muted); line-height: 1.55; margin-bottom: .9rem; flex-grow: 1; }
+  .status-card-active-bar {
+    height: 3px; border-radius: 0 0 3px 3px; margin: -1.4rem -1.35rem 1rem;
+    margin-bottom: .7rem;
+  }
+
+  .generate-wrap {
+    border-radius: 20px; overflow: hidden;
+    box-shadow: 0 4px 6px rgba(15,23,42,0.04), 0 12px 32px rgba(15,23,42,0.08);
+    position: relative;
+  }
+  .generate-wrap::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--indigo), var(--violet), var(--amber), var(--emerald));
+  }
+  .generate-inner { background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 2.25rem; border-top: none; border-radius: 0 0 20px 20px; }
+  .generate-title {
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900;
+    font-size: 1.3rem; color: var(--navy); margin-bottom: .4rem; letter-spacing: -.03em;
+    display: flex; align-items: center; gap: .55rem;
+  }
+  .generate-sub { color: var(--muted); font-size: .88rem; margin-bottom: 1.4rem; line-height: 1.6; }
+</style>
+
 <!-- Greeting -->
-<div class="mb-4" style="padding-top:.5rem;">
-  <h2 style="font-weight:800;font-size:1.85rem;letter-spacing:-.04em;color:var(--navy);margin-bottom:.25rem;">
-    Good to see you, {{ name }} &#128075;
-  </h2>
-  <p style="color:var(--muted);font-size:.95rem;margin:0;">Ready to apply? Let's build something great.</p>
+<div class="mb-4" style="padding-top:.75rem;">
+  <h2 class="dash-greeting">Welcome back, {{ name }} &#128075;</h2>
+  <p class="dash-sub">Ready to apply? Let's build something great.</p>
 </div>
 
 {% if not (has_bank and has_template and has_ai) %}
-<div class="mb-4" style="background:var(--navy-80);border-radius:var(--r16);border-left:4px solid var(--gold);padding:1.75rem 1.75rem 1.5rem;box-shadow:var(--shadow-md);">
-  <div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-l);margin-bottom:.65rem;">Setup checklist</div>
-  <div style="font-weight:700;font-size:1.05rem;color:#fff;margin-bottom:1.25rem;">Complete setup to start generating CVs</div>
-  <!-- Step 1 -->
-  <div class="d-flex align-items-start gap-3 mb-3 {% if has_ai %}opacity-50{% endif %}">
-    <span class="step-badge mt-1" style="flex-shrink:0;">{% if has_ai %}<i class="bi bi-check-lg" style="font-size:.75rem;"></i>{% else %}1{% endif %}</span>
+<div class="setup-card">
+  <div class="setup-eyebrow">Setup checklist</div>
+  <div class="setup-heading">Complete setup to start generating CVs</div>
+
+  <div class="setup-step {% if has_ai %}opacity-50{% endif %}">
+    <div class="setup-step-num {% if has_ai %}done{% endif %}">
+      {% if has_ai %}<i class="bi bi-check-lg" style="font-size:.75rem;"></i>{% else %}1{% endif %}
+    </div>
     <div>
-      <div style="font-weight:600;font-size:.9rem;color:{% if has_ai %}rgba(255,255,255,0.5){% else %}#fff{% endif %};">
-        {% if has_ai %}<s style="opacity:.6;">Add your API key</s>
-        {% else %}<a href="/settings" style="color:var(--gold-l);text-decoration:none;">Add your Anthropic API key</a>{% endif %}
+      <div class="setup-step-title {% if has_ai %}done{% endif %}">
+        {% if has_ai %}Add your API key{% else %}<a href="/settings" style="color:var(--amber-l);text-decoration:none;">Add your Anthropic API key &rarr;</a>{% endif %}
       </div>
-      <div style="font-size:.78rem;color:rgba(255,255,255,0.4);margin-top:.2rem;">
-        Go to <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--gold-l);opacity:.8;">console.anthropic.com</a> &rarr; copy your key &rarr; paste in Settings. ~$0.02 per CV.
+      <div class="setup-step-desc">
+        Go to <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--amber-l);opacity:.8;">console.anthropic.com</a> &rarr; copy your key &rarr; paste in Settings. ~$0.02 per CV.
       </div>
     </div>
   </div>
-  <!-- Step 2 -->
-  <div class="d-flex align-items-start gap-3 mb-3 {% if has_bank %}opacity-50{% endif %}">
-    <span class="step-badge mt-1" style="flex-shrink:0;">{% if has_bank %}<i class="bi bi-check-lg" style="font-size:.75rem;"></i>{% else %}2{% endif %}</span>
+
+  <div class="setup-step {% if has_bank %}opacity-50{% endif %}">
+    <div class="setup-step-num {% if has_bank %}done{% endif %}">
+      {% if has_bank %}<i class="bi bi-check-lg" style="font-size:.75rem;"></i>{% else %}2{% endif %}
+    </div>
     <div>
-      <div style="font-weight:600;font-size:.9rem;color:{% if has_bank %}rgba(255,255,255,0.5){% else %}#fff{% endif %};">
-        {% if has_bank %}<s style="opacity:.6;">Build your experience bank</s>
-        {% else %}<a href="/bank/create" style="color:var(--gold-l);text-decoration:none;">Build your experience bank</a>{% endif %}
+      <div class="setup-step-title {% if has_bank %}done{% endif %}">
+        {% if has_bank %}Build your experience bank{% else %}<a href="/bank/create" style="color:var(--amber-l);text-decoration:none;">Build your experience bank &rarr;</a>{% endif %}
       </div>
-      <div style="font-size:.78rem;color:rgba(255,255,255,0.4);margin-top:.2rem;">
+      <div class="setup-step-desc">
         Upload your existing CV (.docx/.pdf) or paste your experience — AI extracts every role, bullet, and skill automatically.
       </div>
     </div>
   </div>
-  <!-- Step 3 -->
-  <div class="d-flex align-items-start gap-3 {% if has_template %}opacity-50{% endif %}">
-    <span class="step-badge mt-1" style="flex-shrink:0;">{% if has_template %}<i class="bi bi-check-lg" style="font-size:.75rem;"></i>{% else %}3{% endif %}</span>
+
+  <div class="setup-step {% if has_template %}opacity-50{% endif %}">
+    <div class="setup-step-num {% if has_template %}done{% endif %}">
+      {% if has_template %}<i class="bi bi-check-lg" style="font-size:.75rem;"></i>{% else %}3{% endif %}
+    </div>
     <div>
-      <div style="font-weight:600;font-size:.9rem;color:{% if has_template %}rgba(255,255,255,0.5){% else %}#fff{% endif %};">
-        {% if has_template %}<s style="opacity:.6;">Upload your CV template</s>
-        {% else %}<a href="/upload-template" style="color:var(--gold-l);text-decoration:none;">Upload your CV template (.docx)</a>{% endif %}
+      <div class="setup-step-title {% if has_template %}done{% endif %}">
+        {% if has_template %}Upload your CV template{% else %}<a href="/upload-template" style="color:var(--amber-l);text-decoration:none;">Upload your CV template (.docx) &rarr;</a>{% endif %}
       </div>
-      <div style="font-size:.78rem;color:rgba(255,255,255,0.4);margin-top:.2rem;">
+      <div class="setup-step-desc">
         Your formatted base CV — the app preserves its exact layout, bullet counts, and sections.
       </div>
     </div>
@@ -1137,95 +1200,78 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
 {% endif %}
 
 <!-- Status cards -->
-<div class="row g-3 mb-4">
-  <!-- Bank -->
-  <div class="col-sm-4">
-    <div class="card card-hover h-100" style="border-left:4px solid var(--indigo)!important;">
-      <div class="card-body p-3 d-flex flex-column">
-        <div class="d-flex align-items-center gap-2 mb-2">
-          <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--indigo),var(--indigo-l));border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.95rem;flex-shrink:0;">
-            <i class="bi bi-database"></i>
-          </div>
-          <div>
-            <div style="font-weight:700;font-size:.9rem;color:var(--navy);">Info Bank</div>
-            <div style="display:flex;align-items:center;gap:.3rem;">
-              <span class="sdot {{ 'sdot-ok' if has_bank else 'sdot-no' }}"></span>
-              <span style="font-size:.72rem;color:var(--muted);">{{ 'Active' if has_bank else 'Not set up' }}</span>
-            </div>
-          </div>
+<div class="status-cards">
+  <div class="status-card" style="{% if has_bank %}border-top:3px solid var(--indigo);{% endif %}">
+    <div class="status-card-top">
+      <div class="status-icon si-bank"><i class="bi bi-database-fill"></i></div>
+      <div>
+        <div class="status-card-name">Info Bank</div>
+        <div class="status-dot-row">
+          <span class="sdot2 {{ 'sdot2-ok' if has_bank else 'sdot2-no' }}"></span>
+          <span style="font-size:.72rem;color:var(--muted);">{{ 'Active' if has_bank else 'Not set up' }}</span>
         </div>
-        <p class="text-muted small mb-3" style="font-size:.8rem;">{{ 'Your experience & bullets are ready.' if has_bank else 'Upload your CV or paste your experience.' }}</p>
-        {% if has_bank %}
-          <div class="d-grid gap-1 mt-auto">
-            <a href="/bank" class="btn btn-ghost btn-sm">Edit Bank</a>
-            <a href="/bank/import" class="btn btn-ghost btn-sm">+ Import more</a>
-          </div>
-        {% else %}
-          <a href="/bank/create" class="btn btn-indig btn-sm mt-auto">Set up Bank</a>
-        {% endif %}
       </div>
     </div>
+    <p class="status-card-desc">{{ 'Your experience &amp; bullets are ready.' if has_bank else 'Upload your CV or paste your experience.' }}</p>
+    {% if has_bank %}
+      <div class="d-grid gap-1 mt-auto">
+        <a href="/bank" class="btn btn-ghost btn-sm">Edit Bank</a>
+        <a href="/bank/import" class="btn btn-ghost btn-sm">+ Import more</a>
+      </div>
+    {% else %}
+      <a href="/bank/create" class="btn btn-indig btn-sm mt-auto" style="display:block;text-align:center;">Set up Bank</a>
+    {% endif %}
   </div>
-  <!-- Template -->
-  <div class="col-sm-4">
-    <div class="card card-hover h-100" style="border-left:4px solid var(--emerald)!important;">
-      <div class="card-body p-3 d-flex flex-column">
-        <div class="d-flex align-items-center gap-2 mb-2">
-          <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--emerald),#10b981);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.95rem;flex-shrink:0;">
-            <i class="bi bi-file-earmark-word"></i>
-          </div>
-          <div>
-            <div style="font-weight:700;font-size:.9rem;color:var(--navy);">CV Template</div>
-            <div style="display:flex;align-items:center;gap:.3rem;">
-              <span class="sdot {{ 'sdot-ok' if has_template else 'sdot-no' }}"></span>
-              <span style="font-size:.72rem;color:var(--muted);">{{ 'Uploaded' if has_template else 'Not uploaded' }}</span>
-            </div>
-          </div>
+
+  <div class="status-card" style="{% if has_template %}border-top:3px solid var(--emerald);{% endif %}">
+    <div class="status-card-top">
+      <div class="status-icon si-tpl"><i class="bi bi-file-earmark-word-fill"></i></div>
+      <div>
+        <div class="status-card-name">CV Template</div>
+        <div class="status-dot-row">
+          <span class="sdot2 {{ 'sdot2-ok' if has_template else 'sdot2-no' }}"></span>
+          <span style="font-size:.72rem;color:var(--muted);">{{ 'Uploaded' if has_template else 'Not uploaded' }}</span>
         </div>
-        <p class="text-muted small mb-3" style="font-size:.8rem;">{{ 'Template ready — format preserved on generation.' if has_template else 'Upload your base .docx template.' }}</p>
-        <a href="/upload-template" class="btn {{ 'btn-ghost' if has_template else 'btn-success-custom' }} btn-sm mt-auto">
-          {{ 'Replace Template' if has_template else 'Upload Template' }}
-        </a>
       </div>
     </div>
+    <p class="status-card-desc">{{ 'Template ready — format preserved on generation.' if has_template else 'Upload your base .docx template.' }}</p>
+    <a href="/upload-template" class="btn {{ 'btn-ghost' if has_template else 'btn-success-custom' }} btn-sm mt-auto" style="display:block;text-align:center;">
+      {{ 'Replace Template' if has_template else 'Upload Template' }}
+    </a>
   </div>
-  <!-- API Key -->
-  <div class="col-sm-4">
-    <div class="card card-hover h-100" style="border-left:4px solid var(--gold)!important;">
-      <div class="card-body p-3 d-flex flex-column">
-        <div class="d-flex align-items-center gap-2 mb-2">
-          <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold-l));border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.95rem;flex-shrink:0;">
-            <i class="bi bi-key"></i>
-          </div>
-          <div>
-            <div style="font-weight:700;font-size:.9rem;color:var(--navy);">API Key</div>
-            <div style="display:flex;align-items:center;gap:.3rem;">
-              <span class="sdot {{ 'sdot-ok' if has_ai else 'sdot-no' }}"></span>
-              <span style="font-size:.72rem;color:var(--muted);">{{ ai_label + ' connected' if has_ai else 'Not configured' }}</span>
-            </div>
-          </div>
+
+  <div class="status-card" style="{% if has_ai %}border-top:3px solid var(--amber);{% endif %}">
+    <div class="status-card-top">
+      <div class="status-icon si-key"><i class="bi bi-key-fill"></i></div>
+      <div>
+        <div class="status-card-name">API Key</div>
+        <div class="status-dot-row">
+          <span class="sdot2 {{ 'sdot2-ok' if has_ai else 'sdot2-no' }}"></span>
+          <span style="font-size:.72rem;color:var(--muted);">{{ ai_label + ' connected' if has_ai else 'Not configured' }}</span>
         </div>
-        <p class="text-muted small mb-3" style="font-size:.8rem;">{{ 'Your AI key is encrypted and ready.' if has_ai else 'Add your Anthropic / OpenAI / Gemini key.' }}</p>
-        <a href="/settings" class="btn {{ 'btn-ghost' if has_ai else 'btn-gold' }} btn-sm mt-auto">
-          {{ 'Change Settings' if has_ai else 'Add API Key' }}
-        </a>
       </div>
     </div>
+    <p class="status-card-desc">{{ 'Your AI key is encrypted and ready.' if has_ai else 'Add your Anthropic / OpenAI / Gemini key.' }}</p>
+    <a href="/settings" class="btn {{ 'btn-ghost' if has_ai else 'btn-gold' }} btn-sm mt-auto" style="display:block;text-align:center;">
+      {{ 'Change Settings' if has_ai else 'Add API Key' }}
+    </a>
   </div>
 </div>
 
 {% if has_bank and has_template and has_ai %}
-<div class="card" style="border-top:3px solid transparent;border-image:linear-gradient(90deg,var(--indigo),var(--gold-l)) 1;">
-  <div class="card-body p-4">
-    <h5 style="font-weight:800;font-size:1.15rem;color:var(--navy);margin-bottom:.35rem;">
-      <i class="bi bi-magic me-1" style="color:var(--indigo);"></i>Generate your tailored CV
-    </h5>
-    <p style="color:var(--muted);font-size:.85rem;margin-bottom:1.25rem;">
-      Paste the full job description below &mdash; the more detail, the better the tailoring.
+<div class="generate-wrap">
+  <div style="height:3px;background:linear-gradient(90deg,var(--indigo),var(--violet),var(--amber),var(--emerald));"></div>
+  <div class="generate-inner">
+    <div class="generate-title">
+      <span style="font-size:1.3rem;">&#10024;</span>Generate your tailored CV
+    </div>
+    <p class="generate-sub">
+      Paste the full job description below — the more detail, the better the tailoring.
     </p>
     <form method="post" action="/generate" id="genForm">
       <div class="mb-3">
-        <textarea name="jd_text" class="form-control" rows="14" style="min-height:300px;font-family:'Inter',sans-serif;font-size:.85rem;"
+        <textarea name="jd_text" class="form-control" rows="14"
+          style="min-height:280px;font-family:'Inter',sans-serif;font-size:.86rem;border-radius:var(--r12);background:#fafbff;"
           placeholder="Paste the full job description here — include role title, responsibilities, requirements, and any keywords you spot…" required></textarea>
       </div>
       <button class="btn-generate" type="submit" id="genBtn">
@@ -1238,8 +1284,8 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
 """).replace("{% block scripts %}{% endblock %}", """
 <script>
 document.getElementById('genForm')?.addEventListener('submit', function() {
-  document.getElementById('overlayTitle').textContent = 'Analysing JD & tailoring your CV…';
-  document.getElementById('overlaySub').textContent   = 'AI is rewriting your bullets in the JD\'s language — ~20–40 seconds';
+  document.getElementById('overlayTitle').textContent = 'Analysing JD & tailoring your CV\u2026';
+  document.getElementById('overlaySub').textContent   = 'AI is rewriting your bullets in the JD\'s language \u2014 ~20\u201340 seconds';
   document.getElementById('loadingOverlay').style.display = 'flex';
   document.getElementById('genBtn').disabled = true;
 });
