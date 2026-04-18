@@ -577,8 +577,8 @@ _INDEX = r"""<!doctype html>
     .hero {
       background: var(--deep);
       position: relative; overflow: hidden;
-      padding: 7rem 0 6rem;
-      min-height: 92vh; display: flex; align-items: center;
+      padding: 4rem 0 4.5rem;
+      display: flex; align-items: center;
     }
     /* Grid texture */
     .hero::before {
@@ -631,19 +631,19 @@ _INDEX = r"""<!doctype html>
       background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3);
       border-radius: 24px; padding: .35rem 1rem;
       font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
-      color: var(--amber-l); margin-bottom: 1.75rem;
+      color: var(--amber-l); margin-bottom: 1.25rem;
     }
     .hero-h1 {
       font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900;
-      font-size: clamp(2.6rem, 5.5vw, 3.75rem); line-height: 1.06;
-      color: #fff; letter-spacing: -.05em; margin-bottom: 1.3rem;
+      font-size: clamp(2.4rem, 5vw, 3.4rem); line-height: 1.05;
+      color: #fff; letter-spacing: -.05em; margin-bottom: 1rem;
     }
     .hero-h1 em { font-style: normal; color: var(--amber-l); }
     .hero-sub {
-      font-size: 1.05rem; line-height: 1.72; color: rgba(255,255,255,0.6);
-      max-width: 460px; margin-bottom: 2.25rem;
+      font-size: 1rem; line-height: 1.65; color: rgba(255,255,255,0.6);
+      max-width: 500px; margin-bottom: 1.5rem;
     }
-    .hero-cta-row { display: flex; gap: .85rem; flex-wrap: wrap; margin-bottom: 1.75rem; }
+    .hero-cta-row { display: flex; gap: .85rem; flex-wrap: wrap; margin-bottom: 1rem; }
     .btn-hero-primary {
       padding: .75rem 1.75rem; border-radius: var(--r12);
       background: linear-gradient(135deg, var(--indigo), var(--violet));
@@ -663,8 +663,45 @@ _INDEX = r"""<!doctype html>
     .hero-trust {
       font-size: .77rem; color: rgba(255,255,255,0.35);
       display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+      margin-bottom: 2rem;
     }
     .hero-trust i { color: rgba(255,255,255,0.25); }
+
+    /* ── Hero feature grid (fills left column) ── */
+    .hero-feat-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: .9rem;
+      max-width: 540px;
+    }
+    @media (max-width: 560px) { .hero-feat-grid { grid-template-columns: 1fr; } }
+    .hero-feat {
+      display: flex; align-items: flex-start; gap: .75rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px; padding: .85rem .95rem;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      transition: background .2s, border-color .2s, transform .2s;
+    }
+    .hero-feat:hover {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(255,255,255,0.18);
+      transform: translateY(-2px);
+    }
+    .hero-feat-ic {
+      width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      color: #fff; font-size: .9rem;
+      box-shadow: 0 4px 14px rgba(79,70,229,0.4);
+    }
+    .hero-feat-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: .82rem; font-weight: 700; color: #fff;
+      letter-spacing: -.01em; margin-bottom: .15rem;
+    }
+    .hero-feat-desc {
+      font-size: .72rem; line-height: 1.45;
+      color: rgba(255,255,255,0.5);
+    }
 
     /* ── CV mockup ── */
     .cv-mockup-wrap { display: flex; justify-content: center; align-items: center; padding: 2rem 1rem; }
@@ -716,7 +753,7 @@ _INDEX = r"""<!doctype html>
     .stats-bar {
       background: rgba(15,23,42,0.9); backdrop-filter: blur(20px);
       border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding: 1.5rem 0;
+      padding: 1.1rem 0;
     }
     .stat-item { text-align: center; padding: .5rem 1.5rem; }
     .stat-item:not(:last-child) { border-right: 1px solid rgba(255,255,255,0.08); }
@@ -729,7 +766,7 @@ _INDEX = r"""<!doctype html>
     .stat-label { font-size: .72rem; color: rgba(255,255,255,0.45); font-weight: 500; letter-spacing: .03em; }
 
     /* ── How it works ── */
-    .how-section { background: #0d1117; padding: 6rem 0; }
+    .how-section { background: #0d1117; padding: 4rem 0 4.5rem; }
     .how-heading {
       font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900;
       font-size: clamp(1.8rem, 3.5vw, 2.6rem); color: #fff;
@@ -777,7 +814,7 @@ _INDEX = r"""<!doctype html>
     /* ── INSEAD pledge section ── */
     .insead-pledge {
       background: linear-gradient(180deg, #0d1117 0%, #060918 100%);
-      padding: 5rem 0 6rem; position: relative; overflow: hidden;
+      padding: 4rem 0 4.5rem; position: relative; overflow: hidden;
     }
     .insead-pledge::before {
       content: ''; position: absolute; inset: 0; pointer-events: none;
@@ -851,7 +888,7 @@ _INDEX = r"""<!doctype html>
     }
 
     /* ── Auth section ── */
-    .auth-section { background: var(--bg); padding: 6rem 0; }
+    .auth-section { background: var(--bg); padding: 4rem 0 4.5rem; }
     .auth-heading {
       font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900;
       font-size: clamp(1.8rem, 3.5vw, 2.4rem); color: var(--navy);
@@ -971,6 +1008,38 @@ _INDEX = r"""<!doctype html>
           <span style="color:rgba(255,255,255,0.15);">|</span>
           <i class="bi bi-infinity"></i>Unlimited tailored CVs
         </div>
+
+        <!-- Hero feature grid — fills the vertical space beside the mockup -->
+        <div class="hero-feat-grid">
+          <div class="hero-feat">
+            <div class="hero-feat-ic"><i class="bi bi-lightning-charge-fill"></i></div>
+            <div>
+              <div class="hero-feat-title">60-second generation</div>
+              <div class="hero-feat-desc">From paste to polished PDF in under a minute.</div>
+            </div>
+          </div>
+          <div class="hero-feat">
+            <div class="hero-feat-ic"><i class="bi bi-file-earmark-check-fill"></i></div>
+            <div>
+              <div class="hero-feat-title">Your template, preserved</div>
+              <div class="hero-feat-desc">Exact fonts, spacing, and bullet counts — pixel perfect.</div>
+            </div>
+          </div>
+          <div class="hero-feat">
+            <div class="hero-feat-ic"><i class="bi bi-ban"></i></div>
+            <div>
+              <div class="hero-feat-title">Zero hallucination</div>
+              <div class="hero-feat-desc">AI only rewrites what's in your master bank — never invents.</div>
+            </div>
+          </div>
+          <div class="hero-feat">
+            <div class="hero-feat-ic"><i class="bi bi-cpu-fill"></i></div>
+            <div>
+              <div class="hero-feat-title">Any AI provider</div>
+              <div class="hero-feat-desc">Anthropic, OpenAI, or Gemini — your choice, your cost.</div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="col-lg-6">
         <div class="cv-mockup-wrap">
@@ -1036,7 +1105,7 @@ _INDEX = r"""<!doctype html>
 <!-- How it works -->
 <section class="how-section">
   <div class="container">
-    <div class="text-center mb-5">
+    <div class="text-center mb-4">
       <div class="section-eyebrow mb-3">The workflow</div>
       <h2 class="how-heading">Invest once.<br>Apply forever.</h2>
       <p class="how-sub">Spend an hour building your master bank once. After that, every tailored CV is just a job description away.</p>
@@ -1101,7 +1170,7 @@ _INDEX = r"""<!doctype html>
 <!-- Auth -->
 <section class="auth-section" id="signin">
   <div class="container">
-    <div class="text-center mb-5">
+    <div class="text-center mb-4">
       <div class="section-eyebrow mb-3">Get started</div>
       <h2 class="auth-heading">Start in 30 seconds</h2>
       <p class="auth-sub">No credit card. Bring your own API key. Your data stays yours.</p>
