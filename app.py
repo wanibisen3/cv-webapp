@@ -1150,8 +1150,7 @@ _INDEX = r"""<!doctype html>
         <h2 class="pledge-heading">Free. Forever.</h2>
         <p class="pledge-sub">
           This tool will <strong>always</strong> be free for INSEADers. Bring your own API key,
-          build your master bank once, and tailor unlimited CVs to land your dream role — from
-          McKinsey to Google to your own startup.
+          build your master bank once, and tailor unlimited CVs to land any role after your MBA.
         </p>
         <div class="pledge-pills">
           <span class="pledge-pill"><i class="bi bi-infinity"></i>Unlimited generations</span>
