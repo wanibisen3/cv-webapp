@@ -258,10 +258,46 @@ def _build_user_message(jd_text: str, master_bank: dict,
 
 
 def _parse(text: str) -> dict:
+    """
+    Robust JSON parse for AI responses.
+
+    Handles:
+      - Surrounding markdown code fences (```json … ```)
+      - Leading/trailing prose ("Here is the JSON:" / "Let me know…")
+      - Extra content after the JSON object (JSONDecodeError: Extra data)
+      - Stray whitespace / BOM / invisible chars
+    """
+    text = (text or "").strip()
+    # Strip a leading BOM if present
+    if text.startswith("\ufeff"):
+        text = text[1:]
+    # Strip ``` or ```json fences
+    text = re.sub(r"^```(?:json)?\s*\n?", "", text)
+    text = re.sub(r"\n?```\s*$", "", text)
     text = text.strip()
-    text = re.sub(r"^```(?:json)?\n?", "", text)
-    text = re.sub(r"\n?```$", "", text)
-    return json.loads(text)
+
+    # Fast path: plain json.loads
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Locate the first "{" and use raw_decode to parse one value,
+    # discarding any prose before or after the JSON.
+    first_brace = text.find("{")
+    if first_brace == -1:
+        raise ValueError("AI response contains no JSON object")
+    candidate = text[first_brace:]
+    decoder   = json.JSONDecoder()
+    try:
+        obj, _end = decoder.raw_decode(candidate)
+        return obj
+    except json.JSONDecodeError as e:
+        # Last resort: surface a clear error with a snippet of the bad payload
+        snippet = candidate[:300].replace("\n", " ")
+        raise ValueError(
+            f"AI returned invalid JSON ({e.msg} at pos {e.pos}): {snippet}…"
+        ) from e
 
 
 # ─── Provider implementations ─────────────────────────────────────────────────
@@ -292,7 +328,7 @@ def _call_openai(system: str, user_msg: str, api_key: str, model: str,
         ],
         response_format={"type": "json_object"},
     )
-    return json.loads(resp.choices[0].message.content)
+    return _parse(resp.choices[0].message.content)
 
 
 def _call_gemini(system: str, user_msg: str, api_key: str, model: str,

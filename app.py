@@ -1493,7 +1493,11 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
           placeholder="Paste the full job description here — include role title, responsibilities, requirements, and any keywords you spot…" required></textarea>
       </div>
       <button class="btn-generate" type="submit" id="genBtn">
-        &#10024; Tailor my CV for this role &rarr;
+        <span id="genBtnDefault">&#10024; Tailor my CV for this role &rarr;</span>
+        <span id="genBtnLoading" style="display:none;align-items:center;justify-content:center;gap:.6rem;">
+          <span style="display:inline-block;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:ccSpin .7s linear infinite;"></span>
+          Analysing JD &amp; tailoring your CV&hellip;
+        </span>
       </button>
     </form>
   </div>
@@ -1501,12 +1505,26 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
 {% endif %}
 """).replace("{% block scripts %}{% endblock %}", """
 <script>
-document.getElementById('genForm')?.addEventListener('submit', function() {
-  document.getElementById('overlayTitle').textContent = 'Analysing JD & tailoring your CV\u2026';
-  document.getElementById('overlaySub').textContent   = 'AI is rewriting your bullets in the JD\'s language \u2014 ~20\u201340 seconds';
-  document.getElementById('loadingOverlay').style.display = 'flex';
-  document.getElementById('genBtn').disabled = true;
-});
+(function() {
+  const form = document.getElementById('genForm');
+  if (!form) return;
+  form.addEventListener('submit', function() {
+    // In-button spinner (always visible even if overlay has issues)
+    const btn       = document.getElementById('genBtn');
+    const btnDef    = document.getElementById('genBtnDefault');
+    const btnLoad   = document.getElementById('genBtnLoading');
+    if (btn)     btn.disabled = true;
+    if (btnDef)  btnDef.style.display = 'none';
+    if (btnLoad) btnLoad.style.display = 'inline-flex';
+    // Full-screen overlay (richer feedback)
+    const ov = document.getElementById('loadingOverlay');
+    const ot = document.getElementById('overlayTitle');
+    const os = document.getElementById('overlaySub');
+    if (ot) ot.textContent = 'Analysing JD & tailoring your CV\u2026';
+    if (os) os.textContent = "AI is rewriting your bullets in the JD's language \u2014 ~20\u201340 seconds";
+    if (ov) ov.style.display = 'flex';
+  });
+})();
 </script>
 """)
 
