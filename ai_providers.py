@@ -104,7 +104,7 @@ is_project=true sections; score by domain match, skills overlap, JD focus areas;
 9. Return ONLY valid JSON — no markdown fences, no prose
 
 ## Output JSON
-{"jd_analysis":{"company":"","role":"","top_keywords":[],"focus_areas":[]},"sections":{"<key>":["STAR bullet 1","STAR bullet 2"]},"skills_text":"Category: skill · skill\nCertifications: cert","project_overrides":{"<key>":{"old_name":"","new_name":"","new_subtitle":null,"new_date":"YYYY - Present"}} }
+{"jd_analysis":{"company":"","role":""},"sections":{"<key>":["STAR bullet 1","STAR bullet 2"]},"skills_text":"Category: skill · skill\nCertifications: cert","project_overrides":{"<key>":{"old_name":"","new_name":"","new_subtitle":null,"new_date":"YYYY - Present"}} }
 Set project_overrides to null when no title swaps needed or PROJECT_SLOT_COUNT is 0."""
 
 

@@ -336,6 +336,31 @@ def discover_template_sections(template_path: Path) -> dict:
     return slot_counts
 
 
+def map_template_slots_from_raw(raw_slots: dict, master_bank: dict) -> dict:
+    """
+    Map a raw_slots dict (title → bullet_count, as returned by
+    discover_template_sections) to master-bank section keys, without
+    re-opening the DOCX file.
+
+    This is the in-memory equivalent of read_template_slots() when the raw
+    slot counts were cached in format_rules at upload time.
+    """
+    if not master_bank:
+        return raw_slots
+    all_anchors = _build_anchors(master_bank)
+    result: dict[str, int] = {}
+    for title, count in raw_slots.items():
+        title_lower = title.lower()
+        matched_key = None
+        for anchor, key in all_anchors:
+            if anchor.lower() in title_lower:
+                matched_key = key
+                break
+        if matched_key:
+            result[matched_key] = result.get(matched_key, 0) + count
+    return result
+
+
 def read_template_slots(template_path: Path,
                         master_bank: dict | None = None) -> dict:
     """"""

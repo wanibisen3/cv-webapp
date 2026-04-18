@@ -40,9 +40,12 @@ from flask import (
 
 import supabase_client as sb
 from ai_providers import PROVIDERS, call_ai, decrypt_key, encrypt_key, parse_cv_to_bank
+from concurrent.futures import ThreadPoolExecutor
+
 from cv_engine import (
-    check_one_page, convert_to_pdf, extract_template_format_rules,
-    extract_text, modify_docx, read_template_slots,
+    check_one_page, convert_to_pdf, discover_template_sections,
+    extract_template_format_rules, extract_text, map_template_slots_from_raw,
+    modify_docx, read_template_slots,
 )
 
 # ─── App setup ────────────────────────────────────────────────────────────────
@@ -2190,6 +2193,15 @@ def upload_template():
         except Exception:
             pass   # non-fatal — fallback defaults will be used at generate time
 
+        # Cache raw section slot counts so generate() can skip re-downloading
+        # the template just to count bullets. Stored inside format_rules JSONB.
+        try:
+            raw_slots = discover_template_sections(tmp)
+            if raw_slots:
+                fmt_rules["raw_slots"] = raw_slots
+        except Exception:
+            pass  # non-fatal
+
         sb.upload_cv_template(session["user_id"], tmp, format_rules=fmt_rules or None)
         session["has_template"] = True
 
@@ -2610,11 +2622,15 @@ def generate():
     tmp_dir = Path(tempfile.mkdtemp())
 
     try:
-        # 1. Load master bank
-        master_bank = sb.load_master_bank(user_id)
+        # 1–3. Parallelise all three DB reads — they are independent of each other.
+        with ThreadPoolExecutor(max_workers=3) as ex:
+            f_bank = ex.submit(sb.load_master_bank,            user_id)
+            f_ai   = ex.submit(sb.load_ai_settings,            user_id)
+            f_fmt  = ex.submit(sb.load_template_format_rules,  user_id)
+        master_bank = f_bank.result()
+        ai_cfg      = f_ai.result()
+        fmt_rules   = f_fmt.result() or {}
 
-        # 2. Load AI settings + decrypt key
-        ai_cfg = sb.load_ai_settings(user_id)
         if not ai_cfg.get("api_key_enc"):
             flash("No AI API key configured. Go to Settings first.", "error")
             return redirect(url_for("dashboard"))
@@ -2622,29 +2638,35 @@ def generate():
         raw_key  = decrypt_key(ai_cfg["api_key_enc"])
         model    = ai_cfg.get("model") or None
 
-        # 3. Download CV template + read slot counts + merge format rules
-        template_path = tmp_dir / "base_cv.docx"
-        sb.download_cv_template(user_id, template_path)
-        template_slots = read_template_slots(template_path, master_bank)
-
-        # Inject template format rules (font, bullet length…) into master_bank so
-        # both call_ai() and modify_docx() use this user's exact formatting constraints.
-        #
-        # Lazy back-fill: if format_rules is NULL (template was uploaded before this
-        # feature existed), extract from the already-downloaded file and persist so
-        # the next generate is instant.
-        fmt_rules = sb.load_template_format_rules(user_id)
-        if not fmt_rules:
+        # 3. Resolve template slot counts.
+        # Fast path: raw_slots was cached in format_rules at upload time → no download needed.
+        # Slow path (back-compat): download template, extract, persist for next time.
+        raw_slots = fmt_rules.get("raw_slots") if isinstance(fmt_rules, dict) else None
+        if raw_slots:
+            template_slots = map_template_slots_from_raw(raw_slots, master_bank)
+            template_path  = None   # will be downloaded lazily at confirm time if needed
+        else:
+            template_path = tmp_dir / "base_cv.docx"
+            sb.download_cv_template(user_id, template_path)
+            template_slots = read_template_slots(template_path, master_bank)
+            # Lazy back-fill: persist format_rules + raw_slots so next generate is fast.
+            if not fmt_rules:
+                try:
+                    fmt_rules = extract_template_format_rules(template_path)
+                except Exception:
+                    fmt_rules = {}
             try:
-                fmt_rules = extract_template_format_rules(template_path)
-                sb.save_template_format_rules(user_id, fmt_rules)
+                new_raw = discover_template_sections(template_path)
+                if new_raw:
+                    fmt_rules["raw_slots"] = new_raw
+                    sb.save_template_format_rules(user_id, fmt_rules)
             except Exception:
-                fmt_rules = {}
+                pass
 
         if fmt_rules:
             master_bank["format_rules"] = {
                 **master_bank.get("format_rules", {}),
-                **fmt_rules,   # template extraction always overrides bank defaults
+                **{k: v for k, v in fmt_rules.items() if k != "raw_slots"},
             }
 
         # 4. Call AI
@@ -2676,6 +2698,7 @@ def generate():
             "role":          role,
             "safe":          safe,
             "labels":        labels,
+            "user_id":       user_id,
         }
 
         return redirect(url_for("review_page", token=token))
@@ -2756,7 +2779,17 @@ def review_confirm(token):
                 print(f"  ✂️  Bullet capped ({len(b)}→{len(truncated)} chars) in '{sec_key}'")
         sections[sec_key] = capped
 
-    tmp_dir  = template_path.parent
+    # Lazy template download: skipped during generate() when raw_slots was cached.
+    # Download now (just before DOCX manipulation) if we don't have it locally yet.
+    if template_path is None or not template_path.exists():
+        tmp_dir = Path(tempfile.mkdtemp())
+        template_path = tmp_dir / "base_cv.docx"
+        sb.download_cv_template(pending.get("user_id") or session["user_id"], template_path)
+        # Update pending so subsequent retries / page refreshes don't re-download.
+        pending["template_path"] = template_path
+    else:
+        tmp_dir = template_path.parent
+
     out_dir  = tmp_dir / safe
     out_dir.mkdir(parents=True, exist_ok=True)
     docx_path = out_dir / "Tailored_CV.docx"
