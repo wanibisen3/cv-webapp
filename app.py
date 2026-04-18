@@ -2225,9 +2225,7 @@ _RESULT = _BASE.replace("{% block content %}{% endblock %}", """
       Tailored for <strong style="color:var(--navy);">{{ company }}</strong> &mdash; <em>{{ role }}</em>
     </p>
 
-    <div style="display:inline-flex;align-items:center;gap:.35rem;background:#f0fdf4;border:1px solid rgba(5,150,105,0.2);border-radius:20px;padding:.3rem .85rem;font-size:.78rem;font-weight:600;color:var(--emerald);margin-bottom:1.5rem;">
-      <i class="bi bi-check-circle-fill"></i>1-page verified
-    </div>
+    <div style="margin-bottom:1.25rem;"></div>
 
     <div style="display:grid;gap:.6rem;margin-bottom:1.5rem;">
       <a href="/download/{{ token }}/docx" class="btn-indig" style="display:block;padding:.75rem;border-radius:var(--r10);text-decoration:none;font-size:.95rem;">
