@@ -1004,7 +1004,7 @@ _INDEX = r"""<!doctype html>
         <div class="hero-trust">
           <i class="bi bi-key-fill"></i>Bring your own API key
           <span style="color:rgba(255,255,255,0.15);">|</span>
-          <i class="bi bi-shield-check"></i>Zero data stored
+          <i class="bi bi-shield-check"></i>Encrypted & private
           <span style="color:rgba(255,255,255,0.15);">|</span>
           <i class="bi bi-infinity"></i>Unlimited tailored CVs
         </div>
@@ -1091,8 +1091,8 @@ _INDEX = r"""<!doctype html>
         <div class="stat-label">Per CV Generation</div>
       </div>
       <div class="col-auto stat-item">
-        <div class="stat-number"><span>Zero</span></div>
-        <div class="stat-label">Data Stored</div>
+        <div class="stat-number"><span>Private</span></div>
+        <div class="stat-label">Encrypted &amp; Yours Only</div>
       </div>
       <div class="col-auto stat-item">
         <div class="stat-number"><span>Any</span> AI</div>
@@ -1226,7 +1226,7 @@ _INDEX = r"""<!doctype html>
     </div>
     <div style="text-align:center;font-size:.77rem;color:var(--muted);margin-top:2rem;display:flex;align-items:center;justify-content:center;gap:.5rem;">
       <i class="bi bi-shield-lock-fill" style="color:var(--emerald);"></i>
-      Your API key is encrypted at rest and only used for CV generation. We never store your CV content.
+      Your API key is encrypted at rest and only used for CV generation. Your data is yours — protected by row-level security.
     </div>
   </div>
 </section>
