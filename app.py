@@ -108,6 +108,74 @@ _pending   = CVStore("pending")
 _generated = CVStore("generated")
 
 
+# ─── Skills-text normaliser (generic, template-driven) ───────────────────────
+def _cap_skills_text(skills_text: str, max_lines: int, max_line_chars: int) -> str:
+    """
+    Enforce the template's skill-block constraints on arbitrary skills text.
+
+    Rules:
+      • Each line must fit in `max_line_chars` (truncate at word boundary).
+      • Total line count must not exceed `max_lines`. If it does:
+          - Always keep the "Certifications:" line (last), if present.
+          - Drop the shortest non-certifications lines first (least value per line).
+    Works for any template — no hardcoded categories.
+    """
+    if not skills_text:
+        return skills_text
+
+    lines = [ln.strip() for ln in skills_text.splitlines() if ln.strip()]
+
+    # ── Per-line length cap ──
+    capped_lines = []
+    for ln in lines:
+        if len(ln) <= max_line_chars:
+            capped_lines.append(ln)
+        else:
+            # Preserve "Category:" prefix, trim the trailing values at a separator.
+            head, sep, tail = ln.partition(":")
+            if sep:
+                room = max(0, max_line_chars - len(head) - 2)
+                # Split tail by common separators and add items until we run out.
+                parts = re.split(r"\s*[·•|]\s*|\s*,\s*", tail)
+                acc   = ""
+                for p in parts:
+                    add = (" · " if acc else "") + p.strip()
+                    if len(acc) + len(add) > room:
+                        break
+                    acc += add
+                capped_lines.append(f"{head}: {acc}".strip() if acc else head + ":")
+            else:
+                # No colon — just hard-truncate at word boundary.
+                capped_lines.append(ln[:max_line_chars].rsplit(" ", 1)[0].rstrip(",;: "))
+        if len(capped_lines[-1]) != len(ln):
+            print(f"  ✂️  Skill line capped ({len(ln)}→{len(capped_lines[-1])} chars)")
+
+    # ── Line count cap ──
+    if len(capped_lines) <= max_lines:
+        return "\n".join(capped_lines)
+
+    # Always keep any line starting with "Certifications" (case-insensitive).
+    cert_idxs = [i for i, ln in enumerate(capped_lines) if ln.lower().startswith("certifications")]
+    keep_mask = [False] * len(capped_lines)
+    for i in cert_idxs:
+        keep_mask[i] = True
+
+    # Score remaining lines by length (longer = richer = keep). Drop shortest first.
+    remaining_budget = max_lines - sum(keep_mask)
+    scored = sorted(
+        [(i, len(ln)) for i, ln in enumerate(capped_lines) if not keep_mask[i]],
+        key=lambda t: -t[1],
+    )
+    for i, _len in scored[:remaining_budget]:
+        keep_mask[i] = True
+
+    pruned = [ln for i, ln in enumerate(capped_lines) if keep_mask[i]]
+    dropped = len(capped_lines) - len(pruned)
+    if dropped:
+        print(f"  ✂️  Skill lines pruned ({len(capped_lines)}→{len(pruned)}; -{dropped})")
+    return "\n".join(pruned)
+
+
 
 # ─── Auth decorator ───────────────────────────────────────────────────────────
 
@@ -2879,14 +2947,15 @@ def generate():
         # 6. Store pending state and redirect to review
         token = _uuid.uuid4().hex
         _pending[token] = {
-            "ai_result":     result,
-            "master_bank":   master_bank,
-            "template_path": template_path,
-            "company":       company,
-            "role":          role,
-            "safe":          safe,
-            "labels":        labels,
-            "user_id":       user_id,
+            "ai_result":      result,
+            "master_bank":    master_bank,
+            "template_path":  template_path,
+            "company":        company,
+            "role":           role,
+            "safe":           safe,
+            "labels":         labels,
+            "user_id":        user_id,
+            "template_slots": template_slots,
         }
 
         return redirect(url_for("review_page", token=token))
@@ -2951,11 +3020,19 @@ def review_confirm(token):
     project_overrides = result.get("project_overrides") or None
     company, role, safe = pending["company"], pending["role"], pending["safe"]
 
-    # Hard-cap bullet length to what fits in this user's template.
-    # The AI prompt requests this but sometimes overshoots — truncate at the
-    # last word boundary to keep bullets readable and stay within one page.
-    fmt_rules        = master_bank.get("format_rules", {})
-    max_bullet_chars = int(fmt_rules.get("max_bullet_chars", 215))
+    # ── Generic format-rule enforcement — works for any user's template ──
+    # Use the rules auto-extracted from the user's DOCX at upload time:
+    #   max_bullet_chars      — longest bullet the template font can hold on one line
+    #   max_skill_lines       — number of soft-return lines the skills paragraph has
+    #   max_skill_line_chars  — longest single skill line the template can hold
+    # template_slots maps section_key → bullet count for that section's slot.
+    fmt_rules            = master_bank.get("format_rules", {})
+    max_bullet_chars     = int(fmt_rules.get("max_bullet_chars",     215))
+    max_skill_lines      = int(fmt_rules.get("max_skill_lines",      5))
+    max_skill_line_chars = int(fmt_rules.get("max_skill_line_chars", 120))
+    template_slots       = pending.get("template_slots") or {}
+
+    # 1. Cap each bullet's length (word-boundary truncate) ────────────────────
     for sec_key in sections:
         capped = []
         for b in sections[sec_key]:
@@ -2966,6 +3043,19 @@ def review_confirm(token):
                 capped.append(truncated)
                 print(f"  ✂️  Bullet capped ({len(b)}→{len(truncated)} chars) in '{sec_key}'")
         sections[sec_key] = capped
+
+    # 2. Cap bullet COUNT per section to the template's slot count ────────────
+    #    Prevents an AI that returned N+1 bullets from ever overflowing the
+    #    template's layout — modify_docx also guards this, but we cap here so
+    #    the retry-prune logic below has an accurate view of what will be used.
+    for sec_key, slot_count in template_slots.items():
+        if sec_key in sections and slot_count > 0 and len(sections[sec_key]) > slot_count:
+            before = len(sections[sec_key])
+            sections[sec_key] = sections[sec_key][:slot_count]
+            print(f"  ✂️  Bullet count capped ({before}→{slot_count}) in '{sec_key}' (template slots)")
+
+    # 3. Cap skills text — line count AND per-line length ─────────────────────
+    skills_text = _cap_skills_text(skills_text, max_skill_lines, max_skill_line_chars)
 
     # Lazy template download: skipped during generate() when raw_slots was cached.
     # Download now (just before DOCX manipulation) if we don't have it locally yet.
@@ -2984,9 +3074,17 @@ def review_confirm(token):
 
     print(f"  🏁  Confirming CV generation for token: {token}")
     try:
-        # HARD ONE-PAGE GUARANTEE LOOP
+        # ── HARD ONE-PAGE GUARANTEE LOOP ──
+        # Strategy (applies to ANY template — template-agnostic):
+        #   Attempt 1   → render with caps already applied above.
+        #   Attempt 2-4 → alternate between trimming bullets and trimming
+        #                 skill lines, starting with whichever is largest.
+        #                 Always keep ≥1 bullet per section and the
+        #                 Certifications line (handled by _cap_skills_text).
+        MAX_ATTEMPTS = 5
         attempts = 0
-        while attempts < 3:
+        one_page = False
+        while attempts < MAX_ATTEMPTS:
             print(f"  - Attempt {attempts + 1}: Generating files...")
             modify_docx(
                 sections=sections,
@@ -2998,27 +3096,51 @@ def review_confirm(token):
             )
             pdf_path = convert_to_pdf(docx_path)
             one_page = check_one_page(pdf_path)
-            
-            if one_page or attempts >= 2:
+
+            if one_page:
                 break
-            
-            # Too long! Prune the longest section to try and fit in one page
             attempts += 1
+            if attempts >= MAX_ATTEMPTS:
+                break
+
             print(f"  📏 CV is > 1 page. Pruning attempt {attempts}...")
-            
-            # Find the section with the absolute most bullets to trim
-            max_key = None
-            max_len = -1
-            for k, v in sections.items():
-                if len(v) > max_len:
-                    max_len = len(v)
-                    max_key = k
-            
-            if max_key and max_len > 1:
-                print(f"     ✂️ Trimming 1 bullet from '{max_key}'")
-                sections[max_key].pop()
-            else:
-                break # Cannot trim further
+
+            # Decide what to trim this round by comparing "costs":
+            #   - total bullet count across all sections
+            #   - current skill-line count
+            # Trim whichever is larger (bullet=1 line, skill line=1 line).
+            total_bullets = sum(len(v) for v in sections.values())
+            skill_lines   = [ln for ln in skills_text.splitlines() if ln.strip()]
+            n_skill_lines = len(skill_lines)
+
+            trimmed = False
+
+            # Prefer pruning bullets first when there's slack (keep ≥1 per section)
+            if total_bullets >= n_skill_lines:
+                max_key, max_len = None, -1
+                for k, v in sections.items():
+                    if len(v) > max_len:
+                        max_len, max_key = len(v), k
+                if max_key and max_len > 1:
+                    print(f"     ✂️  Trimming 1 bullet from '{max_key}' ({max_len}→{max_len-1})")
+                    sections[max_key].pop()
+                    trimmed = True
+
+            # Otherwise (or if no bullet was trimmable) prune a skill line.
+            if not trimmed and n_skill_lines > 2:
+                # Protect Certifications line; drop the shortest non-cert line.
+                non_cert = [(i, ln) for i, ln in enumerate(skill_lines)
+                            if not ln.lower().startswith("certifications")]
+                if non_cert:
+                    drop_i, drop_ln = min(non_cert, key=lambda t: len(t[1]))
+                    print(f"     ✂️  Trimming skill line: '{drop_ln[:60]}…'")
+                    skill_lines.pop(drop_i)
+                    skills_text = "\n".join(skill_lines)
+                    trimmed = True
+
+            if not trimmed:
+                print("     ⚠️  Nothing left to trim safely — breaking retry loop.")
+                break
 
         print("  - Final Step: Finalizing session...")
 

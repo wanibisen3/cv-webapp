@@ -97,7 +97,9 @@ STAR worked examples (the candidate's background does not matter — apply the s
 is_project=true sections; score by domain match, skills overlap, JD focus areas; vary per JD
    - If a slot currently shows a different project name than your pick, add it to project_overrides
 6. Skills: put JD-relevant categories first; use JD's exact skill names; always end with "Certifications:" \
-   (if none, write "Certifications: None listed")
+   (if none, write "Certifications: None listed"). STRICT: total lines ≤ MAX_SKILL_LINES \
+   (one line per category, separated by \\n); each line ≤ MAX_SKILL_LINE_CHARS. Collapse/drop \
+   least-relevant categories if needed — do not exceed these limits.
 7. Every section type is valid — experience, research, leadership, volunteer, consulting, anything; \
    treat them all equally; pick the most JD-relevant bullets regardless of section type
 8. Sections NOT in TEMPLATE_SLOTS (education, contact, other fixed content) must not be touched
@@ -185,9 +187,11 @@ def _build_user_message(jd_text: str, master_bank: dict,
     sections = master_bank.get("sections", {})
     template_keys = set(template_slots.keys()) if template_slots else None
 
-    # Max bullet char limit — from template format_rules (extracted from user's DOCX)
-    fmt_rules    = master_bank.get("format_rules", {})
-    max_bullet_chars = int(fmt_rules.get("max_bullet_chars", 215))
+    # Template format rules (extracted from user's DOCX at upload time)
+    fmt_rules            = master_bank.get("format_rules", {})
+    max_bullet_chars     = int(fmt_rules.get("max_bullet_chars",     215))
+    max_skill_lines      = int(fmt_rules.get("max_skill_lines",      5))
+    max_skill_line_chars = int(fmt_rules.get("max_skill_line_chars", 120))
 
     # Classify template slots into experience vs project
     # A slot is a "project slot" when its key maps to a bank section with project_name
@@ -252,7 +256,9 @@ def _build_user_message(jd_text: str, master_bank: dict,
         f"BANK:{json.dumps(bank_payload)}"
         f"{slots_note}"
         f"{proj_names_note}"
-        f"\nMAX_BULLET_CHARS:{max_bullet_chars}\n"
+        f"\nMAX_BULLET_CHARS:{max_bullet_chars}"
+        f"\nMAX_SKILL_LINES:{max_skill_lines}  (total lines in skills_text, incl. Certifications)"
+        f"\nMAX_SKILL_LINE_CHARS:{max_skill_line_chars}  (each line must fit)\n"
         "Produce the tailored CV JSON."
     )
 
