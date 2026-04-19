@@ -295,6 +295,22 @@ def extract_template_format_rules(template_path: Path) -> dict:
     max_skill_lines      = len(skill_lines) if skill_lines else 5
     max_skill_line_chars = max((len(ln) for ln in skill_lines), default=80)
 
+    # ── Chars-per-line estimate (line-fill discipline, widow-word avoidance) ──
+    # Compute how many characters of the bullet font/size fit on one rendered
+    # line of the template's page at its margins. This is the key input for
+    # "no dangling last-line words" logic: the AI is asked to pack bullets so
+    # that the last line is substantially full, and app.py post-processes any
+    # bullet whose final wrapped line has <3 words.
+    usable_twips     = _get_text_width_twips(body)
+    chars_per_line   = _estimate_chars_per_line(bullet_font, bullet_font_size_pt, usable_twips)
+
+    # Ideal 2-line max: pack the second line to ~90% full so minor font-metric
+    # differences between LibreOffice and Word don't push it to a 3rd line.
+    # Leave a 6-char safety margin on each full line.
+    ideal_1line_max  = max(60,  chars_per_line - 6)
+    ideal_2line_min  = chars_per_line + 30            # enough to clearly need 2 lines
+    ideal_2line_max  = min(max_bullet_chars, int(chars_per_line * 1.88))
+
     return {
         "max_bullet_chars":     max_bullet_chars,
         "max_skill_lines":      max_skill_lines,
@@ -303,7 +319,120 @@ def extract_template_format_rules(template_path: Path) -> dict:
         "bullet_font_size_pt":  bullet_font_size_pt,
         "has_bold_subheading":  has_bold_subheading,
         "bullet_format":        "SubHeading: [verb] [action+context], [result]",
+        "chars_per_line":       chars_per_line,
+        "ideal_1line_max":      ideal_1line_max,
+        "ideal_2line_min":      ideal_2line_min,
+        "ideal_2line_max":      ideal_2line_max,
     }
+
+
+# ─── Line-width estimation + widow-word fixer ────────────────────────────────
+# These are used to (a) tell the AI the line budget in chars so it can write
+# bullets that fill their final line, and (b) post-process any bullet whose
+# last wrapped line has <3 words (a "widow"), by trimming to end cleanly on
+# the previous line. Character widths below are empirical average-char widths
+# in ems for each font; they're the same values typography tools use for rough
+# text-fitting estimates. Proportional fonts vary ±5%, which is well within
+# the 6-char safety margin we leave on each line.
+
+_AVG_CHAR_EM: dict[str, float] = {
+    "verdana":            0.560,
+    "tahoma":             0.520,
+    "calibri":            0.450,
+    "carlito":            0.450,   # Calibri-metric-compatible (Linux)
+    "arial":              0.490,
+    "helvetica":          0.490,
+    "liberation sans":    0.490,
+    "times":              0.445,
+    "times new roman":    0.445,
+    "georgia":            0.490,
+    "cambria":            0.475,
+    "caladea":            0.475,   # Cambria-metric-compatible (Linux)
+    "garamond":           0.440,
+    "book antiqua":       0.480,
+    "palatino":           0.490,
+    "courier":            0.600,
+    "courier new":        0.600,
+}
+_DEFAULT_CHAR_EM = 0.500
+
+
+def _estimate_chars_per_line(font_name: str, font_size_pt: int | float,
+                             usable_twips: int) -> int:
+    """
+    Estimate how many characters of `font_name` at `font_size_pt` fit on one
+    line of width `usable_twips`. Uses an average-char-em lookup; accurate
+    enough (±5%) for proportional fonts used in CVs. 1 pt = 20 twips.
+    """
+    size_pt = float(font_size_pt) if font_size_pt else 10.0
+    if size_pt <= 0:
+        size_pt = 10.0
+    em = _AVG_CHAR_EM.get((font_name or "").strip().lower(), _DEFAULT_CHAR_EM)
+    char_w_twips = size_pt * 20.0 * em   # 1 pt = 20 twips
+    if char_w_twips <= 0:
+        return 100
+    cpl = int(usable_twips / char_w_twips)
+    # Clamp to a sane range — very small/large values indicate weird templates
+    return max(60, min(180, cpl))
+
+
+def fix_widow_line(text: str, chars_per_line: int,
+                   min_last_line_words: int = 3,
+                   min_last_line_chars: int = 18) -> str:
+    """
+    Prevent a bullet from ending with 1–2 words dangling on a new line.
+
+    Greedy-wraps `text` at `chars_per_line`-char line boundaries (breaking at
+    spaces). If the bullet wraps to >1 line AND the final line contains
+    fewer than `min_last_line_words` words AND fewer than `min_last_line_chars`
+    characters, we drop those dangling tokens and tidy the trailing punctuation.
+
+    Why drop instead of extend? Extending would require another AI round-trip
+    and risk hallucinating facts. The widow content is almost always a filler
+    suffix ("across regions", "by leveraging X") — losing it costs little and
+    guarantees the bullet renders without visual waste.
+
+    Returns the original text when no widow is detected or when `chars_per_line`
+    is unknown.
+    """
+    if not text or chars_per_line <= 0:
+        return text
+    words = text.split()
+    if not words:
+        return text
+
+    lines: list[list[str]] = [[]]
+    cur_len = 0
+    for w in words:
+        add = len(w) + (1 if lines[-1] else 0)
+        if cur_len + add > chars_per_line and lines[-1]:
+            lines.append([w])
+            cur_len = len(w)
+        else:
+            lines[-1].append(w)
+            cur_len += add
+
+    if len(lines) <= 1:
+        return text
+
+    last = lines[-1]
+    last_chars = sum(len(w) for w in last) + max(0, len(last) - 1)
+    if len(last) >= min_last_line_words and last_chars >= min_last_line_chars:
+        return text
+
+    kept_words = [w for line in lines[:-1] for w in line]
+    if not kept_words:
+        return text
+    trimmed = " ".join(kept_words).rstrip(" ,;:·–-—&/")
+    # Ensure we didn't strip into a mid-sentence preposition / connector
+    tail_lower = trimmed.lower().split()[-1] if trimmed else ""
+    _CONNECTORS = {"and", "or", "the", "a", "an", "of", "to", "for", "in",
+                   "on", "with", "by", "via", "from", "at", "across", "over",
+                   "under", "into", "as", "per", "through"}
+    while tail_lower in _CONNECTORS:
+        trimmed = trimmed.rsplit(" ", 1)[0].rstrip(" ,;:·–-—&/")
+        tail_lower = trimmed.lower().split()[-1] if trimmed else ""
+    return trimmed or text
 
 
 # ─── Template structure discovery ────────────────────────────────────────────

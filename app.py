@@ -44,8 +44,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 from cv_engine import (
     check_one_page, convert_to_pdf, discover_template_sections,
-    extract_template_format_rules, extract_text, map_template_slots_from_raw,
-    measure_last_page_fill_ratio, modify_docx, read_template_slots,
+    extract_template_format_rules, extract_text, fix_widow_line,
+    map_template_slots_from_raw, measure_last_page_fill_ratio, modify_docx,
+    read_template_slots,
 )
 
 # ─── App setup ────────────────────────────────────────────────────────────────
@@ -3062,11 +3063,15 @@ def generate():
             sb.download_cv_template(user_id, template_path)
             template_slots = read_template_slots(template_path, master_bank)
             # Lazy back-fill: persist format_rules + raw_slots so next generate is fast.
-            if not fmt_rules:
+            # Also re-extract if the cached fmt_rules is missing newer fields
+            # (chars_per_line, ideal_*line_*) — templates uploaded before these
+            # fields existed would otherwise skip the widow-word pass entirely.
+            needs_refresh = (not fmt_rules) or ("chars_per_line" not in fmt_rules)
+            if needs_refresh:
                 try:
                     fmt_rules = extract_template_format_rules(template_path)
                 except Exception:
-                    fmt_rules = {}
+                    fmt_rules = fmt_rules or {}
             try:
                 new_raw = discover_template_sections(template_path)
                 if new_raw:
@@ -3105,6 +3110,7 @@ def generate():
         max_bullet_chars     = int(eff_fmt.get("max_bullet_chars",     215))
         max_skill_lines      = int(eff_fmt.get("max_skill_lines",      5))
         max_skill_line_chars = int(eff_fmt.get("max_skill_line_chars", 120))
+        chars_per_line       = int(eff_fmt.get("chars_per_line",       0))   # 0 → skip widow pass
 
         # 1. Cap each bullet's length (word-boundary truncate) ────────────────
         for sec_key in sections:
@@ -3117,6 +3123,19 @@ def generate():
                     capped.append(truncated)
                     print(f"  ✂️  Bullet capped ({len(b)}→{len(truncated)} chars) in '{sec_key}'")
             sections[sec_key] = capped
+
+        # 1b. Widow-word pass — guarantee no bullet ends with 1–2 words on a
+        #     near-empty final line. Belt-and-braces on top of the AI's own
+        #     line-fill discipline (Step 3 of the system prompt).
+        if chars_per_line > 0:
+            for sec_key in list(sections.keys()):
+                fixed = []
+                for b in sections[sec_key]:
+                    nb = fix_widow_line(b, chars_per_line)
+                    if nb != b:
+                        print(f"  🪄  Widow fix in '{sec_key}' ({len(b)}→{len(nb)} chars)")
+                    fixed.append(nb)
+                sections[sec_key] = fixed
 
         # 2. Cap bullet COUNT per section to the template's slot count ────────
         for sec_key, slot_count in template_slots.items():
