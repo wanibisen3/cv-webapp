@@ -542,7 +542,7 @@ _BASE = r"""<!doctype html>
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
       <div>
         <div class="footer-brand">My INSEAD <span>CV</span></div>
-        <div class="footer-tag">built with love by wani for INSEADers</div>
+        <div class="footer-tag">Precision-crafted for the INSEAD community by wani</div>
       </div>
       <div class="footer-lock">
         <i class="bi bi-shield-check"></i> Your data stays yours — always.
@@ -1403,7 +1403,7 @@ _INDEX = r"""<!doctype html>
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
       <div>
         <div class="footer-brand">My INSEAD <span>CV</span></div>
-        <div class="footer-tag">built with love by wani for INSEADers</div>
+        <div class="footer-tag">Precision-crafted for the INSEAD community by wani</div>
       </div>
       <div class="footer-lock">
         <i class="bi bi-shield-check"></i> Your data stays yours — always.
