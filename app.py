@@ -534,7 +534,8 @@ _BASE = r"""<!doctype html>
       </div>
     {% endfor %}
   </div>
-  {% block content %}{% endblock %}
+</div>
+
 <!-- Footer -->
 <footer class="site-footer">
   <div class="container">
