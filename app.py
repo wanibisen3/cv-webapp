@@ -743,7 +743,7 @@ _INDEX = r"""<!doctype html>
 
     /* ── Hero ── */
     .hero {
-      background: #ffffff;
+      background: transparent;
       position: relative; overflow: hidden;
       padding: 3rem 0 8rem;
       display: flex; align-items: center;
@@ -882,7 +882,8 @@ _INDEX = r"""<!doctype html>
 
     /* ── Stats bar ── */
     .stats-bar {
-      background: #fff;
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(4px);
       border-bottom: 1px solid rgba(15,23,42,0.06);
       border-top: 1px solid rgba(15,23,42,0.06);
       padding: 1.1rem 0;
@@ -982,7 +983,7 @@ _INDEX = r"""<!doctype html>
 
     /* ── INSEAD pledge section ── */
     .insead-pledge {
-      background: #f8fafc;
+      background: transparent;
       padding: 4rem 0 4.5rem; position: relative; overflow: hidden;
     }
     .insead-pledge::before {
@@ -1048,7 +1049,7 @@ _INDEX = r"""<!doctype html>
     }
 
     /* ── Auth section ── */
-    .auth-section { background: var(--bg); padding: 4rem 0 4.5rem; }
+    .auth-section { background: transparent; padding: 4rem 0 4.5rem; }
     .auth-heading {
       font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900;
       font-size: clamp(1.8rem, 3.5vw, 2.4rem); color: var(--navy);
