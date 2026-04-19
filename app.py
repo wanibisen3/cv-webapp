@@ -1738,7 +1738,6 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
   <!-- Sharper Tailoring Box -->
   <div class="bank-boost-card mb-4">
     <div class="bank-boost-left">
-      <div class="bank-boost-badge">Boost tailoring quality</div>
       <h4 class="bank-boost-title">Want even sharper tailoring?</h4>
       <p class="bank-boost-desc">The more context about your work and metrics you give in your Bullet Bank, the stronger the AI can rewrite and pull exact bullets to match the job description . <a href="/bank" style="color:var(--indigo);font-weight:600;text-decoration:none;">Update your library &rarr;</a></p>
     </div>
