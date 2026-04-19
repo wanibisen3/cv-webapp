@@ -1566,15 +1566,16 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
   }
   .generate-sub { color: var(--muted); font-size: .88rem; margin-bottom: 1.4rem; line-height: 1.6; }
 
-  /* ── How it works in Dashboard (Dark theme consistent) ── */
-  .dash-how { background: transparent; padding: 2.25rem 0; margin-top: 1.75rem; }
-  .how-heading { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 1.5rem; color: var(--navy); letter-spacing: -.03em; margin-bottom: 1rem; }
+  /* ── How it works in Dashboard (Forced visibility) ── */
+  .dash-how { background: transparent; padding: 2.25rem 0; margin-top: 1.75rem; display: block !important; visibility: visible !important; opacity: 1 !important; }
+  .how-heading { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 1.5rem; color: var(--navy); letter-spacing: -.03em; margin-bottom: 1rem; display: block !important; }
   .how-sub { font-size: .88rem; color: var(--muted); margin-bottom: 2rem; max-width: 600px; }
   .step-card {
     background: #fff; border: 1px solid rgba(15,23,42,0.08); border-radius: var(--r20); padding: 1.75rem;
     transition: transform .22s, box-shadow .22s; box-shadow: 0 4px 16px rgba(15,23,42,0.04);
+    opacity: 1 !important; transform: none !important; visibility: visible !important;
   }
-  .step-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(15,23,42,0.08); }
+  .step-card:hover { transform: translateY(-4px) !important; box-shadow: 0 12px 32px rgba(15,23,42,0.08); }
   .step-icon-circle {
     width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
     font-size: 1.2rem; color: #fff; margin-bottom: 1rem;
@@ -1729,8 +1730,53 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
   </div>
 </div>
 
-  {% if has_template and has_ai %}
-  <div class="generate-wrap mt-5">
+<!-- Workflow and Tailoring Section -->
+{% if has_template and has_ai %}
+<div class="mt-5 pb-5">
+  <h2 class="how-heading mb-4">Building your tailored CV</h2>
+  
+  <!-- Sharper Tailoring Box -->
+  <div class="bank-boost-card mb-5">
+    <div class="bank-boost-left">
+      <div class="bank-boost-badge">Boost tailoring quality</div>
+      <h4 class="bank-boost-title">Want even sharper tailoring?</h4>
+      <p class="bank-boost-desc">The more context and metrics you give in your Bullet Bank, the stronger the AI can rewrite each bullet to match the job. <a href="/bank" style="color:var(--indigo);font-weight:600;text-decoration:none;">Update your library &rarr;</a></p>
+    </div>
+    <div class="bank-boost-right">
+      <div class="bank-boost-ic"><i class="bi bi-lightning-charge-fill"></i></div>
+    </div>
+  </div>
+
+  <!-- Instruction Cards -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-4">
+      <div class="step-card">
+        <div class="step-icon-circle ic-indigo"><i class="bi bi-file-earmark-arrow-up"></i></div>
+        <div class="step-num">Step 01</div>
+        <div class="step-title">Upload template</div>
+        <div class="step-desc">Upload your .docx CV Once. We extract the font and layout.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="step-card">
+        <div class="step-icon-circle ic-violet"><i class="bi bi-textarea-t"></i></div>
+        <div class="step-num">Step 02</div>
+        <div class="step-title">Paste job description</div>
+        <div class="step-desc">Paste the JD. AI picks the best bullets from your library.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="step-card">
+        <div class="step-icon-circle ic-emerald"><i class="bi bi-download"></i></div>
+        <div class="step-num">Step 03</div>
+        <div class="step-title">Download CV</div>
+        <div class="step-desc">Get a perfectly tailored .docx and PDF in seconds.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generation Form Box -->
+  <div class="generate-wrap">
     <div class="generate-inner">
       <div class="generate-title">
         <i class="bi bi-magic" style="color:var(--indigo);"></i>Tailor your CV with AI
@@ -1750,7 +1796,8 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
       </form>
     </div>
   </div>
-  {% endif %}
+</div>
+{% endif %}
 </div> <!-- End cc-page -->
 
 """).replace("{% block scripts %}{% endblock %}", """
