@@ -39,7 +39,7 @@ from flask import (
 )
 
 import supabase_client as sb
-from ai_providers import PROVIDERS, call_ai, decrypt_key, encrypt_key, parse_cv_to_bank
+from ai_providers import PROVIDERS, call_ai, decrypt_key, encrypt_key, generate_bank_summary, parse_cv_to_bank
 from concurrent.futures import ThreadPoolExecutor
 
 from cv_engine import (
@@ -1501,8 +1501,8 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
     <p class="status-card-desc">{{ 'Your experience &amp; bullets are ready.' if has_bank else 'Upload your CV or paste your experience.' }}</p>
     {% if has_bank %}
       <div class="d-grid gap-1 mt-auto">
-        <a href="/bank" class="btn btn-ghost btn-sm">Edit Bank</a>
-        <a href="/bank/import" class="btn btn-ghost btn-sm">+ Import more</a>
+        <a href="/bank" class="btn btn-ghost btn-sm">View Bank</a>
+        <a href="/bank/download" class="btn btn-ghost btn-sm">Download JSON</a>
       </div>
     {% else %}
       <a href="/bank/create" class="btn btn-indig btn-sm mt-auto" style="display:block;text-align:center;">Set up Bank</a>
@@ -1970,15 +1970,11 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
     <p style="color:var(--muted);font-size:.82rem;margin:.2rem 0 0;">Your library of experience — the source of every tailored CV</p>
   </div>
   <div class="d-flex gap-2 flex-wrap">
-    <a href="/bank/import" class="btn-success-custom" style="font-size:.8rem;padding:.4rem .9rem;border-radius:var(--r10);text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;">
-      <i class="bi bi-plus-circle"></i>Import more
-    </a>
-    <a href="/bank/section/add" class="btn-indig" style="font-size:.8rem;padding:.4rem .9rem;border-radius:var(--r10);text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;">
-      <i class="bi bi-briefcase"></i>Add section
-    </a>
+    {% if bank %}
     <a href="/bank/download" class="btn-ghost" style="font-size:.8rem;padding:.4rem .9rem;border-radius:var(--r10);text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;">
-      <i class="bi bi-download"></i>Export JSON
+      <i class="bi bi-download"></i>Download JSON
     </a>
+    {% endif %}
   </div>
 </div>
 
@@ -1990,188 +1986,113 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
 </div>
 {% else %}
 
-<!-- STAR format guide (collapsible) -->
-<div class="star-guide mb-3" style="cursor:pointer;">
-  <div class="d-flex justify-content-between align-items-center"
-       data-bs-toggle="collapse" data-bs-target="#starGuide">
-    <span><strong>STAR bullet format</strong> &mdash; how bullets are written for every JD</span>
-    <i class="bi bi-chevron-down" style="color:var(--indigo);font-size:.8rem;"></i>
-  </div>
-  <div class="collapse" id="starGuide">
-    <hr style="border-color:rgba(79,70,229,0.2);margin:.6rem 0;">
-    <div class="mb-1"><strong>Format:</strong>
-      <code>SubHeading: [Strong verb] [what you did + context], [result with metric]</code>
-    </div>
-    <div class="mb-2" style="font-size:.78rem;color:#4c1d95;">
-      SubHeading = bold JD-matched keyword &nbsp;&middot;&nbsp;
-      Verb = Led / Drove / Built / Delivered / Spearheaded &nbsp;&middot;&nbsp;
-      Result = $, %, &times;, rank, or directional outcome
-    </div>
-    <div class="mb-1"><span style="color:#dc2626;font-size:.76rem;font-weight:600;">&cross; Weak:</span>
-      <code>Helped with audit work for financial services client</code>
-    </div>
-    <div><span style="color:var(--emerald);font-size:.76rem;font-weight:600;">&check; STAR:</span>
-      <code>Financial Controls: Led statutory audit for mid-cap healthcare client, identifying &pound;1.2M in revenue recognition errors across 3 business units</code>
-    </div>
-    <div class="mt-2" style="font-size:.77rem;color:#4c1d95;">
-      <i class="bi bi-info-circle me-1"></i>
-      <strong>You don't need perfect bullets in your bank</strong> &mdash; just accurate facts and any metrics you have.
-      The AI rewrites everything in STAR format using the specific JD's language at generation time.
-    </div>
-  </div>
-</div>
-
-<!-- Skills & Certifications -->
-<div class="card mb-3" style="border-left:4px solid var(--gold)!important;">
+<!-- AI Summary card (read-only) -->
+<div class="card mb-3" style="border-left:4px solid var(--indigo)!important;">
   <div class="card-header d-flex justify-content-between align-items-center">
     <span style="font-weight:700;color:var(--navy);display:flex;align-items:center;gap:.4rem;">
-      <i class="bi bi-stars" style="color:var(--gold);"></i>Skills &amp; Certifications
+      <i class="bi bi-person-badge" style="color:var(--indigo);"></i>Your professional summary
     </span>
-    <button class="btn btn-xs btn-ghost" onclick="toggleEdit('skills-edit')" style="font-size:.76rem;padding:.25rem .65rem;">Edit</button>
+    <form method="post" action="/bank/regenerate-summary" style="margin:0;"
+          data-loading data-loading-title="Refreshing summary…" data-loading-sub="Re-reading your bank">
+      <button class="btn btn-xs btn-ghost" style="font-size:.74rem;padding:.25rem .65rem;"
+              data-quick-action>
+        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+      </button>
+    </form>
   </div>
   <div class="card-body p-3">
-    <div id="skills-view">
-      <pre style="white-space:pre-wrap;font-size:.82rem;margin:0;font-family:'Inter',sans-serif;color:var(--text);">{{ bank.skills_text or '(none yet)' }}</pre>
-      {% if bank.certifications %}
-        <hr style="border-color:var(--border);margin:.6rem 0;">
-        <div style="font-size:.8rem;color:var(--muted);">
-          <i class="bi bi-patch-check me-1" style="color:var(--emerald);"></i>
-          {{ ', '.join(bank.certifications) }}
-        </div>
-      {% endif %}
-    </div>
-    <div id="skills-edit" style="display:none">
-      <form method="post" action="/bank/skills"
-            data-loading data-loading-title="Saving skills…" data-loading-sub="Updating your master bank">
-        <label class="fl mt-1">Skills (one category per line)</label>
-        <div style="font-size:.75rem;color:var(--muted);margin-bottom:.4rem;">Format: <code style="background:#eef2ff;color:var(--indigo);border-radius:4px;padding:.1rem .3rem;">Category: skill &middot; skill &middot; skill</code></div>
-        <textarea name="skills_text" class="form-control mb-2" rows="6"
-          style="font-size:.82rem;">{{ bank.skills_text or '' }}</textarea>
-        <label class="fl">Certifications (comma-separated)</label>
-        <input name="certifications" class="form-control mb-2" style="font-size:.82rem;"
-          value="{{ ', '.join(bank.certifications or []) }}">
-        <label class="fl">Skills section header in your template</label>
-        <input name="skills_header" class="form-control mb-3" style="font-size:.82rem;"
-          value="{{ bank.skills_header or 'skills' }}"
-          placeholder="e.g. Skills & Additional Information">
-        <div class="d-flex gap-2">
-          <button class="btn-indig" style="font-size:.82rem;padding:.4rem .9rem;border-radius:var(--r10);"
-                  data-quick-action>Save</button>
-          <button type="button" class="btn-ghost" style="font-size:.82rem;padding:.4rem .9rem;border-radius:var(--r10);"
-            onclick="toggleEdit('skills-edit')">Cancel</button>
-        </div>
-      </form>
+    {% if bank.ai_summary %}
+      <p style="font-size:.92rem;line-height:1.65;color:var(--text);margin:0;">{{ bank.ai_summary }}</p>
+    {% else %}
+      <p style="font-size:.85rem;color:var(--muted);margin:0;font-style:italic;">
+        Summary will appear here once generated. Click <em>Refresh</em> to create it.
+      </p>
+    {% endif %}
+    <div style="margin-top:.75rem;font-size:.75rem;color:var(--muted);">
+      <i class="bi bi-info-circle me-1"></i>
+      Your bank contains <strong>{{ (bank.sections or {})|length }}</strong> experience/project section(s),
+      <strong>{{ (bank.certifications or [])|length }}</strong> certification(s), and skills data.
+      To edit specifics, download the JSON below, edit it externally, then upload it back.
     </div>
   </div>
 </div>
 
-<!-- Experience & project sections -->
-{% for key, sec in bank.sections.items() %}
-<div class="card section-card {{ 'type-company' if sec.company else 'type-project' }}">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <span style="display:flex;align-items:center;gap:.4rem;font-weight:600;color:var(--navy);">
-      {% if sec.company %}
-        <i class="bi bi-briefcase" style="color:var(--indigo);"></i>
-        {{ sec.company }}
-        {% if sec.role %}<span style="color:var(--muted);font-weight:400;font-size:.83rem;">&middot; {{ sec.role }}</span>{% endif %}
-      {% elif sec.project_name %}
-        <i class="bi bi-layers" style="color:var(--emerald);"></i>
-        {{ sec.project_name }}
-      {% else %}
-        <i class="bi bi-card-text" style="color:var(--muted);"></i>
-        {{ key }}
-      {% endif %}
-      {% if sec.date %}<span style="color:var(--muted);font-weight:400;font-size:.78rem;margin-left:.25rem;">{{ sec.date }}</span>{% endif %}
-    </span>
-    <span class="badge-pill badge-navy" style="font-size:.72rem;">{{ (sec.bullets or [])|length }} bullets &middot; {{ sec.bullet_slots or 3 }} slots</span>
+<!-- Replace bank -->
+<div class="card mb-3" style="border-left:4px solid #dc2626!important;">
+  <div class="card-header" style="font-weight:700;color:var(--navy);display:flex;align-items:center;gap:.4rem;">
+    <i class="bi bi-arrow-repeat" style="color:#dc2626;"></i>Replace bank
+    <span style="font-size:.72rem;color:var(--muted);font-weight:400;margin-left:.35rem;">Overwrites everything</span>
   </div>
-  <div class="card-body p-3 pb-2">
-    {% for b in (sec.bullets or []) %}
-    <div class="bullet-row py-1" id="bullet-{{ b.id }}">
-      <div id="view-{{ b.id }}" class="d-flex justify-content-between align-items-start gap-2">
-        <span style="font-size:.84rem;color:var(--text);line-height:1.5;">{{ b.text }}</span>
-        <div class="d-flex gap-1 flex-shrink-0">
-          <button class="btn btn-xs btn-ghost"
-            onclick="showEditBullet('{{ key }}','{{ b.id }}')">Edit</button>
-          <form method="post" action="/bank/section/{{ key }}/bullet/{{ b.id }}/delete"
-            onsubmit="return confirm('Delete this bullet?')" style="display:inline">
-            <button class="btn btn-xs" style="padding:.2rem .5rem;font-size:.73rem;border-radius:6px;background:transparent;border:1px solid rgba(220,38,38,0.3);color:#dc2626;cursor:pointer;"
-                    data-quick-action>&times;</button>
-          </form>
-        </div>
+  <div class="card-body p-3">
+    <ul class="nav nav-pills mb-2" role="tablist" style="gap:.4rem;">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#replace-file" type="button" style="font-size:.8rem;padding:.3rem .75rem;">File upload</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#replace-text" type="button" style="font-size:.8rem;padding:.3rem .75rem;">Paste text</button></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="replace-file">
+        <form method="post" action="/bank/from-file" enctype="multipart/form-data"
+              data-loading data-loading-title="Replacing your bank…" data-loading-sub="Parsing your file with AI">
+          <input type="file" name="cv_file" class="form-control mb-2" style="font-size:.82rem;"
+                 accept=".docx,.pdf,.txt,.json" required>
+          <div style="font-size:.74rem;color:var(--muted);margin-bottom:.6rem;">Accepts .docx, .pdf, .txt, or .json (round-trip)</div>
+          <button class="btn-indig" style="font-size:.82rem;padding:.4rem .9rem;border-radius:var(--r10);"
+                  data-quick-action>Replace bank</button>
+        </form>
       </div>
-      <div id="edit-{{ b.id }}" style="display:none;margin-top:.5rem;">
-        <form method="post" action="/bank/section/{{ key }}/bullet/{{ b.id }}/update"
-              data-loading data-loading-title="Saving bullet…" data-loading-sub="Updating your master bank">
-          <textarea name="text" class="form-control mb-2" rows="2"
-            style="font-size:.82rem;">{{ b.text }}</textarea>
-          <div class="d-flex gap-2">
-            <button class="btn-indig" style="font-size:.78rem;padding:.3rem .75rem;border-radius:8px;"
-                    data-quick-action>Save</button>
-            <button type="button" class="btn-ghost" style="font-size:.78rem;padding:.3rem .75rem;border-radius:8px;"
-              onclick="document.getElementById('edit-{{ b.id }}').style.display='none';
-                       document.getElementById('view-{{ b.id }}').style.display='flex'">Cancel</button>
-          </div>
+      <div class="tab-pane fade" id="replace-text">
+        <form method="post" action="/bank/from-text"
+              data-loading data-loading-title="Replacing your bank…" data-loading-sub="Parsing text with AI">
+          <textarea name="cv_text" class="form-control mb-2" rows="6" required
+            style="font-size:.82rem;" placeholder="Paste your full CV / experience text here…"></textarea>
+          <button class="btn-indig" style="font-size:.82rem;padding:.4rem .9rem;border-radius:var(--r10);"
+                  data-quick-action>Replace bank</button>
         </form>
       </div>
     </div>
-    {% endfor %}
-
-    <!-- Add bullet -->
-    <div class="mt-2" id="add-area-{{ key }}" style="display:none">
-      <form method="post" action="/bank/section/{{ key }}/bullet/add"
-            data-loading data-loading-title="Adding bullet…" data-loading-sub="Updating your master bank">
-        <textarea name="text" class="form-control mb-2" rows="2"
-          placeholder="SubHeading: Led [what you did + context], [result with $/%/metric]"
-          style="font-size:.82rem;" required></textarea>
-        <div class="d-flex gap-2">
-          <button class="btn-success-custom" style="font-size:.78rem;padding:.3rem .75rem;border-radius:8px;"
-                  data-quick-action>+ Add bullet</button>
-          <button type="button" class="btn-ghost" style="font-size:.78rem;padding:.3rem .75rem;border-radius:8px;"
-            onclick="document.getElementById('add-area-{{ key }}').style.display='none'">Cancel</button>
-        </div>
-      </form>
-    </div>
-    <button class="btn btn-xs" style="margin-top:.5rem;font-size:.76rem;padding:.25rem .65rem;border-radius:6px;background:transparent;border:1.5px solid var(--emerald);color:var(--emerald);cursor:pointer;"
-      onclick="document.getElementById('add-area-{{ key }}').style.display='block';this.style.display='none'">
-      + Add bullet
-    </button>
-
-    <!-- Slots -->
-    <form method="post" action="/bank/section/{{ key }}/slots"
-      class="d-flex align-items-center gap-2 mt-3" style="font-size:.78rem;">
-      <label style="color:var(--muted);margin:0;white-space:nowrap;">Bullet slots for AI:</label>
-      <input name="slots" type="number" min="1" max="8" value="{{ sec.bullet_slots or 3 }}"
-        class="form-control form-control-sm" style="width:60px;">
-      <button class="btn-ghost" style="font-size:.76rem;padding:.25rem .65rem;border-radius:8px;"
-              data-quick-action>Update</button>
-    </form>
   </div>
 </div>
-{% endfor %}
+
+<!-- Append to bank -->
+<div class="card mb-3" style="border-left:4px solid var(--emerald)!important;">
+  <div class="card-header" style="font-weight:700;color:var(--navy);display:flex;align-items:center;gap:.4rem;">
+    <i class="bi bi-plus-circle" style="color:var(--emerald);"></i>Add more experience
+    <span style="font-size:.72rem;color:var(--muted);font-weight:400;margin-left:.35rem;">Merges into your existing bank</span>
+  </div>
+  <div class="card-body p-3">
+    <ul class="nav nav-pills mb-2" role="tablist" style="gap:.4rem;">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#append-file" type="button" style="font-size:.8rem;padding:.3rem .75rem;">File upload</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#append-text" type="button" style="font-size:.8rem;padding:.3rem .75rem;">Paste text</button></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="append-file">
+        <form method="post" action="/bank/from-file?mode=append" enctype="multipart/form-data"
+              data-loading data-loading-title="Appending to your bank…" data-loading-sub="Parsing your file with AI">
+          <input type="file" name="cv_file" class="form-control mb-2" style="font-size:.82rem;"
+                 accept=".docx,.pdf,.txt,.json" required>
+          <div style="font-size:.74rem;color:var(--muted);margin-bottom:.6rem;">Accepts .docx, .pdf, .txt, or .json</div>
+          <button class="btn-success-custom" style="font-size:.82rem;padding:.4rem .9rem;border-radius:var(--r10);"
+                  data-quick-action>Append</button>
+        </form>
+      </div>
+      <div class="tab-pane fade" id="append-text">
+        <form method="post" action="/bank/from-text?mode=append"
+              data-loading data-loading-title="Appending to your bank…" data-loading-sub="Parsing text with AI">
+          <textarea name="cv_text" class="form-control mb-2" rows="6" required
+            style="font-size:.82rem;" placeholder="Paste new experience, projects, or skills to add…"></textarea>
+          <button class="btn-success-custom" style="font-size:.82rem;padding:.4rem .9rem;border-radius:var(--r10);"
+                  data-quick-action>Append</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endif %}
 <div class="mt-3 d-flex gap-2 flex-wrap">
   <a href="/dashboard" style="font-size:.82rem;color:var(--muted);text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;border:1.5px solid var(--border);border-radius:var(--r10);background:var(--surface);">
     <i class="bi bi-arrow-left"></i> Dashboard
   </a>
-  {% if bank %}
-  <a href="/bank/import" style="font-size:.82rem;color:var(--emerald);text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;border:1.5px solid rgba(5,150,105,0.3);border-radius:var(--r10);background:var(--surface);">
-    + Import more experience
-  </a>
-  {% endif %}
 </div>
-""").replace("{% block scripts %}{% endblock %}", """
-<script>
-function toggleEdit(id) {
-  const el = document.getElementById(id);
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
-}
-function showEditBullet(secKey, bulletId) {
-  document.getElementById('view-' + bulletId).style.display = 'none';
-  document.getElementById('edit-' + bulletId).style.display = 'block';
-}
-</script>
 """)
 
 
@@ -2590,6 +2511,20 @@ def _load_ai_for_parsing(user_id: str):
     return provider, raw_key, model
 
 
+def _try_refresh_summary(user_id: str) -> None:
+    """Best-effort: regenerate the AI summary for the user's bank. Silent on failure."""
+    try:
+        bank = sb.load_master_bank(user_id)
+        provider, raw_key, model = _load_ai_for_parsing(user_id)
+        summary = generate_bank_summary(bank, provider, raw_key, model)
+        if summary:
+            bank["ai_summary"] = summary.strip()
+            sb.save_master_bank(user_id, bank)
+    except Exception:
+        # Summary is a nice-to-have; never block the import flow
+        pass
+
+
 def _merge_or_replace_bank(user_id: str, new_bank: dict, append: bool) -> None:
     """Save new_bank, optionally merging sections into any existing bank."""
     if not append:
@@ -2637,22 +2572,33 @@ def bank_from_file():
         flash("Please choose a file to upload.", "error")
         return redirect(url_for("bank_import_page" if append else "bank_create_page"))
     suffix = Path(f.filename).suffix.lower()
-    if suffix not in (".docx", ".pdf", ".txt"):
-        flash("Unsupported file type. Please upload .docx, .pdf, or .txt", "error")
+    if suffix not in (".docx", ".pdf", ".txt", ".json"):
+        flash("Unsupported file type. Please upload .docx, .pdf, .txt or .json", "error")
         return redirect(url_for("bank_import_page" if append else "bank_create_page"))
     try:
-        provider, raw_key, model = _load_ai_for_parsing(user_id)
-        tmp = Path(tempfile.mktemp(suffix=suffix))
-        f.save(str(tmp))
-        cv_text = extract_text(tmp)
-        if not cv_text.strip():
-            raise ValueError("Could not extract any text from this file. Try a .txt version.")
-        bank = parse_cv_to_bank(cv_text, provider, raw_key, model)
+        if suffix == ".json":
+            # Direct round-trip: parse JSON as bank — no AI call, lossless
+            try:
+                raw = f.read().decode("utf-8")
+                bank = json.loads(raw)
+            except Exception as e:
+                raise ValueError(f"Invalid JSON file: {e}")
+            if not isinstance(bank, dict) or "sections" not in bank:
+                raise ValueError("JSON doesn't look like a bank (missing 'sections').")
+        else:
+            provider, raw_key, model = _load_ai_for_parsing(user_id)
+            tmp = Path(tempfile.mktemp(suffix=suffix))
+            f.save(str(tmp))
+            cv_text = extract_text(tmp)
+            if not cv_text.strip():
+                raise ValueError("Could not extract any text from this file. Try a .txt version.")
+            bank = parse_cv_to_bank(cv_text, provider, raw_key, model)
         _merge_or_replace_bank(user_id, bank, append)
         session["has_bank"] = True
         n_sections = len(bank.get("sections", {}))
         verb = "updated with" if append else "created with"
-        flash(f"Bank {verb} {n_sections} section(s) from your file. Review and edit below.", "success")
+        flash(f"Bank {verb} {n_sections} section(s) from your file.", "success")
+        _try_refresh_summary(user_id)
     except ValueError as e:
         flash(str(e), "error")
     except Exception as e:
@@ -2676,7 +2622,8 @@ def bank_from_text():
         session["has_bank"] = True
         n_sections = len(bank.get("sections", {}))
         verb = "updated with" if append else "created with"
-        flash(f"Bank {verb} {n_sections} section(s). Review and edit below.", "success")
+        flash(f"Bank {verb} {n_sections} section(s).", "success")
+        _try_refresh_summary(user_id)
     except ValueError as e:
         flash(str(e), "error")
     except Exception as e:
@@ -2696,7 +2643,34 @@ def bank_page():
         bank = sb.load_master_bank(user_id)
     except FileNotFoundError:
         bank = None
+    # Back-compat: generate summary once for banks that pre-date this feature
+    if bank and not bank.get("ai_summary"):
+        _try_refresh_summary(user_id)
+        try:
+            bank = sb.load_master_bank(user_id)
+        except FileNotFoundError:
+            pass
     return render_template_string(_BANK, bank=bank)
+
+
+@app.route("/bank/regenerate-summary", methods=["POST"])
+@login_required
+def bank_regenerate_summary():
+    user_id = session["user_id"]
+    try:
+        bank = sb.load_master_bank(user_id)
+        provider, raw_key, model = _load_ai_for_parsing(user_id)
+        summary = generate_bank_summary(bank, provider, raw_key, model)
+        bank["ai_summary"] = (summary or "").strip()
+        sb.save_master_bank(user_id, bank)
+        flash("Summary refreshed.", "success")
+    except FileNotFoundError:
+        flash("No bank found.", "error")
+    except ValueError as e:
+        flash(str(e), "error")
+    except Exception as e:
+        flash(f"Could not regenerate summary: {e}", "error")
+    return redirect(url_for("bank_page"))
 
 
 @app.route("/bank/download")

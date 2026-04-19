@@ -448,6 +448,88 @@ def parse_cv_to_bank(
         raise ValueError(f"Provider '{provider}' not implemented")
 
 
+# ─── High-level bank summary (for Bank page) ─────────────────────────────────
+
+_SUMMARY_SYSTEM = (
+    "You are a concise career writer. Given a structured master CV bank (JSON of "
+    "experiences, projects, skills, certifications), write a 3-5 sentence third-person "
+    "professional summary of the individual. Capture: domain(s), total years/seniority "
+    "signal, headline achievements, and technical/functional strengths. No bullet points, "
+    "no lists, no headings — prose only. Do NOT invent facts. Return ONLY the summary text "
+    "— no JSON, no quotes, no markdown."
+)
+
+
+def generate_bank_summary(
+    bank:     dict,
+    provider: str,
+    api_key:  str,
+    model:    str | None = None,
+) -> str:
+    """Produce a short narrative summary of the individual from their master bank."""
+    if not api_key:
+        raise ValueError("API key is empty. Please add your API key in Settings.")
+
+    provider, effective_model = _resolve_provider_model(provider, api_key, model)
+
+    # Compact bank payload — only the fields that carry signal
+    compact = {
+        "certifications": bank.get("certifications", []),
+        "skills_text":    bank.get("skills_text", "")[:1200],
+        "sections": [
+            {
+                "company":      s.get("company", ""),
+                "role":         s.get("role", ""),
+                "project_name": s.get("project_name", ""),
+                "date":         s.get("date", ""),
+                "bullets":      [b.get("text", "")[:180] for b in s.get("bullets", [])[:4]],
+            }
+            for s in bank.get("sections", {}).values()
+        ],
+    }
+    user_msg = "MASTER BANK JSON:\n" + json.dumps(compact, ensure_ascii=False)
+
+    def _plain(client_call_result: str) -> str:
+        # Providers sometimes still wrap in quotes / fences even though we ask for prose.
+        t = (client_call_result or "").strip()
+        t = re.sub(r"^```(?:text|markdown)?\s*\n?", "", t)
+        t = re.sub(r"\n?```\s*$", "", t)
+        if (t.startswith('"') and t.endswith('"')) or (t.startswith("'") and t.endswith("'")):
+            t = t[1:-1].strip()
+        return t
+
+    # Use a small max_tokens budget — summary is always short
+    if provider == "anthropic":
+        from anthropic import Anthropic
+        resp = Anthropic(api_key=api_key).messages.create(
+            model=effective_model, max_tokens=400,
+            system=_SUMMARY_SYSTEM,
+            messages=[{"role": "user", "content": user_msg}],
+        )
+        return _plain(resp.content[0].text)
+    elif provider == "openai":
+        from openai import OpenAI
+        resp = OpenAI(api_key=api_key).chat.completions.create(
+            model=effective_model, max_tokens=400,
+            messages=[
+                {"role": "system", "content": _SUMMARY_SYSTEM},
+                {"role": "user",   "content": user_msg},
+            ],
+        )
+        return _plain(resp.choices[0].message.content)
+    elif provider == "gemini":
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        m = genai.GenerativeModel(
+            effective_model,
+            generation_config={"max_output_tokens": 400},
+        )
+        resp = m.generate_content(_SUMMARY_SYSTEM + "\n\n" + user_msg)
+        return _plain(resp.text)
+    else:
+        raise ValueError(f"Provider '{provider}' not implemented")
+
+
 # ─── API key encryption ──────────────────────────────────────────────────────
 
 def _fernet() -> Fernet:
