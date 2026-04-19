@@ -1732,11 +1732,9 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
 
 <!-- Workflow and Tailoring Section -->
 {% if has_template and has_ai %}
-<div class="mt-5 pb-5">
-  <h2 class="how-heading mb-4">Building your tailored CV</h2>
-  
+<div class="mt-4 pb-5">
   <!-- Sharper Tailoring Box -->
-  <div class="bank-boost-card mb-5">
+  <div class="bank-boost-card mb-4">
     <div class="bank-boost-left">
       <div class="bank-boost-badge">Boost tailoring quality</div>
       <h4 class="bank-boost-title">Want even sharper tailoring?</h4>
@@ -1744,34 +1742,6 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
     </div>
     <div class="bank-boost-right">
       <div class="bank-boost-ic"><i class="bi bi-lightning-charge-fill"></i></div>
-    </div>
-  </div>
-
-  <!-- Instruction Cards -->
-  <div class="row g-4 mb-5">
-    <div class="col-md-4">
-      <div class="step-card">
-        <div class="step-icon-circle ic-indigo"><i class="bi bi-file-earmark-arrow-up"></i></div>
-        <div class="step-num">Step 01</div>
-        <div class="step-title">Upload template</div>
-        <div class="step-desc">Upload your .docx CV Once. We extract the font and layout.</div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="step-card">
-        <div class="step-icon-circle ic-violet"><i class="bi bi-textarea-t"></i></div>
-        <div class="step-num">Step 02</div>
-        <div class="step-title">Paste job description</div>
-        <div class="step-desc">Paste the JD. AI picks the best bullets from your library.</div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="step-card">
-        <div class="step-icon-circle ic-emerald"><i class="bi bi-download"></i></div>
-        <div class="step-num">Step 03</div>
-        <div class="step-title">Download CV</div>
-        <div class="step-desc">Get a perfectly tailored .docx and PDF in seconds.</div>
-      </div>
     </div>
   </div>
 
