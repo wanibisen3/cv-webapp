@@ -104,7 +104,6 @@ class CVStore:
         sb.delete_cv_session(token)
         return val
 
-_pending   = CVStore("pending")
 _generated = CVStore("generated")
 
 
@@ -1564,7 +1563,7 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
         <span id="genBtnDefault">&#10024; Tailor my CV for this role &rarr;</span>
         <span id="genBtnLoading" style="display:none;align-items:center;justify-content:center;gap:.6rem;">
           <span style="display:inline-block;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:ccSpin .7s linear infinite;"></span>
-          Analysing JD &amp; tailoring your CV&hellip;
+          Building your tailored CV&hellip;
         </span>
       </button>
     </form>
@@ -1588,8 +1587,8 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
     const ov = document.getElementById('loadingOverlay');
     const ot = document.getElementById('overlayTitle');
     const os = document.getElementById('overlaySub');
-    if (ot) ot.textContent = 'Analysing JD & tailoring your CV\u2026';
-    if (os) os.textContent = "AI is rewriting your bullets in the JD's language \u2014 ~20\u201340 seconds";
+    if (ot) ot.textContent = 'Building your tailored CV\u2026';
+    if (os) os.textContent = "Analysing the JD, writing bullets, and building your .docx + .pdf \u2014 ~30\u201360 seconds";
     if (ov) ov.style.display = 'flex';
   });
 })();
@@ -2093,96 +2092,6 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
     <i class="bi bi-arrow-left"></i> Dashboard
   </a>
 </div>
-""")
-
-
-# ── Review (edit AI-tailored bullets before generating DOCX) ──────────────────
-
-_REVIEW = _BASE.replace("{% block content %}{% endblock %}", """
-<!-- Header -->
-<div class="d-flex align-items-center flex-wrap gap-2 mb-1">
-  <h4 style="font-weight:800;font-size:1.35rem;color:var(--navy);letter-spacing:-.03em;margin:0;">Review your tailored CV</h4>
-  <span class="badge-pill badge-indigo">{{ company }}</span>
-  <span class="badge-pill badge-navy">{{ role }}</span>
-</div>
-<p style="color:var(--muted);font-size:.85rem;margin:.5rem 0 1rem;">
-  Every bullet has been rewritten in STAR format using this JD's exact language.
-  Read through, fix anything that doesn't sound right, then generate.
-</p>
-
-<!-- STAR tip gradient box -->
-<div style="background:linear-gradient(135deg,#eef2ff,#f5f3ff);border:1px solid rgba(79,70,229,0.2);border-radius:var(--r10);padding:.85rem 1.1rem;font-size:.8rem;color:#312e81;margin-bottom:1.5rem;">
-  <strong>STAR check:</strong> each bullet should read as
-  <code style="background:rgba(79,70,229,0.12);border-radius:4px;padding:.1rem .3rem;color:var(--indigo);">SubHeading: [Verb] [what + context], [result]</code>
-  &nbsp;&middot;&nbsp; SubHeading uses a keyword from the JD
-  &nbsp;&middot;&nbsp; Result is a number, %, $ or clear outcome
-  &nbsp;&middot;&nbsp; Max 215 chars
-</div>
-
-<form method="post" action="/review/{{ token }}/confirm" id="reviewForm">
-
-  {% for sec_key, bullets in sections.items() %}
-  <div class="card mb-3">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <span style="font-weight:700;color:var(--navy);display:flex;align-items:center;gap:.4rem;">
-        {% if sec_key in labels %}
-          {% set lbl = labels[sec_key] %}
-          {% if lbl.get('company') %}
-            <i class="bi bi-briefcase" style="color:var(--indigo);"></i>{{ lbl.company }}
-            {% if lbl.get('role') %}<span style="color:var(--muted);font-weight:400;font-size:.82rem;"> &middot; {{ lbl.role }}</span>{% endif %}
-          {% elif lbl.get('project_name') %}
-            <i class="bi bi-layers" style="color:var(--emerald);"></i>{{ lbl.project_name }}
-          {% else %}
-            <i class="bi bi-card-text" style="color:var(--muted);"></i>{{ sec_key }}
-          {% endif %}
-        {% else %}
-          {{ sec_key }}
-        {% endif %}
-      </span>
-      <span class="badge-pill badge-navy" style="font-size:.72rem;">{{ bullets|length }} bullet{{ 's' if bullets|length != 1 }}</span>
-    </div>
-    <div class="card-body p-3">
-      {% for bullet in bullets %}
-      <div class="review-bullet">
-        <textarea name="bullet_{{ sec_key }}_{{ loop.index0 }}" class="form-control border-0 p-0"
-          rows="2" style="resize:vertical;font-size:.84rem;background:transparent;font-family:'Inter',sans-serif;">{{ bullet }}</textarea>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endfor %}
-
-  <!-- Skills -->
-  <div class="card mb-4" style="border-left:4px solid var(--gold)!important;">
-    <div class="card-header" style="font-weight:700;color:var(--navy);">
-      <i class="bi bi-stars me-1" style="color:var(--gold);"></i>Skills Section
-    </div>
-    <div class="card-body p-3">
-      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.5rem;">
-        Format: <code style="background:#eef2ff;color:var(--indigo);border-radius:4px;padding:.1rem .3rem;">Category: skill &middot; skill</code> &mdash; one category per line
-      </div>
-      <textarea name="skills_text" class="form-control" rows="6"
-        style="font-size:.83rem;font-family:'Inter',sans-serif;">{{ skills_text }}</textarea>
-    </div>
-  </div>
-
-  <div class="d-grid gap-2 mb-2">
-    <button type="submit" class="btn-generate" id="confirmBtn" onclick="showGenLoading()">
-      <i class="bi bi-file-earmark-arrow-down me-1"></i>Generate CV files (.docx + .pdf)
-    </button>
-    <a href="/dashboard" class="btn-ghost" style="display:block;text-align:center;padding:.6rem;border-radius:var(--r10);text-decoration:none;color:var(--muted);">&larr; Start over</a>
-  </div>
-</form>
-""").replace("{% block scripts %}{% endblock %}", """
-<script>
-function showGenLoading() {
-  document.getElementById('overlayTitle').textContent = 'Building your CV files\u2026';
-  document.getElementById('overlaySub').textContent   = 'Injecting bullets into your template and converting to PDF';
-  document.getElementById('loadingOverlay').style.display = 'flex';
-  // Use a tiny timeout so the form actually submits before the button disables
-  setTimeout(() => { document.getElementById('confirmBtn').disabled = true; }, 10);
-}
-</script>
 """)
 
 
@@ -2874,7 +2783,7 @@ def generate():
         raw_slots = fmt_rules.get("raw_slots") if isinstance(fmt_rules, dict) else None
         if raw_slots:
             template_slots = map_template_slots_from_raw(raw_slots, master_bank)
-            template_path  = None   # will be downloaded lazily at confirm time if needed
+            template_path  = None   # downloaded lazily just before DOCX build
         else:
             template_path = tmp_dir / "base_cv.docx"
             sb.download_cv_template(user_id, template_path)
@@ -2907,157 +2816,63 @@ def generate():
         role    = jd_info.get("role", "Role")
         safe    = re.sub(r"[^\w\s-]", "", f"{company} {role}").strip().replace(" ", "_")
 
-        # 5. Build section labels for the review page
-        sections_data = master_bank.get("sections", {})
-        labels = {
-            key: {
-                "company":      sec.get("company", ""),
-                "role":         sec.get("role", ""),
-                "project_name": sec.get("project_name", ""),
-            }
-            for key, sec in sections_data.items()
-        }
-
-        # 6. Store pending state and redirect to review
+        # 5. Take AI output directly — no review step.
+        sections = {k: list(v) for k, v in result.get("sections", {}).items() if v}
+        skills_text       = (result.get("skills_text", "") or "").strip()
+        project_overrides = result.get("project_overrides") or None
         token = _uuid.uuid4().hex
-        _pending[token] = {
-            "ai_result":      result,
-            "master_bank":    master_bank,
-            "template_path":  template_path,
-            "company":        company,
-            "role":           role,
-            "safe":           safe,
-            "labels":         labels,
-            "user_id":        user_id,
-            "template_slots": template_slots,
-        }
 
-        return redirect(url_for("review_page", token=token))
+        # ── Generic format-rule enforcement — works for any user's template ──
+        # Use the rules auto-extracted from the user's DOCX at upload time:
+        #   max_bullet_chars      — longest bullet the template font can hold on one line
+        #   max_skill_lines       — number of soft-return lines the skills paragraph has
+        #   max_skill_line_chars  — longest single skill line the template can hold
+        # template_slots maps section_key → bullet count for that section's slot.
+        eff_fmt              = master_bank.get("format_rules", {})
+        max_bullet_chars     = int(eff_fmt.get("max_bullet_chars",     215))
+        max_skill_lines      = int(eff_fmt.get("max_skill_lines",      5))
+        max_skill_line_chars = int(eff_fmt.get("max_skill_line_chars", 120))
 
-    except FileNotFoundError as e:
-        flash(str(e), "error")
-    except ValueError as e:
-        flash(str(e), "error")
-    except Exception as e:
-        flash(f"Generation failed: {e}", "error")
+        # 1. Cap each bullet's length (word-boundary truncate) ────────────────
+        for sec_key in sections:
+            capped = []
+            for b in sections[sec_key]:
+                if len(b) <= max_bullet_chars:
+                    capped.append(b)
+                else:
+                    truncated = b[:max_bullet_chars].rsplit(" ", 1)[0].rstrip(",;: ")
+                    capped.append(truncated)
+                    print(f"  ✂️  Bullet capped ({len(b)}→{len(truncated)} chars) in '{sec_key}'")
+            sections[sec_key] = capped
 
-    return redirect(url_for("dashboard"))
+        # 2. Cap bullet COUNT per section to the template's slot count ────────
+        for sec_key, slot_count in template_slots.items():
+            if sec_key in sections and slot_count > 0 and len(sections[sec_key]) > slot_count:
+                before = len(sections[sec_key])
+                sections[sec_key] = sections[sec_key][:slot_count]
+                print(f"  ✂️  Bullet count capped ({before}→{slot_count}) in '{sec_key}' (template slots)")
 
+        # 3. Cap skills text — line count AND per-line length ─────────────────
+        skills_text = _cap_skills_text(skills_text, max_skill_lines, max_skill_line_chars)
 
-@app.route("/review/<token>")
-@login_required
-def review_page(token):
-    pending = _pending.get(token)
-    if not pending:
-        flash("Session expired or invalid. Please generate again.", "error")
-        return redirect(url_for("dashboard"))
+        # Lazy template download: skipped above when raw_slots was cached.
+        if template_path is None or not template_path.exists():
+            template_path = tmp_dir / "base_cv.docx"
+            sb.download_cv_template(user_id, template_path)
+        else:
+            tmp_dir = template_path.parent
 
-    result = pending["ai_result"]
-    return render_template_string(
-        _REVIEW,
-        token      = token,
-        sections   = result.get("sections", {}),
-        skills_text= result.get("skills_text", ""),
-        company    = pending["company"],
-        role       = pending["role"],
-        labels     = pending["labels"],
-    )
+        out_dir  = tmp_dir / safe
+        out_dir.mkdir(parents=True, exist_ok=True)
+        docx_path = out_dir / "Tailored_CV.docx"
 
+        print(f"  🏁  Building CV for token: {token}")
 
-@app.route("/review/<token>/confirm", methods=["POST"])
-@login_required
-def review_confirm(token):
-    pending = _pending.get(token)
-    if not pending:
-        flash("Session expired. Please generate again.", "error")
-        return redirect(url_for("dashboard"))
-
-    result      = pending["ai_result"]
-    master_bank = pending["master_bank"]
-    template_path = pending["template_path"]
-
-    # Rebuild sections from the review form (user may have edited bullets)
-    sections = {}
-    for sec_key, orig_bullets in result.get("sections", {}).items():
-        bullets = []
-        for i in range(len(orig_bullets) + 3):   # +3 for safety
-            b = request.form.get(f"bullet_{sec_key}_{i}")
-            if b is None:
-                break
-            b = (b or "").strip()
-            if b:
-                bullets.append(b)
-        if bullets:
-            sections[sec_key] = bullets
-
-    skills_text       = (request.form.get("skills_text", "") or "").strip()
-    project_overrides = result.get("project_overrides") or None
-    company, role, safe = pending["company"], pending["role"], pending["safe"]
-
-    # ── Generic format-rule enforcement — works for any user's template ──
-    # Use the rules auto-extracted from the user's DOCX at upload time:
-    #   max_bullet_chars      — longest bullet the template font can hold on one line
-    #   max_skill_lines       — number of soft-return lines the skills paragraph has
-    #   max_skill_line_chars  — longest single skill line the template can hold
-    # template_slots maps section_key → bullet count for that section's slot.
-    fmt_rules            = master_bank.get("format_rules", {})
-    max_bullet_chars     = int(fmt_rules.get("max_bullet_chars",     215))
-    max_skill_lines      = int(fmt_rules.get("max_skill_lines",      5))
-    max_skill_line_chars = int(fmt_rules.get("max_skill_line_chars", 120))
-    template_slots       = pending.get("template_slots") or {}
-
-    # 1. Cap each bullet's length (word-boundary truncate) ────────────────────
-    for sec_key in sections:
-        capped = []
-        for b in sections[sec_key]:
-            if len(b) <= max_bullet_chars:
-                capped.append(b)
-            else:
-                truncated = b[:max_bullet_chars].rsplit(" ", 1)[0].rstrip(",;: ")
-                capped.append(truncated)
-                print(f"  ✂️  Bullet capped ({len(b)}→{len(truncated)} chars) in '{sec_key}'")
-        sections[sec_key] = capped
-
-    # 2. Cap bullet COUNT per section to the template's slot count ────────────
-    #    Prevents an AI that returned N+1 bullets from ever overflowing the
-    #    template's layout — modify_docx also guards this, but we cap here so
-    #    the retry-prune logic below has an accurate view of what will be used.
-    for sec_key, slot_count in template_slots.items():
-        if sec_key in sections and slot_count > 0 and len(sections[sec_key]) > slot_count:
-            before = len(sections[sec_key])
-            sections[sec_key] = sections[sec_key][:slot_count]
-            print(f"  ✂️  Bullet count capped ({before}→{slot_count}) in '{sec_key}' (template slots)")
-
-    # 3. Cap skills text — line count AND per-line length ─────────────────────
-    skills_text = _cap_skills_text(skills_text, max_skill_lines, max_skill_line_chars)
-
-    # Lazy template download: skipped during generate() when raw_slots was cached.
-    # Download now (just before DOCX manipulation) if we don't have it locally yet.
-    if template_path is None or not template_path.exists():
-        tmp_dir = Path(tempfile.mkdtemp())
-        template_path = tmp_dir / "base_cv.docx"
-        sb.download_cv_template(pending.get("user_id") or session["user_id"], template_path)
-        # Update pending so subsequent retries / page refreshes don't re-download.
-        pending["template_path"] = template_path
-    else:
-        tmp_dir = template_path.parent
-
-    out_dir  = tmp_dir / safe
-    out_dir.mkdir(parents=True, exist_ok=True)
-    docx_path = out_dir / "Tailored_CV.docx"
-
-    print(f"  🏁  Confirming CV generation for token: {token}")
-    try:
-        # ── HARD ONE-PAGE GUARANTEE LOOP ──
-        # Strategy (applies to ANY template — template-agnostic):
-        #   Attempt 1   → render with caps already applied above.
-        #   Attempt 2-4 → alternate between trimming bullets and trimming
-        #                 skill lines, starting with whichever is largest.
-        #                 Always keep ≥1 bullet per section and the
-        #                 Certifications line (handled by _cap_skills_text).
+        # ── HARD ONE-PAGE GUARANTEE LOOP (template-agnostic) ──
         MAX_ATTEMPTS = 5
         attempts = 0
         one_page = False
+        pdf_path = None
         while attempts < MAX_ATTEMPTS:
             print(f"  - Attempt {attempts + 1}: Generating files...")
             modify_docx(
@@ -3078,18 +2893,10 @@ def review_confirm(token):
                 break
 
             print(f"  📏 CV is > 1 page. Pruning attempt {attempts}...")
-
-            # Decide what to trim this round by comparing "costs":
-            #   - total bullet count across all sections
-            #   - current skill-line count
-            # Trim whichever is larger (bullet=1 line, skill line=1 line).
             total_bullets = sum(len(v) for v in sections.values())
             skill_lines   = [ln for ln in skills_text.splitlines() if ln.strip()]
             n_skill_lines = len(skill_lines)
-
             trimmed = False
-
-            # Prefer pruning bullets first when there's slack (keep ≥1 per section)
             if total_bullets >= n_skill_lines:
                 max_key, max_len = None, -1
                 for k, v in sections.items():
@@ -3099,10 +2906,7 @@ def review_confirm(token):
                     print(f"     ✂️  Trimming 1 bullet from '{max_key}' ({max_len}→{max_len-1})")
                     sections[max_key].pop()
                     trimmed = True
-
-            # Otherwise (or if no bullet was trimmable) prune a skill line.
             if not trimmed and n_skill_lines > 2:
-                # Protect Certifications line; drop the shortest non-cert line.
                 non_cert = [(i, ln) for i, ln in enumerate(skill_lines)
                             if not ln.lower().startswith("certifications")]
                 if non_cert:
@@ -3111,12 +2915,9 @@ def review_confirm(token):
                     skill_lines.pop(drop_i)
                     skills_text = "\n".join(skill_lines)
                     trimmed = True
-
             if not trimmed:
                 print("     ⚠️  Nothing left to trim safely — breaking retry loop.")
                 break
-
-        print("  - Final Step: Finalizing session...")
 
         # Back up to Supabase Storage so any worker can serve the download
         sb.upload_generated_cv(session["user_id"], token, docx_path)
@@ -3131,8 +2932,6 @@ def review_confirm(token):
             "safe":     safe,
             "one_page": one_page,
         }
-        # No pop needed here, as the row was already updated to the 'generated' mode
-        # _pending.pop(token, None)
 
         return render_template_string(
             _RESULT,
@@ -3143,9 +2942,14 @@ def review_confirm(token):
             one_page= one_page,
         )
 
+    except FileNotFoundError as e:
+        flash(str(e), "error")
+    except ValueError as e:
+        flash(str(e), "error")
     except Exception as e:
         flash(f"CV generation failed: {e}", "error")
-        return redirect(url_for("dashboard"))
+
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/download/<token>/<fmt>")
