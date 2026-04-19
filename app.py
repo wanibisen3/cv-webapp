@@ -3201,29 +3201,50 @@ def generate():
                     skills_text = "\n".join(skill_lines)
                     trimmed = True
 
-            # 3) Last resort: shorten the longest bullet by ~15% (word-boundary).
+            # 3) Shorten the longest bullet by ~15% (word-boundary).
             if not trimmed:
                 longest_key, longest_idx, longest_len = None, -1, -1
                 for k, v in sections.items():
                     for i, b in enumerate(v):
                         if len(b) > longest_len:
                             longest_len, longest_key, longest_idx = len(b), k, i
-                if longest_key and longest_len > 80:
+                if longest_key and longest_len > 40:
                     b = sections[longest_key][longest_idx]
-                    cut_to = max(60, int(len(b) * 0.85))
+                    cut_to = max(30, int(len(b) * 0.85))
                     truncated = b[:cut_to].rsplit(" ", 1)[0].rstrip(",;:·– ")
                     if truncated and truncated != b:
                         print(f"     ✂️  Shortening longest bullet in '{longest_key}' ({len(b)}→{len(truncated)} chars)")
                         sections[longest_key][longest_idx] = truncated
                         trimmed = True
 
+            # 4) Drop the last remaining skill line even if only 2 remain — overflow beats prettiness.
+            if not trimmed and n_skill_lines >= 1:
+                print(f"     ✂️  Emergency: dropping last skill line '{skill_lines[-1][:60]}…'")
+                skill_lines.pop()
+                skills_text = "\n".join(skill_lines)
+                trimmed = True
+
+            # 5) Nuclear fallback: drop the last bullet of the section with the most remaining bullets,
+            #    even if that section would go to 0. Overflow must never be accepted.
             if not trimmed:
-                print("     ⚠️  Nothing left to trim safely — breaking retry loop.")
+                any_key = next((k for k, v in sections.items() if len(v) >= 1), None)
+                if any_key:
+                    print(f"     ✂️  Nuclear: dropping last bullet of '{any_key}' (was {len(sections[any_key])})")
+                    sections[any_key].pop()
+                    if not sections[any_key]:
+                        sections.pop(any_key)
+                    trimmed = True
+
+            if not trimmed:
+                # Genuinely nothing left — CV is effectively empty. Give up.
+                print("     ⚠️  CV reduced to empty — breaking retry loop.")
                 break
 
-        if one_page and fill_ratio > SAFE_FILL_RATIO:
-            print(f"  ⚠️  Could not achieve safety margin ({fill_ratio:.3f} > {SAFE_FILL_RATIO}); "
-                  f"PDF is 1 page but DOCX may overflow in Word on some systems.")
+        if not one_page:
+            print(f"  ❌  PDF still exceeds 1 page after {attempts} attempts — accepting anyway (should not happen).")
+        elif fill_ratio > SAFE_FILL_RATIO:
+            print(f"  ⚠️  1-page PDF achieved but without safety margin "
+                  f"({fill_ratio:.3f} > {SAFE_FILL_RATIO}); DOCX may overflow in Word on some systems.")
 
         # Back up to Supabase Storage so any worker can serve the download
         sb.upload_generated_cv(session["user_id"], token, docx_path)
