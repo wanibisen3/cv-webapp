@@ -1143,14 +1143,12 @@ _INDEX = r"""<!doctype html>
               <div class="cv-mock-name">Wani Bisen</div>
               <div class="cv-mock-contact">wani.bisen@email.com &nbsp;&bull;&nbsp; London, UK<br>linkedin.com/in/wani-bisen &nbsp;&bull;&nbsp; +44 7700 000000</div>
               <div class="cv-mock-section">Experience</div>
-              <div class="cv-mock-role">Strategy Manager</div>
-              <div class="cv-mock-company">Elite Strategy Firm &nbsp;&middot;&nbsp; 2022–Present</div>
+              <div class="cv-mock-role">Strategy Manager &nbsp;&middot;&nbsp; 2022–Present</div>
               <div class="cv-mock-line" style="width:95%"></div>
               <div class="cv-mock-line" style="width:80%"></div>
               <div class="cv-mock-line" style="width:88%"></div>
               <div style="margin-top:.6rem;"></div>
-              <div class="cv-mock-role">Associate Consultant</div>
-              <div class="cv-mock-company">MBB Tier Consulting &nbsp;&middot;&nbsp; 2020–2022</div>
+              <div class="cv-mock-role">Associate Consultant &nbsp;&middot;&nbsp; 2020–2022</div>
               <div class="cv-mock-line" style="width:90%"></div>
               <div class="cv-mock-line" style="width:75%"></div>
               <div style="margin-top:.75rem;"></div>
@@ -1935,18 +1933,19 @@ updateModelList();
 # ── Bank create / import (shared template, mode differs) ─────────────────────
 
 _BANK_CREATE = _BASE.replace("{% block content %}{% endblock %}", """
-<!-- Header -->
-<div class="d-flex align-items-center gap-3 mb-4">
-  <a href="{{ back_url }}" style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border:1.5px solid var(--border);border-radius:var(--r10);color:var(--muted);text-decoration:none;background:var(--surface);transition:background .18s,border-color .18s;flex-shrink:0;"
-     onmouseover="this.style.background='var(--bg)';this.style.borderColor='rgba(15,23,42,.2)'"
-     onmouseout="this.style.background='var(--surface)';this.style.borderColor='var(--border)'">
-    <i class="bi bi-arrow-left"></i>
-  </a>
-  <div>
-    <h4 style="font-weight:800;font-size:1.3rem;color:var(--navy);margin:0;letter-spacing:-.03em;">{{ page_title }}</h4>
-    <div style="color:var(--muted);font-size:.82rem;margin-top:.1rem;">{{ page_subtitle }}</div>
+  <div class="mb-3">
+    <a href="/dashboard" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.82rem;font-weight:600;color:var(--muted);text-decoration:none;padding:.35rem .75rem;border:1.5px solid var(--border);border-radius:var(--r10);background:var(--surface);transition:background .18s,border-color .18s;"
+       onmouseover="this.style.background='var(--bg)';this.style.borderColor='rgba(15,23,42,.2)'"
+       onmouseout="this.style.background='var(--surface)';this.style.borderColor='var(--border)'">
+      <i class="bi bi-arrow-left"></i> Dashboard
+    </a>
   </div>
-</div>
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <div>
+      <h4 style="font-weight:800;font-size:1.3rem;color:var(--navy);margin:0;letter-spacing:-.03em;">{{ page_title }}</h4>
+      <div style="color:var(--muted);font-size:.82rem;margin-top:.1rem;">{{ page_subtitle }}</div>
+    </div>
+  </div>
 
 {% if not has_ai %}
 <div class="alert alert-warning mb-4">
@@ -2100,6 +2099,13 @@ if (zone) {
 # ── Bank editor ────────────────────────────────────────────────────────────────
 
 _BANK = _BASE.replace("{% block content %}{% endblock %}", """
+<div class="mb-3">
+  <a href="/dashboard" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.82rem;font-weight:600;color:var(--muted);text-decoration:none;padding:.35rem .75rem;border:1.5px solid var(--border);border-radius:var(--r10);background:var(--surface);transition:background .18s,border-color .18s;"
+     onmouseover="this.style.background='var(--bg)';this.style.borderColor='rgba(15,23,42,.2)'"
+     onmouseout="this.style.background='var(--surface)';this.style.borderColor='var(--border)'">
+    <i class="bi bi-arrow-left"></i> Dashboard
+  </a>
+</div>
 <!-- Header row -->
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
   <div>
