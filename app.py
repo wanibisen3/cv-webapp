@@ -1008,8 +1008,7 @@ _INDEX = r"""<!doctype html>
     .auth-card-top {
       height: 3px;
     }
-    .auth-card-top.signin { background: linear-gradient(90deg, var(--indigo), var(--violet)); }
-    .auth-card-top.signup { background: linear-gradient(90deg, var(--amber), var(--emerald)); }
+    .auth-card-top.signin, .auth-card-top.signup { background: linear-gradient(90deg, var(--indigo), var(--violet)); }
     .auth-card-body { padding: 2rem 2.25rem 2.25rem; }
     .auth-card-title {
       font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 800;
@@ -1020,8 +1019,7 @@ _INDEX = r"""<!doctype html>
       width: 34px; height: 34px; border-radius: 10px;
       display: flex; align-items: center; justify-content: center; font-size: .9rem; color: #fff;
     }
-    .ic-sign-in { background: linear-gradient(135deg, var(--indigo), var(--violet)); }
-    .ic-sign-up { background: linear-gradient(135deg, var(--amber), var(--emerald)); }
+    .ic-sign-in, .ic-sign-up { background: linear-gradient(135deg, var(--indigo), var(--violet)); }
     .auth-label {
       display: block; font-size: .72rem; font-weight: 700; color: var(--navy);
       margin-bottom: .4rem; text-transform: uppercase; letter-spacing: .06em;
@@ -1033,24 +1031,15 @@ _INDEX = r"""<!doctype html>
       transition: border-color .18s, box-shadow .18s; outline: none;
     }
     .auth-input:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); background: #fff; }
-    .auth-input.signup-focus:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(217,119,6,0.12); }
     .auth-mb { margin-bottom: .95rem; }
-    .btn-auth-signin {
+    .btn-auth-signin, .btn-auth-signup {
       width: 100%; padding: .75rem 1rem;
       background: linear-gradient(135deg, var(--indigo), var(--violet));
       color: #fff; border: none; border-radius: var(--r10);
       font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .9rem; cursor: pointer;
       box-shadow: 0 6px 20px rgba(79,70,229,0.4); transition: opacity .18s, transform .15s;
     }
-    .btn-auth-signin:hover { opacity: .88; transform: translateY(-1px); }
-    .btn-auth-signup {
-      width: 100%; padding: .75rem 1rem;
-      background: linear-gradient(135deg, var(--amber), var(--emerald));
-      color: #fff; border: none; border-radius: var(--r10);
-      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .9rem; cursor: pointer;
-      box-shadow: 0 6px 20px rgba(217,119,6,0.35); transition: opacity .18s, transform .15s;
-    }
-    .btn-auth-signup:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-auth-signin:hover, .btn-auth-signup:hover { opacity: .88; transform: translateY(-1px); }
 
     /* ── Footer ── */
     .site-footer {
@@ -2042,42 +2031,11 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
 </div>
 {% else %}
 
-<!-- AI Summary card (read-only) -->
+<!-- Replace bank — primary action, top of page -->
 <div class="card mb-3" style="border-left:4px solid var(--indigo)!important;">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <span style="font-weight:700;color:var(--navy);display:flex;align-items:center;gap:.4rem;">
-      <i class="bi bi-person-badge" style="color:var(--indigo);"></i>Your professional summary
-    </span>
-    <form method="post" action="/bank/regenerate-summary" style="margin:0;"
-          data-loading data-loading-title="Refreshing summary…" data-loading-sub="Re-reading your bank">
-      <button class="btn btn-xs btn-ghost" style="font-size:.74rem;padding:.25rem .65rem;"
-              data-quick-action>
-        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
-      </button>
-    </form>
-  </div>
-  <div class="card-body p-3">
-    {% if bank.ai_summary %}
-      <p style="font-size:.92rem;line-height:1.65;color:var(--text);margin:0;">{{ bank.ai_summary }}</p>
-    {% else %}
-      <p style="font-size:.85rem;color:var(--muted);margin:0;font-style:italic;">
-        Summary will appear here once generated. Click <em>Refresh</em> to create it.
-      </p>
-    {% endif %}
-    <div style="margin-top:.75rem;font-size:.75rem;color:var(--muted);">
-      <i class="bi bi-info-circle me-1"></i>
-      Your bank contains <strong>{{ (bank.sections or {})|length }}</strong> experience/project section(s),
-      <strong>{{ (bank.certifications or [])|length }}</strong> certification(s), and skills data.
-      To edit specifics, download the JSON below, edit it externally, then upload it back.
-    </div>
-  </div>
-</div>
-
-<!-- Replace bank -->
-<div class="card mb-3" style="border-left:4px solid #dc2626!important;">
   <div class="card-header" style="font-weight:700;color:var(--navy);display:flex;align-items:center;gap:.4rem;">
-    <i class="bi bi-arrow-repeat" style="color:#dc2626;"></i>Replace bank
-    <span style="font-size:.72rem;color:var(--muted);font-weight:400;margin-left:.35rem;">Overwrites everything</span>
+    <i class="bi bi-arrow-repeat" style="color:var(--indigo);"></i>Replace master file
+    <span style="font-size:.72rem;color:var(--muted);font-weight:400;margin-left:.35rem;">Upload a new file to overwrite everything below</span>
   </div>
   <div class="card-body p-3">
     <ul class="nav nav-pills mb-2" role="tablist" style="gap:.4rem;">
@@ -2092,7 +2050,7 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
                  accept=".docx,.pdf,.txt,.json" required>
           <div style="font-size:.74rem;color:var(--muted);margin-bottom:.6rem;">Accepts .docx, .pdf, .txt, or .json (round-trip)</div>
           <button class="btn-indig" style="font-size:.82rem;padding:.4rem .9rem;border-radius:var(--r10);"
-                  data-quick-action>Replace bank</button>
+                  data-quick-action>Replace master file</button>
         </form>
       </div>
       <div class="tab-pane fade" id="replace-text">
@@ -2101,43 +2059,87 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
           <textarea name="cv_text" class="form-control mb-2" rows="6" required
             style="font-size:.82rem;" placeholder="Paste your full CV / experience text here…"></textarea>
           <button class="btn-indig" style="font-size:.82rem;padding:.4rem .9rem;border-radius:var(--r10);"
-                  data-quick-action>Replace bank</button>
+                  data-quick-action>Replace master file</button>
         </form>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Append to bank -->
-<div class="card mb-3" style="border-left:4px solid var(--emerald)!important;">
-  <div class="card-header" style="font-weight:700;color:var(--navy);display:flex;align-items:center;gap:.4rem;">
-    <i class="bi bi-plus-circle" style="color:var(--emerald);"></i>Add more experience
-    <span style="font-size:.72rem;color:var(--muted);font-weight:400;margin-left:.35rem;">Merges into your existing bank</span>
+<!-- Bank contents — read-only scrollable view -->
+<div class="card mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span style="font-weight:700;color:var(--navy);display:flex;align-items:center;gap:.4rem;">
+      <i class="bi bi-journal-text" style="color:var(--indigo);"></i>Your master bank
+    </span>
+    <span style="font-size:.72rem;color:var(--muted);">
+      {{ (bank.sections or {})|length }} section(s) &middot;
+      {{ (bank.certifications or [])|length }} cert(s) &middot; read-only
+    </span>
   </div>
-  <div class="card-body p-3">
-    <ul class="nav nav-pills mb-2" role="tablist" style="gap:.4rem;">
-      <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#append-file" type="button" style="font-size:.8rem;padding:.3rem .75rem;">File upload</button></li>
-      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#append-text" type="button" style="font-size:.8rem;padding:.3rem .75rem;">Paste text</button></li>
-    </ul>
-    <div class="tab-content">
-      <div class="tab-pane fade show active" id="append-file">
-        <form method="post" action="/bank/from-file?mode=append" enctype="multipart/form-data"
-              data-loading data-loading-title="Appending to your bank…" data-loading-sub="Parsing your file with AI">
-          <input type="file" name="cv_file" class="form-control mb-2" style="font-size:.82rem;"
-                 accept=".docx,.pdf,.txt,.json" required>
-          <div style="font-size:.74rem;color:var(--muted);margin-bottom:.6rem;">Accepts .docx, .pdf, .txt, or .json</div>
-          <button class="btn-success-custom" style="font-size:.82rem;padding:.4rem .9rem;border-radius:var(--r10);"
-                  data-quick-action>Append</button>
-        </form>
+  <div class="card-body p-0">
+    <div style="max-height:560px;overflow-y:auto;padding:1rem 1.1rem;">
+
+      {% if bank.ai_summary %}
+      <div style="background:linear-gradient(135deg,#eef2ff,#f5f3ff);border:1px solid rgba(79,70,229,0.18);border-radius:var(--r10);padding:.8rem 1rem;margin-bottom:1.1rem;">
+        <div style="font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--indigo);margin-bottom:.3rem;">Summary</div>
+        <p style="font-size:.85rem;line-height:1.6;color:var(--text);margin:0;">{{ bank.ai_summary }}</p>
       </div>
-      <div class="tab-pane fade" id="append-text">
-        <form method="post" action="/bank/from-text?mode=append"
-              data-loading data-loading-title="Appending to your bank…" data-loading-sub="Parsing text with AI">
-          <textarea name="cv_text" class="form-control mb-2" rows="6" required
-            style="font-size:.82rem;" placeholder="Paste new experience, projects, or skills to add…"></textarea>
-          <button class="btn-success-custom" style="font-size:.82rem;padding:.4rem .9rem;border-radius:var(--r10);"
-                  data-quick-action>Append</button>
-        </form>
+      {% endif %}
+
+      {% if bank.sections %}
+      <div style="font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:.3rem 0 .6rem;">Experience &amp; projects</div>
+      {% for key, sec in bank.sections.items() %}
+      <div style="padding:.7rem .9rem;border:1px solid var(--border);border-radius:var(--r10);margin-bottom:.6rem;background:var(--surface);">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;flex-wrap:wrap;margin-bottom:.4rem;">
+          <div style="font-weight:700;color:var(--navy);font-size:.9rem;">
+            {% if sec.company %}
+              <i class="bi bi-briefcase me-1" style="color:var(--indigo);"></i>{{ sec.company }}
+              {% if sec.role %}<span style="color:var(--muted);font-weight:500;font-size:.82rem;"> &middot; {{ sec.role }}</span>{% endif %}
+            {% elif sec.project_name %}
+              <i class="bi bi-layers me-1" style="color:var(--emerald);"></i>{{ sec.project_name }}
+            {% else %}
+              <i class="bi bi-card-text me-1" style="color:var(--muted);"></i>{{ key }}
+            {% endif %}
+          </div>
+          {% if sec.date %}<span style="color:var(--muted);font-size:.76rem;">{{ sec.date }}</span>{% endif %}
+        </div>
+        {% if sec.bullets %}
+        <ul style="margin:0;padding-left:1.1rem;">
+          {% for b in sec.bullets %}
+          <li style="font-size:.82rem;line-height:1.55;color:var(--text);margin-bottom:.2rem;">{{ b.text }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div style="font-size:.78rem;color:var(--muted);font-style:italic;">No bullets</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% if bank.skills_text %}
+      <div style="font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:1rem 0 .5rem;">Skills</div>
+      <div style="padding:.7rem .9rem;border:1px solid var(--border);border-radius:var(--r10);background:var(--surface);">
+        <pre style="white-space:pre-wrap;font-family:'Inter',sans-serif;font-size:.82rem;line-height:1.55;color:var(--text);margin:0;">{{ bank.skills_text }}</pre>
+      </div>
+      {% endif %}
+
+      {% if bank.certifications %}
+      <div style="font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:1rem 0 .5rem;">Certifications</div>
+      <div style="padding:.7rem .9rem;border:1px solid var(--border);border-radius:var(--r10);background:var(--surface);">
+        <ul style="margin:0;padding-left:1.1rem;">
+          {% for c in bank.certifications %}
+          <li style="font-size:.82rem;line-height:1.55;color:var(--text);margin-bottom:.15rem;">
+            <i class="bi bi-patch-check me-1" style="color:var(--emerald);"></i>{{ c }}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div style="margin-top:1rem;font-size:.72rem;color:var(--muted);text-align:center;">
+        <i class="bi bi-info-circle me-1"></i>
+        This view is read-only. To edit, <a href="/bank/download" style="color:var(--indigo);text-decoration:none;">download the JSON</a>, edit externally, then replace above.
       </div>
     </div>
   </div>
