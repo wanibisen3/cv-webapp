@@ -228,7 +228,7 @@ _BASE = r"""<!doctype html>
     *, *::before, *::after { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
-      background: var(--bg);
+      background: transparent !important;
       font-family: 'Inter', system-ui, sans-serif;
       font-size: .92rem; color: var(--text);
       -webkit-font-smoothing: antialiased;
@@ -485,7 +485,7 @@ _BASE = r"""<!doctype html>
 </head>
 <body>
 
-<canvas id="geom-bg" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;"></canvas>
+<canvas id="geom-bg" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;background:var(--bg);"></canvas>
 
 <!-- Navbar -->
 <nav class="cc-nav">
@@ -666,7 +666,7 @@ _INDEX = r"""<!doctype html>
     body {
       font-family: 'Inter', system-ui, sans-serif;
       font-size: .92rem; color: var(--text);
-      -webkit-font-smoothing: antialiased; background: var(--bg);
+      -webkit-font-smoothing: antialiased; background: transparent !important;
     }
 
     /* ── Navbar ── */
@@ -1084,6 +1084,8 @@ _INDEX = r"""<!doctype html>
   </style>
 </head>
 <body>
+
+<canvas id="geom-bg" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;background:var(--bg);"></canvas>
 
 <!-- Navbar -->
 <nav class="cc-nav">
