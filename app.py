@@ -878,6 +878,43 @@ _INDEX = r"""<!doctype html>
     }
     .step-desc { font-size: .86rem; line-height: 1.7; color: rgba(255,255,255,0.5); }
 
+    /* ── Bank boost (optional) callout ── */
+    .bank-boost-card {
+      display: flex; align-items: center; gap: 1.75rem;
+      background: linear-gradient(135deg, rgba(79,70,229,0.12), rgba(124,58,237,0.08));
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: var(--r20);
+      padding: 1.75rem 2rem;
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 20px 48px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .bank-boost-left { flex: 1; }
+    .bank-boost-badge {
+      display: inline-flex; align-items: center;
+      font-size: .68rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
+      color: var(--amber-l, #fbbf24);
+      background: rgba(217,119,6,0.14);
+      border: 1px solid rgba(217,119,6,0.28);
+      padding: .3rem .7rem; border-radius: 999px; margin-bottom: .85rem;
+    }
+    .bank-boost-title {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.25rem; font-weight: 800;
+      color: #fff; letter-spacing: -.02em; margin-bottom: .5rem;
+    }
+    .bank-boost-desc { font-size: .88rem; line-height: 1.7; color: rgba(255,255,255,0.55); margin: 0; }
+    .bank-boost-right { flex: 0 0 auto; }
+    .bank-boost-ic {
+      width: 72px; height: 72px; border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; color: #fff;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      box-shadow: 0 12px 32px rgba(79,70,229,0.45);
+    }
+    @media (max-width: 768px) {
+      .bank-boost-card { flex-direction: column-reverse; text-align: center; }
+      .bank-boost-badge { margin-left: auto; margin-right: auto; }
+    }
+
     /* ── INSEAD pledge section ── */
     .insead-pledge {
       background: linear-gradient(180deg, #0d1117 0%, #060918 100%);
@@ -1063,7 +1100,7 @@ _INDEX = r"""<!doctype html>
       <div class="col-lg-6">
         <div class="hero-badge"><i class="bi bi-mortarboard-fill"></i>&nbsp;Free forever for INSEADers</div>
         <h1 class="hero-h1">Land interviews,<br><em>every time.</em></h1>
-        <p class="hero-sub">Build your master bank <strong style="color:#fff;">once</strong> — then paste any job description and get a tailored, ATS-optimised CV in 60 seconds. Your template, your words, zero hallucination.</p>
+        <p class="hero-sub">Upload your CV template, paste any job description, and get a tailored, ATS-optimised CV in 60 seconds. <strong style="color:#fff;">Your template, your words</strong> — zero hallucination. Want even sharper tailoring? Build your master bank once and let AI pull the most relevant experience for every JD.</p>
         <div class="hero-cta-row">
           <a href="#signup" class="btn-hero-primary"><i class="bi bi-rocket-takeoff"></i>Start for free</a>
           <a href="#signin" class="btn-hero-outline"><i class="bi bi-box-arrow-in-right"></i>Sign in</a>
@@ -1096,7 +1133,7 @@ _INDEX = r"""<!doctype html>
             <div class="hero-feat-ic"><i class="bi bi-ban"></i></div>
             <div>
               <div class="hero-feat-title">Zero hallucination</div>
-              <div class="hero-feat-desc">AI only rewrites what's in your master bank — never invents.</div>
+              <div class="hero-feat-desc">AI only rewrites what's in your CV and master bank — never invents.</div>
             </div>
           </div>
           <div class="hero-feat">
@@ -1174,16 +1211,16 @@ _INDEX = r"""<!doctype html>
   <div class="container">
     <div class="text-center mb-4">
       <div class="section-eyebrow mb-3">The workflow</div>
-      <h2 class="how-heading">Invest once.<br>Apply forever.</h2>
-      <p class="how-sub">Build your master bank once. After that, every tailored CV is just a job description away.</p>
+      <h2 class="how-heading">Three steps.<br>Sixty seconds.</h2>
+      <p class="how-sub">Upload your template, paste a JD, download your tailored CV. That's it. The master bank is an optional boost — not a prerequisite.</p>
     </div>
     <div class="row g-4 position-relative">
       <div class="col-md-4 step-connector">
         <div class="step-card">
-          <div class="step-icon-circle ic-indigo"><i class="bi bi-database-fill"></i></div>
-          <div class="step-num">Step 01 &nbsp;·&nbsp; One-time effort</div>
-          <div class="step-title">Build your master bank</div>
-          <div class="step-desc">Take the time to collate every role, project, and achievement you've ever had. Upload your CV or paste raw experience — AI structures it into a reusable bank of bullets that powers every future application.</div>
+          <div class="step-icon-circle ic-indigo"><i class="bi bi-file-earmark-arrow-up-fill"></i></div>
+          <div class="step-num">Step 01</div>
+          <div class="step-title">Upload your CV template</div>
+          <div class="step-desc">Drop in the .docx you already use. We preserve its fonts, spacing, and bullet counts exactly — every generated CV comes out looking like the one you designed.</div>
         </div>
       </div>
       <div class="col-md-4 step-connector">
@@ -1191,7 +1228,7 @@ _INDEX = r"""<!doctype html>
           <div class="step-icon-circle ic-violet"><i class="bi bi-file-earmark-text-fill"></i></div>
           <div class="step-num">Step 02</div>
           <div class="step-title">Paste any job description</div>
-          <div class="step-desc">Copy-paste any JD from any company. Our AI reads its language, identifies key priorities, and selects your strongest matching experience.</div>
+          <div class="step-desc">Copy-paste any JD from any company. Our AI reads its language, identifies key priorities, and rewrites your bullets in STAR format using the JD's exact keywords.</div>
         </div>
       </div>
       <div class="col-md-4">
@@ -1199,7 +1236,27 @@ _INDEX = r"""<!doctype html>
           <div class="step-icon-circle ic-emerald"><i class="bi bi-download"></i></div>
           <div class="step-num">Step 03</div>
           <div class="step-title">Download your tailored CV</div>
-          <div class="step-desc">Get a Word + PDF with bullets rewritten in STAR format using the JD's exact language. Same template, perfect fit.</div>
+          <div class="step-desc">Get a Word + PDF instantly — ready to edit or send. Same template, perfect fit, one-page guaranteed.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Optional boost callout -->
+    <div class="row justify-content-center mt-5">
+      <div class="col-lg-10">
+        <div class="bank-boost-card">
+          <div class="bank-boost-left">
+            <div class="bank-boost-badge"><i class="bi bi-stars"></i>&nbsp;Optional &middot; Highly recommended</div>
+            <div class="bank-boost-title">Want sharper tailoring? Build a master bank.</div>
+            <div class="bank-boost-desc">
+              Collate every role, project, and achievement you've ever had — including the ones that didn't make it onto your current CV.
+              When you paste a JD, the AI can dip into your bank and surface the <em>most relevant</em> experience for that specific role,
+              even if it wasn't on your base template. One-time effort; every future application gets smarter.
+            </div>
+          </div>
+          <div class="bank-boost-right">
+            <div class="bank-boost-ic"><i class="bi bi-database-fill"></i></div>
+          </div>
         </div>
       </div>
     </div>
