@@ -521,7 +521,20 @@ _BASE = r"""<!doctype html>
     {% endfor %}
   </div>
   {% block content %}{% endblock %}
-</div>
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div>
+        <div class="footer-brand">My INSEAD <span>CV</span></div>
+        <div class="footer-tag">built with love by wani for INSEADers</div>
+      </div>
+      <div class="footer-lock">
+        <i class="bi bi-shield-check"></i> Your data stays yours — always.
+      </div>
+    </div>
+  </div>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -715,7 +728,7 @@ _INDEX = r"""<!doctype html>
     .hero {
       background: #ffffff;
       position: relative; overflow: hidden;
-      padding: 6rem 0 7rem;
+      padding: 3rem 0 8rem;
       display: flex; align-items: center;
       border-bottom: 1px solid rgba(15,23,42,0.04);
     }
@@ -1115,7 +1128,6 @@ _INDEX = r"""<!doctype html>
   <div class="container hero-inner" style="width:100%;">
     <div class="row align-items-center g-4">
       <div class="col-lg-7">
-        <div class="hero-badge"><i class="bi bi-mortarboard-fill"></i>&nbsp;Free forever for INSEADers</div>
         <h1 class="hero-h1">Land interviews,<br><em>every time.</em></h1>
         <p class="hero-sub">Upload your CV template, paste any job description, and get a tailored, ATS-optimised CV in 60 seconds. <strong style="color:var(--navy);">Your template, your words</strong> — zero hallucination. Want even sharper tailoring? Build your CV Bullet Bank once and let AI pull the most relevant experience for every JD.</p>
         <div class="hero-cta-row">
@@ -1168,8 +1180,8 @@ _INDEX = r"""<!doctype html>
             <div class="cv-glow"></div>
             <div class="cv-mockup">
               <div class="cv-ai-badge">&#10024; AI Tailored</div>
-              <div class="cv-mock-name">Wani Bisen</div>
-              <div class="cv-mock-contact">wani.bisen@email.com &nbsp;&bull;&nbsp; London, UK<br>linkedin.com/in/wani-bisen &nbsp;&bull;&nbsp; +44 7700 000000</div>
+              <div class="cv-mock-name">Your Name</div>
+              <div class="cv-mock-contact">your.name@email.com &nbsp;&bull;&nbsp; London, UK<br>linkedin.com/in/your-name &nbsp;&bull;&nbsp; +44 0000 000000</div>
               <div class="cv-mock-section">Experience</div>
               <div class="cv-mock-role">Strategy Manager &nbsp;&middot;&nbsp; 2022–Present</div>
               <div class="cv-mock-line" style="width:95%"></div>
@@ -1376,7 +1388,7 @@ _INDEX = r"""<!doctype html>
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
       <div>
         <div class="footer-brand">My INSEAD <span>CV</span></div>
-        <div class="footer-tag">AI-powered CV tailoring &mdash; free forever for INSEADers</div>
+        <div class="footer-tag">built with love by wani for INSEADers</div>
       </div>
       <div class="footer-lock">
         <i class="bi bi-shield-check"></i> Your data stays yours — always.
