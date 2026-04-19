@@ -1613,11 +1613,13 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
     .bank-boost-left { text-align: center; }
     .bank-boost-badge { margin-left: auto; margin-right: auto; }
   }
+  /* Reduce top padding for dashboard specifically */
+  .cc-page { padding-top: 1rem !important; }
 </style>
 
 <div class="cc-page">
 <!-- Greeting -->
-<div class="mb-4" style="padding-top:.75rem;">
+<div class="mb-4">
   <h2 class="dash-greeting">Welcome, {{ name }} &#128075;</h2>
   <p class="dash-sub">Your CV Bullet Bank is ready &mdash; paste a job description below and land your next interview.</p>
 </div>
