@@ -2183,12 +2183,8 @@ _RESULT = _BASE.replace("{% block content %}{% endblock %}", """
     <div style="margin-bottom:1.25rem;"></div>
 
     <div style="display:grid;gap:.6rem;margin-bottom:1.5rem;">
-      <a href="/download/{{ token }}/docx" class="btn-indig" style="display:block;padding:.75rem;border-radius:var(--r10);text-decoration:none;font-size:.95rem;">
-        <i class="bi bi-file-earmark-word me-1"></i>Download Word (.docx)
-      </a>
       {% if has_pdf %}
-      <a href="/download/{{ token }}/pdf" style="display:block;padding:.7rem;border-radius:var(--r10);text-decoration:none;font-size:.9rem;border:1.5px solid var(--indigo);color:var(--indigo);font-weight:600;transition:background .18s;"
-         onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background=''">
+      <a href="/download/{{ token }}/pdf" class="btn-indig" style="display:block;padding:.75rem;border-radius:var(--r10);text-decoration:none;font-size:.95rem;">
         <i class="bi bi-file-earmark-pdf me-1"></i>Download PDF
       </a>
       {% else %}
@@ -2196,6 +2192,10 @@ _RESULT = _BASE.replace("{% block content %}{% endblock %}", """
         <i class="bi bi-file-earmark-pdf me-1"></i>PDF not available (see deployment docs)
       </div>
       {% endif %}
+      <a href="/download/{{ token }}/docx" style="display:block;padding:.7rem;border-radius:var(--r10);text-decoration:none;font-size:.9rem;border:1.5px solid var(--indigo);color:var(--indigo);font-weight:600;transition:background .18s;text-align:center;"
+         onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background=''">
+        <i class="bi bi-file-earmark-word me-1"></i>Download Word (.docx)
+      </a>
     </div>
 
     <hr style="border-color:var(--border);margin:0 0 1.25rem;">
