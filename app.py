@@ -3141,10 +3141,19 @@ def generate():
         print(f"  🏁  Building CV for token: {token}")
 
         # ── HARD ONE-PAGE GUARANTEE LOOP (template-agnostic) ──
-        MAX_ATTEMPTS = 5
-        attempts = 0
-        one_page = False
-        pdf_path = None
+        # Why a safety margin on top of the 1-page check:
+        #   LibreOffice (server, renders the PDF) packs text slightly tighter
+        #   than Word (user's desktop, renders the DOCX). A PDF that *just*
+        #   fits on 1 page often overflows to page 2 when the same DOCX is
+        #   opened in Word. We therefore require the PDF's last-text baseline
+        #   to sit within ≤ SAFE_FILL_RATIO of page height — leaving a cushion
+        #   for Word's looser metrics so BOTH outputs stay on one page.
+        MAX_ATTEMPTS    = 12
+        SAFE_FILL_RATIO = 0.955   # ~4.5% bottom buffer; tune if Word still overflows
+        attempts        = 0
+        one_page        = False
+        fill_ratio      = 1.0
+        pdf_path        = None
         while attempts < MAX_ATTEMPTS:
             print(f"  - Attempt {attempts + 1}: Generating files...")
             modify_docx(
@@ -3155,29 +3164,33 @@ def generate():
                 master_bank=master_bank,
                 project_overrides=project_overrides,
             )
-            pdf_path = convert_to_pdf(docx_path)
-            one_page = check_one_page(pdf_path)
+            pdf_path   = convert_to_pdf(docx_path)
+            one_page   = check_one_page(pdf_path)
+            fill_ratio = measure_last_page_fill_ratio(pdf_path) if one_page else 1.0
+            print(f"     📐 one_page={one_page}, last-page fill ratio={fill_ratio:.3f} (target ≤ {SAFE_FILL_RATIO})")
 
-            if one_page:
+            if one_page and fill_ratio <= SAFE_FILL_RATIO:
                 break
             attempts += 1
             if attempts >= MAX_ATTEMPTS:
                 break
 
-            print(f"  📏 CV is > 1 page. Pruning attempt {attempts}...")
-            total_bullets = sum(len(v) for v in sections.values())
+            reason = "overflow to page 2" if not one_page else f"too tight ({fill_ratio:.3f} > {SAFE_FILL_RATIO})"
+            print(f"  📏 {reason}. Pruning attempt {attempts}...")
+
             skill_lines   = [ln for ln in skills_text.splitlines() if ln.strip()]
             n_skill_lines = len(skill_lines)
             trimmed = False
-            if total_bullets >= n_skill_lines:
-                max_key, max_len = None, -1
-                for k, v in sections.items():
-                    if len(v) > max_len:
-                        max_len, max_key = len(v), k
-                if max_key and max_len > 1:
-                    print(f"     ✂️  Trimming 1 bullet from '{max_key}' ({max_len}→{max_len-1})")
-                    sections[max_key].pop()
-                    trimmed = True
+
+            # 1) Prefer pruning the longest section's last bullet (keep ≥1 per section).
+            trim_candidates = [(k, v) for k, v in sections.items() if len(v) > 1]
+            if trim_candidates:
+                max_key, max_list = max(trim_candidates, key=lambda kv: len(kv[1]))
+                print(f"     ✂️  Trimming 1 bullet from '{max_key}' ({len(max_list)}→{len(max_list)-1})")
+                sections[max_key].pop()
+                trimmed = True
+
+            # 2) Otherwise drop a skills line (shortest non-certifications line).
             if not trimmed and n_skill_lines > 2:
                 non_cert = [(i, ln) for i, ln in enumerate(skill_lines)
                             if not ln.lower().startswith("certifications")]
@@ -3187,9 +3200,30 @@ def generate():
                     skill_lines.pop(drop_i)
                     skills_text = "\n".join(skill_lines)
                     trimmed = True
+
+            # 3) Last resort: shorten the longest bullet by ~15% (word-boundary).
+            if not trimmed:
+                longest_key, longest_idx, longest_len = None, -1, -1
+                for k, v in sections.items():
+                    for i, b in enumerate(v):
+                        if len(b) > longest_len:
+                            longest_len, longest_key, longest_idx = len(b), k, i
+                if longest_key and longest_len > 80:
+                    b = sections[longest_key][longest_idx]
+                    cut_to = max(60, int(len(b) * 0.85))
+                    truncated = b[:cut_to].rsplit(" ", 1)[0].rstrip(",;:·– ")
+                    if truncated and truncated != b:
+                        print(f"     ✂️  Shortening longest bullet in '{longest_key}' ({len(b)}→{len(truncated)} chars)")
+                        sections[longest_key][longest_idx] = truncated
+                        trimmed = True
+
             if not trimmed:
                 print("     ⚠️  Nothing left to trim safely — breaking retry loop.")
                 break
+
+        if one_page and fill_ratio > SAFE_FILL_RATIO:
+            print(f"  ⚠️  Could not achieve safety margin ({fill_ratio:.3f} > {SAFE_FILL_RATIO}); "
+                  f"PDF is 1 page but DOCX may overflow in Word on some systems.")
 
         # Back up to Supabase Storage so any worker can serve the download
         sb.upload_generated_cv(session["user_id"], token, docx_path)

@@ -992,3 +992,49 @@ def check_one_page(pdf_path: Path | None) -> bool:
     except ImportError:
         print("  ⚠️  Install pdfinfo or pypdf to enable page-count check")
         return True
+
+
+def measure_last_page_fill_ratio(pdf_path: Path | None) -> float:
+    """
+    Return ratio of last-text baseline y / page height on the LAST page of the PDF.
+    0.0 means empty page; 1.0 means text touches the very bottom.
+
+    We use this to add a safety margin on top of the binary 1-page check:
+    LibreOffice (server) renders slightly tighter than Word (user's desktop),
+    so a PDF that *just* fits on 1 page can still overflow to page 2 when the
+    same DOCX is opened in Word. Requiring the last-page fill ratio to be
+    <= ~0.96 leaves ~4% of page height as a cushion for Word's looser metrics.
+    """
+    if not pdf_path or not pdf_path.exists():
+        return 0.0
+    import tempfile, re as _re
+    html_path = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as tmp:
+            html_path = tmp.name
+        # pdftotext -bbox emits an XHTML file with per-word bounding boxes.
+        subprocess.check_output(
+            ["pdftotext", "-bbox", str(pdf_path), html_path],
+            stderr=subprocess.DEVNULL, timeout=15,
+        )
+        html = Path(html_path).read_text(encoding="utf-8", errors="ignore")
+        pages = _re.findall(
+            r'<page[^>]*width="([\d.]+)"[^>]*height="([\d.]+)"[^>]*>(.*?)</page>',
+            html, _re.DOTALL,
+        )
+        if not pages:
+            return 0.0
+        _w, h, body = pages[-1]
+        page_h = float(h) or 1.0
+        ymaxes = [float(m) for m in _re.findall(r'yMax="([\d.]+)"', body)]
+        if not ymaxes:
+            return 0.0
+        return max(ymaxes) / page_h
+    except Exception:
+        return 0.0
+    finally:
+        if html_path:
+            try:
+                Path(html_path).unlink()
+            except Exception:
+                pass
