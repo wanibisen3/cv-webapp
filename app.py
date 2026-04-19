@@ -1686,7 +1686,7 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
         </div>
       </div>
     </div>
-    <p class="status-card-desc">{{ 'Your experience &amp; bullets are ready.' if has_bank else 'Upload your CV or paste your experience.' }}</p>
+    <p class="status-card-desc">{{ 'Your full experience – everything about the work you have done. You can upload any length CV with everything you have done so far.' if has_bank else 'Upload your CV or paste your experience.' }}</p>
     {% if has_bank %}
       <div class="d-grid gap-1 mt-auto">
         <a href="/bank" class="btn btn-ghost btn-sm">View Bank</a>
