@@ -479,7 +479,7 @@ _BASE = r"""<!doctype html>
     .provider-card.selected { border-color: var(--indigo); background: #eef2ff; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
 
     /* ── Layout ── */
-    .cc-page { max-width: 1200px; margin: 0 auto; padding: 2.25rem 1.5rem 5rem; }
+    .cc-page { max-width: 1280px; margin: 0 auto; padding: 2.25rem 2rem 5rem; }
     .section-eyebrow { font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); }
   </style>
 </head>
@@ -699,6 +699,7 @@ _INDEX = r"""<!doctype html>
       padding: .35rem .9rem; border-radius: 22px; font-size: .8rem; font-weight: 500;
       color: var(--muted); text-decoration: none;
       transition: background .18s, color .18s; border: 1px solid transparent;
+      display: inline-flex; align-items: center; gap: .4rem;
     }
     .cc-nav-pill:hover { background: rgba(15,23,42,0.04); color: var(--navy); }
     .cc-nav-pill.outline { border-color: rgba(15,23,42,0.1); color: var(--muted); }
@@ -712,10 +713,17 @@ _INDEX = r"""<!doctype html>
 
     /* ── Hero ── */
     .hero {
-      background: transparent;
+      background: #ffffff;
       position: relative; overflow: hidden;
-      padding: 4rem 0 4.5rem;
+      padding: 6rem 0 7rem;
       display: flex; align-items: center;
+      border-bottom: 1px solid rgba(15,23,42,0.04);
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 10% 20%, rgba(79,70,229,0.03), transparent 40%),
+                  radial-gradient(circle at 90% 80%, rgba(245,158,11,0.03), transparent 40%);
+      pointer-events: none;
     }
     .hero-inner { position: relative; z-index: 1; }
     .hero-badge {
@@ -1107,7 +1115,7 @@ _INDEX = r"""<!doctype html>
       <div class="col-lg-7">
         <div class="hero-badge"><i class="bi bi-mortarboard-fill"></i>&nbsp;Free forever for INSEADers</div>
         <h1 class="hero-h1">Land interviews,<br><em>every time.</em></h1>
-        <p class="hero-sub">Upload your CV template, paste any job description, and get a tailored, ATS-optimised CV in 60 seconds. <strong style="color:#fff;">Your template, your words</strong> — zero hallucination. Want even sharper tailoring? Build your CV Bullet Bank once and let AI pull the most relevant experience for every JD.</p>
+        <p class="hero-sub">Upload your CV template, paste any job description, and get a tailored, ATS-optimised CV in 60 seconds. <strong style="color:var(--navy);">Your template, your words</strong> — zero hallucination. Want even sharper tailoring? Build your CV Bullet Bank once and let AI pull the most relevant experience for every JD.</p>
         <div class="hero-cta-row">
           <a href="#signup" class="btn-hero-outline"><i class="bi bi-rocket-takeoff"></i>Start for free</a>
           <a href="#signin" class="btn-hero-outline"><i class="bi bi-box-arrow-in-right"></i>Sign in</a>
@@ -1492,7 +1500,7 @@ document.querySelectorAll('form[action="/signin"], form[action="/signup"]').forE
 _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
 <style>
   .dash-greeting { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2rem; letter-spacing: -.04em; color: var(--navy); margin-bottom: .3rem; line-height: 1.2; }
-  .dash-sub { color: var(--muted); font-size: .95rem; }
+  .dash-sub { color: var(--muted); font-size: .95rem; margin-bottom: 0; }
   .setup-card {
     background: #fff; border-radius: 20px;
     border-left: 4px solid var(--amber); padding: 2rem;
@@ -1522,7 +1530,7 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
     display: flex; flex-direction: column;
   }
   .status-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
-  .status-card-top { display: flex; align-items: center; gap: .8rem; margin-bottom: .7rem; }
+  .status-card-top { display: flex; align-items: center; gap: .85rem; margin-bottom: .85rem; min-height: 40px; }
   .status-icon {
     width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff;
@@ -1530,7 +1538,7 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
   .si-bank { background: linear-gradient(135deg, var(--indigo), var(--indigo-l)); box-shadow: 0 4px 12px rgba(79,70,229,0.35); }
   .si-tpl  { background: linear-gradient(135deg, var(--emerald), #10b981); box-shadow: 0 4px 12px rgba(5,150,105,0.3); }
   .si-key  { background: linear-gradient(135deg, var(--amber), var(--amber-l)); box-shadow: 0 4px 12px rgba(217,119,6,0.35); }
-  .status-card-name { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: .95rem; color: var(--navy); letter-spacing: -.02em; }
+  .status-card-name { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: .95rem; color: var(--navy); letter-spacing: -.02em; line-height: 1.2; }
   .status-dot-row { display: flex; align-items: center; gap: .3rem; margin-top: .18rem; }
   .sdot2 { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
   .sdot2-ok { background: var(--emerald); box-shadow: 0 0 0 3px rgba(5,150,105,0.18); }
@@ -1610,7 +1618,7 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
 <!-- Greeting -->
 <div class="mb-4" style="padding-top:.75rem;">
   <h2 class="dash-greeting">Welcome, {{ name }} &#128075;</h2>
-  <p class="dash-sub">Your CV Bullet Bank is ready — paste a JD below and land your next interview.</p>
+  <p class="dash-sub">Your CV Bullet Bank is ready &mdash; paste a job description below and land your next interview.</p>
 </div>
 
 {% if not (has_bank and has_template and has_ai) %}
@@ -1682,7 +1690,7 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
         <a href="/bank/download" class="btn btn-ghost btn-sm">Download JSON</a>
       </div>
     {% else %}
-      <a href="/bank/create" class="btn btn-indig btn-sm mt-auto" style="display:block;text-align:center;">Set up Bank</a>
+      <a href="/bank/create" class="btn btn-indig btn-sm mt-auto" style="display:block;text-align:center;">Set up CV Bullet Bank</a>
     {% endif %}
   </div>
 
@@ -1720,10 +1728,6 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
     </a>
   </div>
 </div>
-
-  </div>
-</div>
-{% endif %}
 </div> <!-- End cc-page -->
 
 <section class="how-section">
@@ -2252,8 +2256,8 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
       <i class="bi bi-journal-text" style="color:var(--indigo);"></i>Your CV Bullet Bank
     </span>
     <span style="font-size:.72rem;color:var(--muted);">
-      {{ (bank.sections or {})|length }} section(s) &middot;
-      {{ (bank.certifications or [])|length }} cert(s) &middot; read-only
+      {{ (bank.sections if bank else {})|length }} section(s) &middot;
+      {{ (bank.certifications if bank else [])|length }} cert(s) &middot; read-only
     </span>
   </div>
   <div class="card-body p-0">
@@ -2612,7 +2616,7 @@ def _bank_create_context(is_create: bool, has_ai: bool):
     if is_create:
         return dict(
             page_title="Build your CV Bullet Bank",
-            page_subtitle="Your library of experience — set it up once, use it forever",
+            page_subtitle="Your professional vault — store every role, project, and achievement here",
             file_action="/bank/from-file",
             text_action="/bank/from-text",
             action_verb="Create",
@@ -2621,8 +2625,8 @@ def _bank_create_context(is_create: bool, has_ai: bool):
             has_ai=has_ai,
         )
     return dict(
-        page_title="Import more experience",
-        page_subtitle="Add new roles, projects, or skills to your existing bank",
+        page_title="Import to CV Bullet Bank",
+        page_subtitle="Add new roles, projects, or skills to your professional vault",
         file_action="/bank/from-file?mode=append",
         text_action="/bank/from-text?mode=append",
         action_verb="Update",
@@ -2790,9 +2794,19 @@ def bank_from_text():
 def bank_page():
     user_id = session["user_id"]
     try:
+        ai_cfg    = sb.load_ai_settings(user_id)
+        has_ai    = bool(ai_cfg.get("api_key_enc"))
+        ai_label  = PROVIDERS.get(ai_cfg.get("provider", ""), {}).get("label", "") if has_ai else ""
+    except:
+        has_ai = False
+        ai_label = ""
+
+    bank = None
+    try:
         bank = sb.load_master_bank(user_id)
     except FileNotFoundError:
-        bank = None
+        pass
+
     # Back-compat: generate summary once for banks that pre-date this feature
     if bank and not bank.get("ai_summary"):
         _try_refresh_summary(user_id)
@@ -2800,7 +2814,8 @@ def bank_page():
             bank = sb.load_master_bank(user_id)
         except FileNotFoundError:
             pass
-    return render_template_string(_BANK, bank=bank)
+
+    return render_template_string(_BANK, bank=bank, has_ai=has_ai, ai_label=ai_label)
 
 
 @app.route("/bank/regenerate-summary", methods=["POST"])
