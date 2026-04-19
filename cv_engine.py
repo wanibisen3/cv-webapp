@@ -264,7 +264,7 @@ def extract_template_format_rules(template_path: Path) -> dict:
                             break
 
     # ── max_bullet_chars: 90th-percentile of actual bullet lengths ────────────
-    max_bullet_chars = 215  # safe fallback
+    max_bullet_chars = 180  # safer fallback
     if bullet_lengths:
         bullet_lengths.sort()
         idx = min(int(len(bullet_lengths) * 0.90), len(bullet_lengths) - 1)
@@ -779,35 +779,64 @@ def modify_docx(
 
     # ── Update skills paragraph ───────────────────────────────────────────────
     if skills_text:
-        lines  = [ln.strip() for ln in skills_text.split("\n") if ln.strip()]
-        in_hdr = False
-        # Search direct body paragraphs only (skills are never inside tables)
-        for child in body:
-            if child.tag != f"{{{WNS}}}p":
-                continue
+        lines = [ln.strip() for ln in skills_text.split("\n") if ln.strip()]
+        
+        # 1. Locate the skills header and all paragraphs belonging to the skills block
+        found_header_idx = -1
+        block_para_idxs = []
+        body_children = list(body)
+        
+        for i, child in enumerate(body_children):
+            if child.tag != f"{{{WNS}}}p": continue
             pt = (_para_text(child) or "").strip()
-            if not pt:
-                continue
+            if not pt: continue
+            
             if skills_header in pt.lower():
-                in_hdr = True
-                continue
-            if in_hdr:
-                # Remove existing runs and re-inject with template font
-                for r in child.findall(f"{{{WNS}}}r"):
-                    child.remove(r)
-                for i, line in enumerate(lines):
-                    add_br = i > 0
-                    if ":" in line:
-                        ci = line.index(":")
-                        _add_skill_run(child, line[: ci + 1], bold=True,  add_br=add_br,
-                                       font_name=skill_font, font_size_half_pt=skill_font_half_pt)
-                        _add_skill_run(child, line[ci + 1:],  bold=False, add_br=False,
-                                       font_name=skill_font, font_size_half_pt=skill_font_half_pt)
-                    else:
-                        _add_skill_run(child, line, add_br=add_br,
-                                       font_name=skill_font, font_size_half_pt=skill_font_half_pt)
-                print("  ✏️  skills updated")
+                found_header_idx = i
+                # Collect all following paragraphs until the next section reset
+                for j in range(i + 1, len(body_children)):
+                    next_child = body_children[j]
+                    if next_child.tag != f"{{{WNS}}}p": 
+                        # If it's a table, it might be the start of a new section (company/project)
+                        if next_child.tag == f"{{{WNS}}}tbl":
+                            break
+                        continue 
+                    next_pt = (_para_text(next_child) or "").strip()
+                    if not next_pt: continue
+                    
+                    next_pt_lower = next_pt.lower()
+                    if (next_pt_lower in _SECTION_RESETS or 
+                        next_pt_lower.rstrip("s") in _SECTION_RESETS):
+                        break
+                    
+                    block_para_idxs.append(j)
                 break
+        
+        # 2. Replace the first slot and remove the rest
+        if found_header_idx != -1 and block_para_idxs:
+            first_slot_idx = block_para_idxs[0]
+            first_slot_para = body_children[first_slot_idx]
+            
+            # Clear first slot and inject
+            for r in first_slot_para.findall(f"{{{WNS}}}r"):
+                first_slot_para.remove(r)
+            for i, line in enumerate(lines):
+                add_br = (i > 0)
+                if ":" in line:
+                    ci = line.index(":")
+                    _add_skill_run(first_slot_para, line[: ci + 1], bold=True,  add_br=add_br,
+                                   font_name=skill_font, font_size_half_pt=skill_font_half_pt)
+                    _add_skill_run(first_slot_para, line[ci + 1:],  bold=False, add_br=False,
+                                   font_name=skill_font, font_size_half_pt=skill_font_half_pt)
+                else:
+                    _add_skill_run(first_slot_para, line, add_br=add_br,
+                                   font_name=skill_font, font_size_half_pt=skill_font_half_pt)
+            
+            # Remove all other leftover paragraphs in the skills block
+            for leftover_idx in block_para_idxs[1:]:
+                body.remove(body_children[leftover_idx])
+            
+            print(f"  ✏️  skills updated (cleared {len(block_para_idxs)} template paragraphs)")
 
     # ── Write DOCX ────────────────────────────────────────────────────────────
     new_xml = etree.tostring(tree, xml_declaration=True, encoding="UTF-8", standalone=True)
