@@ -480,6 +480,20 @@ _BASE = r"""<!doctype html>
 
     /* ── Layout ── */
     .cc-page { max-width: 1280px; margin: 0 auto; padding: 2.25rem 2rem 5rem; }
+    
+    /* ── Footer ── */
+    .site-footer {
+      background: #fff; border-top: 1px solid rgba(15,23,42,0.06);
+      padding: 2.5rem 0; width: 100%; position: relative; z-index: 10;
+    }
+    .footer-brand {
+      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;
+      font-size: 1rem; color: var(--navy); margin-bottom: .4rem;
+    }
+    .footer-brand span { color: var(--amber-l); }
+    .footer-tag { font-size: .78rem; color: var(--muted); }
+    .footer-lock { font-size: .75rem; color: var(--muted); display: flex; align-items: center; gap: .4rem; }
+
     .section-eyebrow { font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); }
   </style>
 </head>
@@ -1080,18 +1094,6 @@ _INDEX = r"""<!doctype html>
     }
     .btn-auth-signin:hover, .btn-auth-signup:hover { opacity: .88; transform: translateY(-1px); }
 
-    /* ── Footer ── */
-    .site-footer {
-      background: #fff; border-top: 1px solid rgba(15,23,42,0.06);
-      padding: 2.5rem 0;
-    }
-    .footer-brand {
-      font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;
-      font-size: 1rem; color: var(--navy); margin-bottom: .4rem;
-    }
-    .footer-brand span { color: var(--amber-l); }
-    .footer-tag { font-size: .78rem; color: var(--muted); }
-    .footer-lock { font-size: .75rem; color: var(--muted); display: flex; align-items: center; gap: .4rem; }
 
     .section-eyebrow { font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); }
   </style>
