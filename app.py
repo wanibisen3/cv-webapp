@@ -1764,7 +1764,7 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
   <div class="generate-wrap">
     <div class="generate-inner">
       <div class="generate-title">
-        <i class="bi bi-magic" style="color:var(--indigo);"></i>Tailor your CV with AI
+        <i class="bi bi-magic" style="color:var(--indigo);"></i>Tailor your CV
       </div>
       <p class="generate-sub">Paste the job description below. AI will select the best bullets from your CV Bullet Bank and rewrite them for the perfect STAR match.</p>
       
