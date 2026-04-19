@@ -708,7 +708,7 @@ _INDEX = r"""<!doctype html>
     .hero-h1 em { font-style: normal; color: var(--amber-l); }
     .hero-sub {
       font-size: 1rem; line-height: 1.65; color: rgba(255,255,255,0.6);
-      max-width: 500px; margin-bottom: 1.5rem;
+      max-width: 600px; margin-bottom: 1.5rem;
     }
     .hero-cta-row { display: flex; gap: .85rem; flex-wrap: wrap; margin-bottom: 1rem; }
     .btn-hero-primary {
@@ -737,7 +737,7 @@ _INDEX = r"""<!doctype html>
     /* ── Hero feature grid (fills left column) ── */
     .hero-feat-grid {
       display: grid; grid-template-columns: 1fr 1fr; gap: .9rem;
-      max-width: 540px;
+      max-width: 640px;
     }
     @media (max-width: 560px) { .hero-feat-grid { grid-template-columns: 1fr; } }
     .hero-feat {
@@ -1085,8 +1085,8 @@ _INDEX = r"""<!doctype html>
   <div class="aurora-orb orb-2"></div>
   <div class="aurora-orb orb-3"></div>
   <div class="container hero-inner" style="width:100%;">
-    <div class="row align-items-center g-5">
-      <div class="col-lg-6">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-7">
         <div class="hero-badge"><i class="bi bi-mortarboard-fill"></i>&nbsp;Free forever for INSEADers</div>
         <h1 class="hero-h1">Land interviews,<br><em>every time.</em></h1>
         <p class="hero-sub">Upload your CV template, paste any job description, and get a tailored, ATS-optimised CV in 60 seconds. <strong style="color:#fff;">Your template, your words</strong> — zero hallucination. Want even sharper tailoring? Build your master bank once and let AI pull the most relevant experience for every JD.</p>
@@ -1134,23 +1134,23 @@ _INDEX = r"""<!doctype html>
           </div>
         </div>
       </div>
-      <div class="col-lg-6">
+      <div class="col-lg-5">
         <div class="cv-mockup-wrap">
           <div style="position:relative;">
             <div class="cv-glow"></div>
             <div class="cv-mockup">
               <div class="cv-ai-badge">&#10024; AI Tailored</div>
-              <div class="cv-mock-name">Alexandra Chen</div>
-              <div class="cv-mock-contact">alexandra.chen@email.com &nbsp;&bull;&nbsp; London, UK<br>linkedin.com/in/alexandra-chen &nbsp;&bull;&nbsp; +44 7700 000000</div>
+              <div class="cv-mock-name">Wani Bisen</div>
+              <div class="cv-mock-contact">wani.bisen@email.com &nbsp;&bull;&nbsp; London, UK<br>linkedin.com/in/wani-bisen &nbsp;&bull;&nbsp; +44 7700 000000</div>
               <div class="cv-mock-section">Experience</div>
               <div class="cv-mock-role">Strategy Manager</div>
-              <div class="cv-mock-company">McKinsey &amp; Company &nbsp;&middot;&nbsp; 2022–Present</div>
+              <div class="cv-mock-company">Elite Strategy Firm &nbsp;&middot;&nbsp; 2022–Present</div>
               <div class="cv-mock-line" style="width:95%"></div>
               <div class="cv-mock-line" style="width:80%"></div>
               <div class="cv-mock-line" style="width:88%"></div>
               <div style="margin-top:.6rem;"></div>
               <div class="cv-mock-role">Associate Consultant</div>
-              <div class="cv-mock-company">Bain &amp; Company &nbsp;&middot;&nbsp; 2020–2022</div>
+              <div class="cv-mock-company">MBB Tier Consulting &nbsp;&middot;&nbsp; 2020–2022</div>
               <div class="cv-mock-line" style="width:90%"></div>
               <div class="cv-mock-line" style="width:75%"></div>
               <div style="margin-top:.75rem;"></div>
