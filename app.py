@@ -43,10 +43,10 @@ from ai_providers import PROVIDERS, call_ai, decrypt_key, encrypt_key, generate_
 from concurrent.futures import ThreadPoolExecutor
 
 from cv_engine import (
-    check_one_page, convert_to_pdf, discover_template_sections,
-    extract_template_format_rules, extract_text, fix_widow_line,
-    map_template_slots_from_raw, measure_last_page_fill_ratio, modify_docx,
-    read_template_slots,
+    CERTIFICATIONS_KEY, check_one_page, convert_to_pdf,
+    discover_template_sections, extract_template_format_rules, extract_text,
+    fix_widow_line, map_template_slots_from_raw, measure_last_page_fill_ratio,
+    modify_docx, read_template_slots,
 )
 
 # ─── App setup ────────────────────────────────────────────────────────────────
@@ -3098,6 +3098,28 @@ def generate():
         project_overrides = result.get("project_overrides") or None
         token = _uuid.uuid4().hex
 
+        # 5b. Dedicated Certifications section support.
+        # Some CV templates have a standalone "Certifications" heading with
+        # bullet slots (distinct from certifications-inside-skills). When
+        # present, CERTIFICATIONS_KEY appears in template_slots. The AI was
+        # told to skip it — we fill those slots here from the user's cert list,
+        # ranked by JD-keyword overlap so the most relevant certs surface first.
+        if CERTIFICATIONS_KEY in template_slots:
+            cert_slots = int(template_slots.get(CERTIFICATIONS_KEY, 0))
+            cert_list  = [c for c in (master_bank.get("certifications") or []) if c]
+            if cert_slots > 0 and cert_list:
+                jd_lower = (jd_text or "").lower()
+                def _cert_score(c):
+                    cl = str(c).lower()
+                    # Count JD overlap on meaningful tokens (≥4 chars)
+                    return sum(1 for w in re.findall(r"[A-Za-z0-9+#\-]{4,}", cl) if w in jd_lower)
+                ranked = sorted(cert_list, key=_cert_score, reverse=True)
+                sections[CERTIFICATIONS_KEY] = [str(c) for c in ranked[:cert_slots]]
+                print(f"  📜  Filled {len(sections[CERTIFICATIONS_KEY])}/{cert_slots} certification slots "
+                      f"(JD-ranked from {len(cert_list)} available)")
+            elif cert_slots > 0:
+                print(f"  📜  Template has {cert_slots} cert slot(s) but user has none — slots will be emptied")
+
         # ── Generic format-rule enforcement — works for any user's template ──
         # Use the rules auto-extracted from the user's DOCX at upload time:
         #   max_bullet_chars      — longest bullet the template font can hold on one line
@@ -3111,7 +3133,11 @@ def generate():
         chars_per_line       = int(eff_fmt.get("chars_per_line",       0))   # 0 → skip widow pass
 
         # 1. Cap each bullet's length (word-boundary truncate) ────────────────
+        #    Skip certifications — they are factual credential strings, not STAR
+        #    bullets, and must be rendered verbatim.
         for sec_key in sections:
+            if sec_key == CERTIFICATIONS_KEY:
+                continue
             capped = []
             for b in sections[sec_key]:
                 if len(b) <= max_bullet_chars:
@@ -3125,8 +3151,12 @@ def generate():
         # 1b. Widow-word pass — guarantee no bullet ends with 1–2 words on a
         #     near-empty final line. Belt-and-braces on top of the AI's own
         #     line-fill discipline (Step 3 of the system prompt).
+        #     Skip the certifications section: cert names are factual, not
+        #     STAR-format, and must not be trimmed.
         if chars_per_line > 0:
             for sec_key in list(sections.keys()):
+                if sec_key == CERTIFICATIONS_KEY:
+                    continue
                 fixed = []
                 for b in sections[sec_key]:
                     nb = fix_widow_line(b, chars_per_line)

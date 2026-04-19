@@ -156,22 +156,38 @@ orchestrating 360° campaign and hitting 8% category share in 6 months — 30% a
 1. Mirror JD language exactly — SubHeadings and key nouns use the JD's own words verbatim.
 2. Fill EXACTLY the count in TEMPLATE_SLOTS per section_key — wrong counts break the DOCX.
 3. Generate bullets ONLY for section_keys that appear in TEMPLATE_SLOTS — nothing else.
+   Templates vary widely: some have Experience + Projects + Leadership; some have
+   only Experience + Education + Skills; some have a dedicated Certifications
+   block; some have multiple roles at the same employer. Trust TEMPLATE_SLOTS as
+   ground truth — if a section key is not there, do NOT invent it. If a section
+   key IS there, it MUST be filled (even when the bank has thin material for it —
+   in that case, lean on the closest-matching bank facts and directional results).
 4. Rewrite every bullet from the bank facts; do not copy verbatim; do not add any fact not in the bank.
 5. First bullet of each role = the most JD-relevant / most quantified — it anchors the section.
 6. Within a section, vary the SubHeadings — no two bullets share the same SubHeading.
-7. Projects — read PROJECT_SLOT_COUNT from the user message:
+7. **Multiple roles at the same employer**: when TEMPLATE_SLOTS contains two or
+   more section_keys tied to the same company (e.g. `goldman_analyst` AND
+   `goldman_associate`), treat them as DISTINCT roles. Each role's bullets
+   must (a) reflect that role's scope and seniority (the Associate bullets
+   should be more strategic / senior than the Analyst bullets), (b) NOT repeat
+   or paraphrase bullets from the other role at the same company, and (c)
+   surface the promotion arc (increasing scope / team / $ / complexity).
+9. Projects — read PROJECT_SLOT_COUNT from the user message:
    - 0 project slots → set project_overrides to null; do not generate any project bullets.
    - 1+ project slots → for each slot, pick the single most JD-relevant project from all \
 is_project=true sections; score by domain match, skills overlap, JD focus areas; vary per JD.
    - If a slot currently shows a different project name than your pick, add it to project_overrides.
-8. Skills: order JD-relevant categories first; use JD's exact skill names; always end with "Certifications:" \
+10. Skills: order JD-relevant categories first; use JD's exact skill names; always end with "Certifications:" \
    (if none, write "Certifications: None listed"). STRICT: total lines ≤ MAX_SKILL_LINES (one line per \
 category, separated by \\n); each line ≤ MAX_SKILL_LINE_CHARS. Collapse/drop least-relevant categories if needed.
-9. Every section type is valid — experience, research, leadership, volunteer, consulting, anything; \
+11. If TEMPLATE_SLOTS contains the reserved key `__certifications__`, DO NOT \
+    write bullets for it — the engine fills that block server-side from the \
+    candidate's certifications list. Just omit the key from your `sections` output.
+12. Every section type is valid — experience, research, leadership, volunteer, consulting, anything; \
 treat them equally; pick the most JD-relevant bullets regardless of section type.
-10. Sections NOT in TEMPLATE_SLOTS (education, contact, other fixed content) must not be touched.
-11. NEVER invent facts, numbers, employers, or experiences absent from the candidate's bank.
-12. Return ONLY valid JSON — no markdown fences, no prose.
+13. Sections NOT in TEMPLATE_SLOTS (education, contact, other fixed content) must not be touched.
+14. NEVER invent facts, numbers, employers, or experiences absent from the candidate's bank.
+15. Return ONLY valid JSON — no markdown fences, no prose.
 
 ## Character-count discipline
 Count characters before writing. If a draft exceeds MAX_BULLET_CHARS, shorten \
@@ -241,7 +257,35 @@ Section classification — use these rules for ANY CV background:
 - bullet_slots = number of bullets produced for that section (1–5; 3–4 is typical for most sections)
 - Extract EVERYTHING in the text — do not drop anything
 - If text is very sparse or vague, still extract what is there; do not pad with invented content
-- Return only valid JSON"""
+
+## Multiple roles at the SAME company — create SEPARATE sections
+If the CV shows a candidate progressed through multiple roles at one employer
+(e.g. "Goldman Sachs: Analyst 2018-20, Associate 2020-22, VP 2022-24"),
+emit ONE section per role. Each section gets:
+  - The same `company` value
+  - A DISTINCT `role` value (the specific title)
+  - A DISTINCT `section_key`, combining company slug + role slug + year if helpful
+    (e.g. "goldman_analyst", "goldman_associate_2020", "goldman_vp")
+  - A `template_anchor` set to "<Company> <Role>" or "<Company> - <Role>"
+    (use the ordering the candidate's CV actually displays; this lets the
+    DOCX engine match each role-block to its own bullets without collision).
+  - Bullets specific to THAT role's scope — do not duplicate bullets across
+    roles at the same company.
+Example section_key set for a Goldman alum: "goldman_analyst", "goldman_associate", "goldman_vp".
+
+## Multiple jobs at DIFFERENT companies — standard case
+Each employer gets its own section with a distinct section_key. Same rules above.
+
+## Dedicated Certifications block with bulleted items
+If the source CV has a "Certifications" heading with bullet items listing
+credentials (e.g. "• AWS Solutions Architect Associate — 2023"), extract each
+credential into the top-level `certifications: []` array (one string per
+credential, include the issuer and year if present). Do NOT create a "section"
+for certifications — the engine renders them from the certifications array.
+Also include them in the final line of `skills_text` ("Certifications: …")
+for templates that keep certifications inside the Skills paragraph.
+
+Return only valid JSON"""
 
 
 def _build_user_message(jd_text: str, master_bank: dict,
@@ -273,6 +317,14 @@ def _build_user_message(jd_text: str, master_bank: dict,
     ideal_1line_max      = int(fmt_rules.get("ideal_1line_max",      max(60, chars_per_line - 6)))
     ideal_2line_min      = int(fmt_rules.get("ideal_2line_min",      chars_per_line + 30))
     ideal_2line_max      = int(fmt_rules.get("ideal_2line_max",      min(max_bullet_chars, int(chars_per_line * 1.88))))
+
+    # Filter out the synthetic certifications key before sending to the AI —
+    # app.py populates that block server-side from the candidate's cert list.
+    # Keeping it out of the AI's view prevents STAR bullets being generated
+    # for what should be verbatim cert entries.
+    CERTS_KEY = "__certifications__"
+    if template_slots and CERTS_KEY in template_slots:
+        template_slots = {k: v for k, v in template_slots.items() if k != CERTS_KEY}
 
     # Classify template slots into experience vs project
     # A slot is a "project slot" when its key maps to a bank section with project_name

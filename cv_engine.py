@@ -68,6 +68,66 @@ _SECTION_RESETS = frozenset({
 })
 
 
+# Headings that specifically designate a DEDICATED Certifications bullet
+# section (i.e. the template has "Certifications" as its own heading with
+# bullet paragraphs under it, as opposed to certifications living inside the
+# Skills paragraph). When we see one of these, we route subsequent bullets to
+# a reserved synthetic section key so generate() can populate them from the
+# user's certifications list.
+_CERTIFICATIONS_HEADINGS = frozenset({
+    "certifications", "certificates",
+    "licenses & certifications", "licenses and certifications",
+    "licences & certifications", "licences and certifications",
+    "professional certifications",
+    "certifications & licenses", "certifications and licenses",
+    "certifications & licences", "certifications and licences",
+})
+
+# Reserved section key used when the template has a dedicated Certifications
+# bullet section. `sections[CERTIFICATIONS_KEY]` is populated server-side from
+# `master_bank["certifications"]` (JD-ranked) — the AI never writes to it.
+CERTIFICATIONS_KEY = "__certifications__"
+
+
+def _is_section_reset(text_lower: str) -> bool:
+    """
+    True if `text_lower` (already lowercased, stripped) is a recognised
+    section heading that should end the current section-of-interest.
+
+    Uses prefix matching so variants like "volunteer experience",
+    "leadership experience", "extracurricular activities", and
+    "community involvement" all match correctly — the original exact-set
+    check missed these.
+    """
+    if not text_lower:
+        return False
+    if text_lower in _SECTION_RESETS:
+        return True
+    if text_lower.rstrip("s") in _SECTION_RESETS:
+        return True
+    if len(text_lower) > 60:
+        return False   # body-of-text, not a heading
+    for reset in _SECTION_RESETS:
+        # Word-boundary prefix match: "volunteer experience" starts with "volunteer "
+        if text_lower.startswith(reset + " "):
+            return True
+    return False
+
+
+def _is_certifications_heading(text_lower: str) -> bool:
+    """True if this heading designates a dedicated Certifications bullet section."""
+    if not text_lower:
+        return False
+    if text_lower in _CERTIFICATIONS_HEADINGS:
+        return True
+    if len(text_lower) > 60:
+        return False
+    for h in _CERTIFICATIONS_HEADINGS:
+        if text_lower == h or text_lower.startswith(h + " ") or text_lower.endswith(" " + h):
+            return True
+    return False
+
+
 # ─── XML helpers ─────────────────────────────────────────────────────────────
 
 def _table_text(tbl) -> str:
@@ -438,7 +498,18 @@ def fix_widow_line(text: str, chars_per_line: int,
 # ─── Template structure discovery ────────────────────────────────────────────
 
 def discover_template_sections(template_path: Path) -> dict:
-    """"""
+    """
+    Walk the template DOCX and return {section_title_or_synthetic_key: bullet_count}.
+
+    Handles three structural patterns the engine must support:
+      • Standard section: a non-bullet title paragraph ("Acme Corp — Analyst")
+        followed by bullet paragraphs. Title becomes the dict key.
+      • Dedicated Certifications section: a "Certifications" heading followed
+        by bullet paragraphs. Slots are routed under CERTIFICATIONS_KEY so
+        generate() can fill them from the user's cert list (AI never writes here).
+      • Missing sections (e.g. no Projects block, no Leadership): simply
+        absent from the returned dict — downstream code only fills what's present.
+    """
     with zipfile.ZipFile(template_path) as z:
         xml = z.read("word/document.xml")
     tree = etree.fromstring(xml)
@@ -452,7 +523,13 @@ def discover_template_sections(template_path: Path) -> dict:
             continue
 
         pt_lower = pt.lower()
-        if pt_lower in _SECTION_RESETS or pt_lower.rstrip("s") in _SECTION_RESETS:
+
+        # Dedicated Certifications heading → route following bullets to synthetic key
+        if _is_certifications_heading(pt_lower):
+            cur_title = CERTIFICATIONS_KEY
+            continue
+
+        if _is_section_reset(pt_lower):
             cur_title = None
             continue
 
@@ -480,6 +557,10 @@ def map_template_slots_from_raw(raw_slots: dict, master_bank: dict) -> dict:
     all_anchors = _build_anchors(master_bank)
     result: dict[str, int] = {}
     for title, count in raw_slots.items():
+        # Synthetic cert key is already canonical — pass through untouched
+        if title == CERTIFICATIONS_KEY:
+            result[title] = result.get(title, 0) + count
+            continue
         title_lower = title.lower()
         matched_key = None
         for anchor, key in all_anchors:
@@ -517,7 +598,10 @@ def read_template_slots(template_path: Path,
             continue
 
         pt_lower = pt.lower()
-        if pt_lower in _SECTION_RESETS or pt_lower.rstrip("s") in _SECTION_RESETS:
+        if _is_certifications_heading(pt_lower):
+            cur_section = CERTIFICATIONS_KEY
+            continue
+        if _is_section_reset(pt_lower):
             cur_section = None
             continue
 
@@ -685,11 +769,46 @@ def _update_side_project_title(para, old_name: str, new_name: str,
 # ─── Generic section anchor builder ──────────────────────────────────────────
 
 def _build_anchors(master_bank: dict) -> list[tuple[str, str]]:
-    anchors_dict: dict[str, str] = {}
-    for key, sec in master_bank.get("sections", {}).items():
+    """
+    Build the list of (anchor_text, section_key) pairs used to map template
+    paragraphs/tables to bank section keys. Sorted longest-first so that more
+    specific anchors (e.g. "Goldman Sachs Associate") match before shorter
+    substrings ("Goldman Sachs" or "Associate" alone).
+
+    Multi-role at the same company:
+      When two+ bank sections share the same company (e.g. Analyst then
+      Associate at Goldman), the bare company name is ambiguous. We instead
+      register a set of composite anchors using every common text ordering a
+      template might use ("Goldman Sachs Associate", "Associate, Goldman Sachs",
+      "Goldman Sachs - Analyst", …). The role name alone is also registered as
+      a lower-priority fallback for templates that list the role without
+      repeating the company.
+
+    Explicit `template_anchor`:
+      If a section specifies `template_anchor`, it's used verbatim — overrides
+      everything else. Useful when a user wants to pin a section to exact
+      template text.
+
+    Projects: anchor is `project_name`.
+    """
+    sections = master_bank.get("sections", {})
+
+    # Pass 1: detect companies that appear in ≥2 sections (multi-role case)
+    company_usage: dict[str, int] = {}
+    for _key, sec in sections.items():
+        if (sec.get("template_anchor") or "").strip():
+            continue
+        c = (sec.get("company") or "").strip().lower()
+        if c:
+            company_usage[c] = company_usage.get(c, 0) + 1
+
+    primary: dict[str, str] = {}      # preferred anchors (company + composites)
+    fallback: dict[str, str] = {}     # role-alone (lower priority)
+
+    for key, sec in sections.items():
         explicit = (sec.get("template_anchor") or "").strip()
         if explicit:
-            anchors_dict[explicit] = key
+            primary[explicit] = key
             continue
 
         company = (sec.get("company") or "").strip()
@@ -697,15 +816,37 @@ def _build_anchors(master_bank: dict) -> list[tuple[str, str]]:
         role    = (sec.get("role") or "").strip()
 
         if company:
-            if company not in anchors_dict:
-                anchors_dict[company] = key
-            if role and role not in anchors_dict:
-                anchors_dict[role] = key
+            is_multirole = company_usage.get(company.lower(), 0) >= 2
+            if is_multirole and role:
+                # Composite anchors — cover common template orderings. Longest-first
+                # sort ensures these beat the bare company anchor of a different
+                # section if it happens to be registered elsewhere.
+                composites = [
+                    f"{company} {role}",       f"{role} {company}",
+                    f"{company} - {role}",     f"{role} - {company}",
+                    f"{company} – {role}",     f"{role} – {company}",   # en-dash
+                    f"{company}, {role}",      f"{role}, {company}",
+                    f"{company} | {role}",     f"{role} | {company}",
+                    f"{company}: {role}",      f"{role}: {company}",
+                ]
+                for form in composites:
+                    primary.setdefault(form, key)
+                fallback.setdefault(role, key)
+            else:
+                # Single-role company (or no role field) — keep the original
+                # simple behaviour.
+                primary.setdefault(company, key)
+                if role:
+                    fallback.setdefault(role, key)
         elif project:
-            if project not in anchors_dict:
-                anchors_dict[project] = key
-                
-    return sorted(anchors_dict.items(), key=lambda x: len(x[0]), reverse=True)
+            primary.setdefault(project, key)
+
+    # Merge fallbacks only where they don't clash with a primary anchor
+    for role, key in fallback.items():
+        if role not in primary:
+            primary[role] = key
+
+    return sorted(primary.items(), key=lambda x: len(x[0]), reverse=True)
 
 
 def _get_skills_header(master_bank: dict) -> str:
@@ -796,18 +937,31 @@ def modify_docx(
 
         if tag == "tbl":
             # Tables hold company names / role titles — use for anchor matching only.
-            tt = (_first_significant_text(child) or _table_text(child)[:120]).strip()
+            # For multi-role-at-same-company templates, we scan the FULL concatenated
+            # table text (not just the first cell) so composite anchors like
+            # "Goldman Sachs Associate" can match even when the company is in one
+            # cell and the role is in the next.
+            first_cell = (_first_significant_text(child) or "").strip()
+            full_text  = _table_text(child).strip()
+            tt = first_cell or full_text[:120]
             if not tt:
                 continue
-            tt_lower = tt.lower()
-            if tt_lower in _SECTION_RESETS or tt_lower.rstrip("s") in _SECTION_RESETS:
+            tt_lower   = tt.lower()
+            full_lower = full_text.lower()
+            if _is_certifications_heading(tt_lower):
+                cur_section = CERTIFICATIONS_KEY
+                continue
+            if _is_section_reset(tt_lower):
                 cur_section = None
                 continue
             if skills_header in tt_lower:
                 cur_section = None
                 continue
+            # Match against the full table text so composite anchors work
+            # across cells. Anchors are sorted longest-first, so the most
+            # specific composite wins before any bare-company match.
             for anchor, key in all_anchors:
-                if anchor.lower() in tt_lower:
+                if anchor.lower() in full_lower:
                     cur_section = key
                     break
             continue
@@ -831,7 +985,10 @@ def modify_docx(
                 bullet_map.setdefault(cur_section, []).append(para_pos[id(child)])
             continue
 
-        if pt_lower in _SECTION_RESETS or pt_lower.rstrip("s") in _SECTION_RESETS:
+        if _is_certifications_heading(pt_lower):
+            cur_section = CERTIFICATIONS_KEY
+            continue
+        if _is_section_reset(pt_lower):
             cur_section = None
             continue
         if skills_header in pt_lower:
