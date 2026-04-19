@@ -1720,10 +1720,7 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
     </div>
     <p class="status-card-desc">{{ 'Your full experience – everything about the work you have done. You can upload any length CV or a document with everything about your work so far' if has_bank else 'Upload your CV or paste your experience.' }}</p>
     {% if has_bank %}
-      <div class="d-grid gap-1 mt-auto">
-        <a href="/bank" class="btn btn-ghost btn-sm">View Bank</a>
-        <a href="/bank/download" class="btn btn-ghost btn-sm">Download JSON</a>
-      </div>
+      <a href="/bank" class="btn btn-ghost btn-sm mt-auto" style="display:block;text-align:center;">View or edit CV Bullet Bank</a>
     {% else %}
       <a href="/bank/create" class="btn btn-indig btn-sm mt-auto" style="display:block;text-align:center;">Set up CV Bullet Bank</a>
     {% endif %}
