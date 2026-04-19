@@ -1,3 +1,4 @@
+from __future__ import annotations
 #!/usr/bin/env python3
 """
 supabase_client.py — Supabase integration for CV Webapp
