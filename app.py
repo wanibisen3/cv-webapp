@@ -1728,62 +1728,31 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
     </a>
   </div>
 </div>
-</div> <!-- End cc-page -->
 
-<section class="how-section">
-  <div class="container overflow-hidden">
-    <div class="text-center mb-5">
-      <div class="section-eyebrow mb-3">Recall the workflow</div>
-      <h3 class="how-heading">Building your tailored CV</h3>
-      <p class="how-sub">Reference these steps if you ever get stuck or want to sharpen your tailoring.</p>
-    </div>
-
-    <div class="row g-4 position-relative">
-      <div class="col-md-4 step-connector">
-        <div class="step-card visible">
-          <div class="step-icon-circle ic-indigo"><i class="bi bi-database-fill"></i></div>
-          <div class="step-num">Step 01</div>
-          <div class="step-title">CV Bullet Bank</div>
-          <div class="step-desc">Keep your full experience history in your Bank — unstructured and raw.</div>
-        </div>
+  {% if has_template and has_ai %}
+  <div class="generate-wrap mt-5">
+    <div class="generate-inner">
+      <div class="generate-title">
+        <i class="bi bi-magic" style="color:var(--indigo);"></i>Tailor your CV with AI
       </div>
-      <div class="col-md-4 step-connector">
-        <div class="step-card visible">
-          <div class="step-icon-circle ic-violet"><i class="bi bi-file-earmark-text-fill"></i></div>
-          <div class="step-num">Step 02</div>
-          <div class="step-title">Paste JD</div>
-          <div class="step-desc">Paste the JD above. AI reads the language and key requirements.</div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="step-card visible">
-          <div class="step-icon-circle ic-emerald"><i class="bi bi-download"></i></div>
-          <div class="step-num">Step 03</div>
-          <div class="step-title">Download</div>
-          <div class="step-desc">Get a Word + PDF with bullets rewritten in perfect STAR format.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row justify-content-center mt-5">
-      <div class="col-lg-10">
-        <div class="bank-boost-card">
-          <div class="bank-boost-left">
-            <div class="bank-boost-badge"><i class="bi bi-stars"></i>&nbsp;Optional &middot; Highly recommended</div>
-            <div class="bank-boost-title">Want sharper tailoring? Build a CV Bullet Bank.</div>
-            <div class="bank-boost-desc">
-              Collate every role, project, and achievement you've ever had — including the ones that didn't make it onto your current CV.
-              When you paste a JD, the AI can dip into your CV Bullet Bank and surface the <em>most relevant</em> experience for that specific role.
-            </div>
-          </div>
-          <div class="bank-boost-right">
-            <div class="bank-boost-ic"><i class="bi bi-database-fill"></i></div>
-          </div>
-        </div>
-      </div>
+      <p class="generate-sub">Paste the job description below. AI will select the best bullets from your CV Bullet Bank and rewrite them for the perfect STAR match.</p>
+      
+      <form action="/generate" method="post" id="genForm">
+        <textarea name="jd_text" class="form-control mb-3" rows="8" placeholder="Paste the job description here..." required></textarea>
+        
+        <button type="submit" id="genBtn" class="btn-generate">
+          <span id="genBtnDefault">Generate Tailored CV</span>
+          <span id="genBtnLoading" style="display:none;align-items:center;justify-content:center;gap:.75rem;">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Tailoring your CV...
+          </span>
+        </button>
+      </form>
     </div>
   </div>
-</section>
+  {% endif %}
+</div> <!-- End cc-page -->
+
 """).replace("{% block scripts %}{% endblock %}", """
 <script>
 (function() {
