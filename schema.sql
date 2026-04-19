@@ -54,7 +54,7 @@ create trigger profiles_updated_at
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- 2. MASTER BANKS
+-- 2. CV BULLET BANKS
 --    Stores each user's bullet bank as JSONB.
 --    Structure: { candidate, sections, certifications, skills_text, skills_header }
 -- ─────────────────────────────────────────────────────────────────────────────

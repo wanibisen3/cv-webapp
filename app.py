@@ -6,9 +6,9 @@ Self-contained Flask application.
 
 Features:
   • Sign up / Sign in (Supabase Auth)
-  • Build master bank from: uploaded CV file (DOCX/PDF/TXT), pasted text, or manual entry
-  • Import more experience into an existing bank at any time
-  • Full bank editor: add / edit / delete bullets, add new sections, edit skills & certs
+  • Build CV Bullet Bank from: uploaded CV file (DOCX/PDF/TXT), pasted text, or manual entry
+  • Import more experience into an existing CV Bullet Bank at any time
+  • Full CV Bullet Bank editor: add / edit / delete bullets, add new sections, edit skills & certs
   • Upload CV template (.docx)
   • AI Settings: choose provider (Anthropic / OpenAI / Gemini) + enter own API key
   • Generate tailored CV from JD → review & edit bullets → download .docx AND .pdf
@@ -238,43 +238,44 @@ _BASE = r"""<!doctype html>
     /* ── Navbar ── */
     .cc-nav {
       position: sticky; top: 0; z-index: 1000; height: 60px;
-      background: rgba(6,9,24,0.96);
+      background: rgba(255,255,255,0.96);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 2rem;
+      border-bottom: 1px solid rgba(15,23,42,0.08);
     }
     .cc-nav::after {
       content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
       background: linear-gradient(90deg, var(--indigo), var(--violet), var(--amber));
-      opacity: 0.55;
+      opacity: 0.15;
     }
     .cc-brand {
       display: flex; align-items: center; gap: .65rem; text-decoration: none;
       font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;
-      font-size: 1.05rem; color: #fff; letter-spacing: -.3px;
+      font-size: 1.05rem; color: var(--navy); letter-spacing: -.3px;
     }
     .cc-brand-icon {
       width: 32px; height: 32px;
       background: linear-gradient(135deg, var(--indigo), var(--violet));
       border-radius: 9px; display: flex; align-items: center; justify-content: center;
-      font-size: .9rem; color: #fff; box-shadow: 0 4px 14px rgba(79,70,229,0.5);
+      font-size: .9rem; color: #fff; box-shadow: 0 4px 14px rgba(79,70,229,0.3);
     }
     .cc-brand-cv { color: var(--amber-l); }
     .cc-nav-links { display: flex; align-items: center; gap: .4rem; }
     .cc-nav-pill {
       padding: .35rem .9rem; border-radius: 22px; font-size: .8rem; font-weight: 500;
-      color: rgba(255,255,255,0.65); text-decoration: none;
+      color: var(--muted); text-decoration: none;
       transition: background .18s, color .18s; border: 1px solid transparent;
       display: flex; align-items: center; gap: .35rem;
     }
-    .cc-nav-pill:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.95); }
-    .cc-nav-pill.outline { border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.7); }
-    .cc-nav-pill.outline:hover { border-color: rgba(255,255,255,0.35); color: #fff; background: rgba(255,255,255,0.05); }
+    .cc-nav-pill:hover { background: rgba(15,23,42,0.04); color: var(--navy); }
+    .cc-nav-pill.outline { border-color: rgba(15,23,42,0.1); color: var(--muted); }
+    .cc-nav-pill.outline:hover { border-color: rgba(15,23,42,0.25); color: var(--navy); background: rgba(15,23,42,0.02); }
     .cc-email-badge {
-      font-size: .73rem; color: rgba(255,255,255,0.35);
-      padding: .28rem .7rem; background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.07); border-radius: 14px;
+      font-size: .73rem; color: var(--muted);
+      padding: .28rem .7rem; background: rgba(15,23,42,0.02);
+      border: 1px solid rgba(15,23,42,0.06); border-radius: 14px;
     }
 
     /* ── Loading overlay ── */
@@ -459,18 +460,14 @@ _BASE = r"""<!doctype html>
       100% { background-position: 200% center; }
     }
 
-    /* ── Generate button ── */
     .btn-generate {
-      background: linear-gradient(90deg, var(--indigo) 0%, var(--violet) 25%, #818cf8 50%, var(--violet) 75%, var(--indigo) 100%);
-      background-size: 200% auto; color: #fff; border: none; border-radius: var(--r12);
+      background: var(--navy);
+      color: #fff; border: 1.5px solid rgba(255,255,255,0.1); border-radius: var(--r12);
       font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.05rem;
       padding: 1rem 2.5rem; width: 100%; cursor: pointer;
-      transition: transform .18s, box-shadow .2s; box-shadow: 0 6px 24px rgba(79,70,229,0.45);
+      transition: transform .18s, box-shadow .2s; box-shadow: 0 6px 20px rgba(15,23,42,0.18);
     }
-    .btn-generate:hover {
-      animation: shimmer 1.8s linear infinite; transform: translateY(-3px);
-      box-shadow: 0 14px 36px rgba(79,70,229,0.52); color: #fff;
-    }
+    .btn-generate:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(15,23,42,0.15); opacity: 0.95; }
     .btn-generate:active { transform: translateY(-1px); }
 
     /* ── Provider cards ── */
@@ -482,11 +479,13 @@ _BASE = r"""<!doctype html>
     .provider-card.selected { border-color: var(--indigo); background: #eef2ff; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
 
     /* ── Layout ── */
-    .cc-page { max-width: 880px; margin: 0 auto; padding: 2.25rem 1.5rem 5rem; }
+    .cc-page { max-width: 1200px; margin: 0 auto; padding: 2.25rem 1.5rem 5rem; }
     .section-eyebrow { font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); }
   </style>
 </head>
 <body>
+
+<canvas id="geom-bg" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;"></canvas>
 
 <!-- Navbar -->
 <nav class="cc-nav">
@@ -497,7 +496,7 @@ _BASE = r"""<!doctype html>
   {% if session.user_id %}
   <div class="cc-nav-links">
     <span class="cc-email-badge d-none d-md-inline">{{ session.email }}</span>
-    <a class="cc-nav-pill" href="/bank"><i class="bi bi-database"></i>Bank</a>
+    <a class="cc-nav-pill" href="/bank"><i class="bi bi-database"></i>CV Bullet Bank</a>
     <a class="cc-nav-pill" href="/settings"><i class="bi bi-gear"></i>Settings</a>
     <a class="cc-nav-pill outline" href="/signout">Sign out</a>
   </div>
@@ -513,12 +512,14 @@ _BASE = r"""<!doctype html>
   </div>
 </div>
 
-<div class="cc-page">
-  {% for cat, msg in get_flashed_messages(with_categories=true) %}
-    <div class="alert alert-{{ 'danger' if cat=='error' else cat }} alert-dismissible fade show mb-3" role="alert">
-      {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-  {% endfor %}
+<div class="main-content">
+  <div class="cc-page" style="padding-bottom:0; min-height: auto;">
+    {% for cat, msg in get_flashed_messages(with_categories=true) %}
+      <div class="alert alert-{{ 'danger' if cat=='error' else cat }} alert-dismissible fade show mb-3" role="alert">
+        {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  </div>
   {% block content %}{% endblock %}
 </div>
 
@@ -562,6 +563,74 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+<script>
+// ── Geometric 3D Background Canvas ──
+(function(){
+  const canvas = document.getElementById('geom-bg');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let width, height;
+  let particles = [];
+  function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  class Particle {
+    constructor() {
+      this.x = Math.random() * width;
+      this.y = Math.random() * height;
+      this.vx = (Math.random() - 0.5) * 0.4;
+      this.vy = (Math.random() - 0.5) * 0.4;
+      this.radius = Math.random() * 1.5 + 0.5;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      if (this.x < 0 || this.x > width) this.vx *= -1;
+      if (this.y < 0 || this.y > height) this.vy *= -1;
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(79, 70, 229, 0.4)'; // subtle indigo
+      ctx.fill();
+    }
+  }
+
+  function init() {
+    particles = [];
+    const num = Math.min(Math.floor((width * height) / 15000), 100);
+    for (let i = 0; i < num; i++) particles.push(new Particle());
+  }
+  init();
+
+  function animate() {
+    ctx.clearRect(0, 0, width, height);
+    for (let i = 0; i < particles.length; i++) {
+      particles[i].update();
+      particles[i].draw();
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 180) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(79, 70, 229, ${0.1 * (1 - dist/180)})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+</script>
 {% block scripts %}{% endblock %}
 </body></html>"""
 
@@ -603,36 +672,37 @@ _INDEX = r"""<!doctype html>
     /* ── Navbar ── */
     .cc-nav {
       position: sticky; top: 0; z-index: 1000; height: 60px;
-      background: rgba(6,9,24,0.96);
+      background: rgba(255,255,255,0.96);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
       display: flex; align-items: center; justify-content: space-between; padding: 0 2rem;
+      border-bottom: 1px solid rgba(15,23,42,0.08);
     }
     .cc-nav::after {
       content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, var(--indigo), var(--violet), var(--amber)); opacity: 0.55;
+      background: linear-gradient(90deg, var(--indigo), var(--violet), var(--amber)); opacity: 0.15;
     }
     .cc-brand {
       display: flex; align-items: center; gap: .65rem; text-decoration: none;
       font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700;
-      font-size: 1.05rem; color: #fff; letter-spacing: -.3px;
+      font-size: 1.05rem; color: var(--navy); letter-spacing: -.3px;
     }
     .cc-brand-icon {
       width: 32px; height: 32px;
       background: linear-gradient(135deg, var(--indigo), var(--violet));
       border-radius: 9px; display: flex; align-items: center; justify-content: center;
-      font-size: .9rem; color: #fff; box-shadow: 0 4px 14px rgba(79,70,229,0.5);
+      font-size: .9rem; color: #fff; box-shadow: 0 4px 14px rgba(79,70,229,0.3);
     }
     .cc-brand-cv { color: var(--amber-l); }
     .cc-nav-links { display: flex; align-items: center; gap: .5rem; }
     .cc-nav-pill {
       padding: .35rem .9rem; border-radius: 22px; font-size: .8rem; font-weight: 500;
-      color: rgba(255,255,255,0.65); text-decoration: none;
+      color: var(--muted); text-decoration: none;
       transition: background .18s, color .18s; border: 1px solid transparent;
     }
-    .cc-nav-pill:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.95); }
-    .cc-nav-pill.outline { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.75); }
-    .cc-nav-pill.outline:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
+    .cc-nav-pill:hover { background: rgba(15,23,42,0.04); color: var(--navy); }
+    .cc-nav-pill.outline { border-color: rgba(15,23,42,0.1); color: var(--muted); }
+    .cc-nav-pill.outline:hover { border-color: rgba(15,23,42,0.25); color: var(--navy); background: rgba(15,23,42,0.02); }
 
     /* ── Alert ── */
     .alert { border-radius: var(--r12); border: none; border-left: 4px solid; font-size: .875rem; font-weight: 500; padding: .85rem 1.1rem; }
@@ -642,55 +712,10 @@ _INDEX = r"""<!doctype html>
 
     /* ── Hero ── */
     .hero {
-      background: var(--deep);
+      background: transparent;
       position: relative; overflow: hidden;
       padding: 4rem 0 4.5rem;
       display: flex; align-items: center;
-    }
-    /* Grid texture */
-    .hero::before {
-      content: ''; position: absolute; inset: 0; pointer-events: none;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-      background-size: 72px 72px;
-    }
-    /* Aurora orbs */
-    .aurora-orb {
-      position: absolute; border-radius: 50%; filter: blur(80px);
-      opacity: 0.35; pointer-events: none;
-    }
-    .orb-1 {
-      width: 600px; height: 600px;
-      background: radial-gradient(circle, var(--indigo) 0%, transparent 70%);
-      top: -15%; left: -10%;
-      animation: orbFloat1 18s ease-in-out infinite;
-    }
-    .orb-2 {
-      width: 500px; height: 500px;
-      background: radial-gradient(circle, var(--violet) 0%, transparent 70%);
-      bottom: -20%; right: -5%;
-      animation: orbFloat2 14s ease-in-out infinite;
-    }
-    .orb-3 {
-      width: 350px; height: 350px;
-      background: radial-gradient(circle, #1e40af 0%, transparent 70%);
-      top: 40%; left: 40%;
-      animation: orbFloat3 20s ease-in-out infinite;
-    }
-    @keyframes orbFloat1 {
-      0%, 100% { transform: translate(0, 0); }
-      33% { transform: translate(60px, 40px); }
-      66% { transform: translate(-30px, 60px); }
-    }
-    @keyframes orbFloat2 {
-      0%, 100% { transform: translate(0, 0); }
-      50% { transform: translate(-80px, -50px); }
-    }
-    @keyframes orbFloat3 {
-      0%, 100% { transform: translate(0, 0); }
-      33% { transform: translate(50px, -40px); }
-      66% { transform: translate(-60px, 30px); }
     }
     .hero-inner { position: relative; z-index: 1; }
     .hero-badge {
@@ -703,11 +728,11 @@ _INDEX = r"""<!doctype html>
     .hero-h1 {
       font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900;
       font-size: clamp(2.4rem, 5vw, 3.4rem); line-height: 1.05;
-      color: #fff; letter-spacing: -.05em; margin-bottom: 1rem;
+      color: var(--navy); letter-spacing: -.05em; margin-bottom: 1rem;
     }
     .hero-h1 em { font-style: normal; color: var(--amber-l); }
     .hero-sub {
-      font-size: 1rem; line-height: 1.65; color: rgba(255,255,255,0.6);
+      font-size: 1rem; line-height: 1.65; color: var(--muted);
       max-width: 600px; margin-bottom: 1.5rem;
     }
     .hero-cta-row { display: flex; gap: .85rem; flex-wrap: wrap; margin-bottom: 1rem; }
@@ -715,24 +740,24 @@ _INDEX = r"""<!doctype html>
       padding: .75rem 1.75rem; border-radius: var(--r12);
       background: linear-gradient(135deg, var(--indigo), var(--violet));
       color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .95rem;
-      text-decoration: none; border: none; box-shadow: 0 6px 22px rgba(79,70,229,0.5);
+      text-decoration: none; border: none; box-shadow: 0 6px 22px rgba(79,70,229,0.3);
       transition: transform .18s, box-shadow .18s; display: inline-flex; align-items: center; gap: .5rem;
     }
-    .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(79,70,229,0.55); color: #fff; }
+    .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(79,70,229,0.4); color: #fff; }
     .btn-hero-outline {
       padding: .75rem 1.75rem; border-radius: var(--r12);
-      border: 1.5px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.85);
+      border: 1.5px solid rgba(15,23,42,0.15); color: var(--navy);
       font-weight: 600; font-size: .95rem; text-decoration: none;
-      transition: border-color .18s, background .18s; background: rgba(255,255,255,0.04);
+      transition: border-color .18s, background .18s; background: #fff;
       display: inline-flex; align-items: center; gap: .5rem;
     }
-    .btn-hero-outline:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); color: #fff; }
+    .btn-hero-outline:hover { border-color: var(--indigo); background: #f8fafc; color: var(--navy); }
     .hero-trust {
-      font-size: .77rem; color: rgba(255,255,255,0.35);
+      font-size: .77rem; color: var(--muted);
       display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
       margin-bottom: 2rem;
     }
-    .hero-trust i { color: rgba(255,255,255,0.25); }
+    .hero-trust i { color: var(--indigo); opacity: 0.6; }
 
     /* ── Hero feature grid (fills left column) ── */
     .hero-feat-grid {
@@ -742,32 +767,33 @@ _INDEX = r"""<!doctype html>
     @media (max-width: 560px) { .hero-feat-grid { grid-template-columns: 1fr; } }
     .hero-feat {
       display: flex; align-items: flex-start; gap: .75rem;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(15,23,42,0.06);
       border-radius: 14px; padding: .85rem .95rem;
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      transition: background .2s, border-color .2s, transform .2s;
+      box-shadow: 0 2px 10px rgba(15,23,42,0.02);
+      transition: background .2s, border-color .2s, transform .2s, box-shadow .2s;
     }
     .hero-feat:hover {
-      background: rgba(255,255,255,0.07);
-      border-color: rgba(255,255,255,0.18);
+      background: #fff;
+      border-color: rgba(15,23,42,0.12);
       transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(15,23,42,0.06);
     }
     .hero-feat-ic {
       width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
       background: linear-gradient(135deg, var(--indigo), var(--violet));
       color: #fff; font-size: .9rem;
-      box-shadow: 0 4px 14px rgba(79,70,229,0.4);
+      box-shadow: 0 4px 14px rgba(79,70,229,0.25);
     }
     .hero-feat-title {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: .82rem; font-weight: 700; color: #fff;
+      font-size: .82rem; font-weight: 700; color: var(--navy);
       letter-spacing: -.01em; margin-bottom: .15rem;
     }
     .hero-feat-desc {
       font-size: .72rem; line-height: 1.45;
-      color: rgba(255,255,255,0.5);
+      color: var(--muted);
     }
 
     /* ── CV mockup ── */
@@ -818,75 +844,76 @@ _INDEX = r"""<!doctype html>
 
     /* ── Stats bar ── */
     .stats-bar {
-      background: rgba(15,23,42,0.9); backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: #fff;
+      border-bottom: 1px solid rgba(15,23,42,0.06);
+      border-top: 1px solid rgba(15,23,42,0.06);
       padding: 1.1rem 0;
     }
     .stat-item { text-align: center; padding: .5rem 1.5rem; }
-    .stat-item:not(:last-child) { border-right: 1px solid rgba(255,255,255,0.08); }
+    .stat-item:not(:last-child) { border-right: 1px solid rgba(15,23,42,0.08); }
     .stat-number {
       font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900;
-      font-size: 1.75rem; color: #fff; line-height: 1; letter-spacing: -.03em;
+      font-size: 1.75rem; color: var(--navy); line-height: 1; letter-spacing: -.03em;
       margin-bottom: .3rem;
     }
     .stat-number span { color: var(--amber-l); }
-    .stat-label { font-size: .72rem; color: rgba(255,255,255,0.45); font-weight: 500; letter-spacing: .03em; }
+    .stat-label { font-size: .72rem; color: var(--muted); font-weight: 500; letter-spacing: .03em; }
 
     /* ── How it works ── */
-    .how-section { background: #0d1117; padding: 4rem 0 4.5rem; }
+    .how-section { background: transparent; padding: 4rem 0 4.5rem; }
     .how-heading {
       font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900;
-      font-size: clamp(1.8rem, 3.5vw, 2.6rem); color: #fff;
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem); color: var(--navy);
       letter-spacing: -.04em; margin-bottom: .75rem; line-height: 1.1;
     }
-    .how-sub { font-size: .95rem; color: rgba(255,255,255,0.45); max-width: 480px; margin: 0 auto; }
+    .how-sub { font-size: .95rem; color: var(--muted); max-width: 480px; margin: 0 auto; }
     /* Connecting line between cards */
     .step-connector { position: relative; }
     .step-connector::before {
       content: '';
       position: absolute; top: 38px; left: calc(50% + 130px); right: calc(-50% + 130px);
-      height: 1px; border-top: 2px dashed rgba(255,255,255,0.1); z-index: 0;
+      height: 1px; border-top: 2px dashed rgba(15,23,42,0.1); z-index: 0;
       display: none;
     }
     @media (min-width: 768px) { .step-connector::before { display: block; } }
     .step-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.09);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      background: #fff;
+      border: 1px solid rgba(15,23,42,0.08);
       border-radius: var(--r20); padding: 2.25rem 1.75rem;
       cursor: default; position: relative; z-index: 1;
       opacity: 0; transform: translateY(32px);
       transition: opacity .5s ease, transform .5s ease, box-shadow .25s;
+      display: flex; flex-direction: column; height: 100%;
+      box-shadow: 0 4px 16px rgba(15,23,42,0.04);
     }
     .step-card.visible { opacity: 1; transform: translateY(0); }
-    .step-card:hover { box-shadow: 0 20px 48px rgba(0,0,0,0.4); }
+    .step-card:hover { box-shadow: 0 12px 32px rgba(15,23,42,0.08); transform: translateY(-4px); }
     .step-icon-circle {
       width: 56px; height: 56px; border-radius: 16px;
       display: flex; align-items: center; justify-content: center;
       font-size: 1.35rem; color: #fff; margin-bottom: 1.2rem;
     }
-    .ic-indigo { background: linear-gradient(135deg, var(--indigo), var(--indigo-l)); box-shadow: 0 6px 20px rgba(79,70,229,0.45); }
-    .ic-violet { background: linear-gradient(135deg, var(--violet), var(--violet-l)); box-shadow: 0 6px 20px rgba(124,58,237,0.45); }
-    .ic-emerald { background: linear-gradient(135deg, var(--emerald), #10b981); box-shadow: 0 6px 20px rgba(5,150,105,0.4); }
+    .ic-indigo { background: linear-gradient(135deg, var(--indigo), var(--indigo-l)); box-shadow: 0 6px 20px rgba(79,70,229,0.3); }
+    .ic-violet { background: linear-gradient(135deg, var(--violet), var(--violet-l)); box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
+    .ic-emerald { background: linear-gradient(135deg, var(--emerald), #10b981); box-shadow: 0 6px 20px rgba(5,150,105,0.3); }
     .step-num {
       font-size: .65rem; font-weight: 800; letter-spacing: .1em;
-      text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: .55rem;
+      text-transform: uppercase; color: var(--muted); margin-bottom: .55rem;
     }
     .step-title {
       font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.05rem; font-weight: 800;
-      color: #fff; margin-bottom: .6rem; letter-spacing: -.02em;
+      color: var(--navy); margin-bottom: .6rem; letter-spacing: -.02em;
     }
-    .step-desc { font-size: .86rem; line-height: 1.7; color: rgba(255,255,255,0.5); }
+    .step-desc { font-size: .86rem; line-height: 1.7; color: var(--muted); }
 
     /* ── Bank boost (optional) callout ── */
     .bank-boost-card {
       display: flex; align-items: center; gap: 1.75rem;
-      background: linear-gradient(135deg, rgba(79,70,229,0.12), rgba(124,58,237,0.08));
-      border: 1px solid rgba(255,255,255,0.10);
+      background: #f8fafc;
+      border: 1px solid rgba(15,23,42,0.1);
       border-radius: var(--r20);
       padding: 1.75rem 2rem;
-      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      box-shadow: 0 20px 48px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+      box-shadow: 0 12px 32px rgba(15,23,42,0.05);
     }
     .bank-boost-left { flex: 1; }
     .bank-boost-badge {
@@ -899,16 +926,16 @@ _INDEX = r"""<!doctype html>
     }
     .bank-boost-title {
       font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.25rem; font-weight: 800;
-      color: #fff; letter-spacing: -.02em; margin-bottom: .5rem;
+      color: var(--navy); letter-spacing: -.02em; margin-bottom: .5rem;
     }
-    .bank-boost-desc { font-size: .88rem; line-height: 1.7; color: rgba(255,255,255,0.55); margin: 0; }
-    .bank-boost-right { flex: 0 0 auto; }
+    .bank-boost-desc { font-size: .88rem; line-height: 1.7; color: var(--muted); margin: 0; }
+    .bank-boost-right { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; }
     .bank-boost-ic {
       width: 72px; height: 72px; border-radius: 20px;
       display: flex; align-items: center; justify-content: center;
       font-size: 1.8rem; color: #fff;
       background: linear-gradient(135deg, var(--indigo), var(--violet));
-      box-shadow: 0 12px 32px rgba(79,70,229,0.45);
+      box-shadow: 0 12px 32px rgba(79,70,229,0.3);
     }
     @media (max-width: 768px) {
       .bank-boost-card { flex-direction: column-reverse; text-align: center; }
@@ -917,30 +944,24 @@ _INDEX = r"""<!doctype html>
 
     /* ── INSEAD pledge section ── */
     .insead-pledge {
-      background: linear-gradient(180deg, #0d1117 0%, #060918 100%);
+      background: #f8fafc;
       padding: 4rem 0 4.5rem; position: relative; overflow: hidden;
     }
     .insead-pledge::before {
       content: ''; position: absolute; inset: 0; pointer-events: none;
       background:
-        radial-gradient(circle at 20% 30%, rgba(124,58,237,0.18), transparent 55%),
-        radial-gradient(circle at 80% 70%, rgba(217,119,6,0.15), transparent 55%);
+        radial-gradient(circle at 20% 30%, rgba(124,58,237,0.06), transparent 55%),
+        radial-gradient(circle at 80% 70%, rgba(217,119,6,0.05), transparent 55%);
     }
     .pledge-card {
       position: relative; z-index: 1;
       max-width: 860px; margin: 0 auto;
-      background: linear-gradient(135deg, rgba(79,70,229,0.15), rgba(124,58,237,0.10), rgba(217,119,6,0.10));
-      border: 1px solid rgba(255,255,255,0.12);
+      background: #fff;
+      border: 1px solid rgba(15,23,42,0.08);
       border-radius: 28px;
       padding: 3.25rem 2.75rem;
       text-align: center;
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      box-shadow: 0 32px 80px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
-    }
-    .pledge-card::after {
-      content: ''; position: absolute; inset: -1px; border-radius: 28px;
-      background: linear-gradient(135deg, var(--violet), var(--amber), var(--indigo));
-      z-index: -1; filter: blur(24px); opacity: 0.22;
+      box-shadow: 0 16px 40px rgba(15,23,42,0.06);
     }
     .pledge-badge {
       display: inline-flex; align-items: center;
@@ -951,14 +972,11 @@ _INDEX = r"""<!doctype html>
     }
     .pledge-heading {
       font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900;
-      font-size: clamp(2.3rem, 5vw, 3.4rem); color: #fff;
+      font-size: clamp(2.3rem, 5vw, 3.4rem); color: var(--navy);
       letter-spacing: -.05em; line-height: 1.05; margin-bottom: 1rem;
-      background: linear-gradient(135deg, #fff 40%, var(--amber-l) 100%);
-      -webkit-background-clip: text; background-clip: text;
-      -webkit-text-fill-color: transparent;
     }
     .pledge-sub {
-      font-size: 1rem; line-height: 1.75; color: rgba(255,255,255,0.72);
+      font-size: 1rem; line-height: 1.75; color: var(--muted);
       max-width: 620px; margin: 0 auto 2rem;
     }
     .pledge-sub strong { color: var(--amber-l); font-weight: 700; }
@@ -968,27 +986,27 @@ _INDEX = r"""<!doctype html>
     }
     .pledge-pill {
       display: inline-flex; align-items: center; gap: .45rem;
-      font-size: .78rem; font-weight: 600; color: rgba(255,255,255,0.85);
-      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      font-size: .78rem; font-weight: 600; color: var(--navy);
+      background: rgba(15,23,42,0.03); border: 1px solid rgba(15,23,42,0.08);
       padding: .5rem 1rem; border-radius: 100px;
       transition: background .2s, border-color .2s, transform .2s;
     }
     .pledge-pill:hover {
-      background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.22);
+      background: rgba(15,23,42,0.06); border-color: rgba(15,23,42,0.15);
       transform: translateY(-1px);
     }
     .pledge-pill i { color: var(--amber-l); }
     .pledge-cta {
       display: inline-flex; align-items: center; gap: .55rem;
-      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      background: var(--navy);
       color: #fff; padding: .85rem 1.9rem; border-radius: 14px;
       font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .95rem;
-      text-decoration: none; box-shadow: 0 10px 30px rgba(79,70,229,0.45);
-      transition: transform .2s, box-shadow .2s;
+      text-decoration: none; border: 1.5px solid rgba(15,23,42,0.1);
+      transition: all .2s;
     }
     .pledge-cta:hover {
       transform: translateY(-2px); color: #fff;
-      box-shadow: 0 14px 40px rgba(79,70,229,0.6);
+      box-shadow: 0 14px 40px rgba(15,23,42,0.15);
     }
 
     /* ── Auth section ── */
@@ -1034,25 +1052,25 @@ _INDEX = r"""<!doctype html>
     .auth-mb { margin-bottom: .95rem; }
     .btn-auth-signin, .btn-auth-signup {
       width: 100%; padding: .75rem 1rem;
-      background: linear-gradient(135deg, var(--indigo), var(--violet));
-      color: #fff; border: none; border-radius: var(--r10);
+      background: var(--navy);
+      color: #fff; border: 1.5px solid rgba(255,255,255,0.1); border-radius: var(--r10);
       font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .9rem; cursor: pointer;
-      box-shadow: 0 6px 20px rgba(79,70,229,0.4); transition: opacity .18s, transform .15s;
+      box-shadow: 0 4px 12px rgba(15,23,42,0.1); transition: all .18s;
     }
     .btn-auth-signin:hover, .btn-auth-signup:hover { opacity: .88; transform: translateY(-1px); }
 
     /* ── Footer ── */
     .site-footer {
-      background: var(--deep); border-top: 1px solid rgba(255,255,255,0.05);
+      background: #fff; border-top: 1px solid rgba(15,23,42,0.06);
       padding: 2.5rem 0;
     }
     .footer-brand {
       font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;
-      font-size: 1rem; color: #fff; margin-bottom: .4rem;
+      font-size: 1rem; color: var(--navy); margin-bottom: .4rem;
     }
     .footer-brand span { color: var(--amber-l); }
-    .footer-tag { font-size: .78rem; color: rgba(255,255,255,0.3); }
-    .footer-lock { font-size: .75rem; color: rgba(255,255,255,0.25); display: flex; align-items: center; gap: .4rem; }
+    .footer-tag { font-size: .78rem; color: var(--muted); }
+    .footer-lock { font-size: .75rem; color: var(--muted); display: flex; align-items: center; gap: .4rem; }
 
     .section-eyebrow { font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); }
   </style>
@@ -1067,7 +1085,7 @@ _INDEX = r"""<!doctype html>
   </a>
   <div class="cc-nav-links">
     <a class="cc-nav-pill outline" href="#signin">Sign in</a>
-    <a class="cc-nav-pill" style="background:linear-gradient(135deg,var(--indigo),var(--violet));color:#fff;font-weight:700;box-shadow:0 4px 14px rgba(79,70,229,0.4);" href="#signup">Get started free</a>
+    <a class="cc-nav-pill outline" href="#signup">Get started free</a>
   </div>
 </nav>
 
@@ -1089,9 +1107,9 @@ _INDEX = r"""<!doctype html>
       <div class="col-lg-7">
         <div class="hero-badge"><i class="bi bi-mortarboard-fill"></i>&nbsp;Free forever for INSEADers</div>
         <h1 class="hero-h1">Land interviews,<br><em>every time.</em></h1>
-        <p class="hero-sub">Upload your CV template, paste any job description, and get a tailored, ATS-optimised CV in 60 seconds. <strong style="color:#fff;">Your template, your words</strong> — zero hallucination. Want even sharper tailoring? Build your master bank once and let AI pull the most relevant experience for every JD.</p>
+        <p class="hero-sub">Upload your CV template, paste any job description, and get a tailored, ATS-optimised CV in 60 seconds. <strong style="color:#fff;">Your template, your words</strong> — zero hallucination. Want even sharper tailoring? Build your CV Bullet Bank once and let AI pull the most relevant experience for every JD.</p>
         <div class="hero-cta-row">
-          <a href="#signup" class="btn-hero-primary"><i class="bi bi-rocket-takeoff"></i>Start for free</a>
+          <a href="#signup" class="btn-hero-outline"><i class="bi bi-rocket-takeoff"></i>Start for free</a>
           <a href="#signin" class="btn-hero-outline"><i class="bi bi-box-arrow-in-right"></i>Sign in</a>
         </div>
         <div class="hero-trust">
@@ -1122,7 +1140,7 @@ _INDEX = r"""<!doctype html>
             <div class="hero-feat-ic"><i class="bi bi-ban"></i></div>
             <div>
               <div class="hero-feat-title">Zero hallucination</div>
-              <div class="hero-feat-desc">AI only rewrites what's in your CV and master bank — never invents.</div>
+              <div class="hero-feat-desc">AI only rewrites what's in your CV and CV Bullet Bank — never invents.</div>
             </div>
           </div>
           <div class="hero-feat">
@@ -1199,7 +1217,7 @@ _INDEX = r"""<!doctype html>
     <div class="text-center mb-4">
       <div class="section-eyebrow mb-3">The workflow</div>
       <h2 class="how-heading">Three steps.<br>Sixty seconds.</h2>
-      <p class="how-sub">Upload your template, paste a JD, download your tailored CV. That's it. The master bank is an optional boost — not a prerequisite.</p>
+      <p class="how-sub">Upload your template, paste a JD, download your tailored CV. That's it. The CV Bullet Bank is an optional boost — not a prerequisite.</p>
     </div>
     <div class="row g-4 position-relative">
       <div class="col-md-4 step-connector">
@@ -1234,10 +1252,10 @@ _INDEX = r"""<!doctype html>
         <div class="bank-boost-card">
           <div class="bank-boost-left">
             <div class="bank-boost-badge"><i class="bi bi-stars"></i>&nbsp;Optional &middot; Highly recommended</div>
-            <div class="bank-boost-title">Want sharper tailoring? Build a master bank.</div>
+            <div class="bank-boost-title">Want sharper tailoring? Build a CV Bullet Bank.</div>
             <div class="bank-boost-desc">
               Collate every role, project, and achievement you've ever had — including the ones that didn't make it onto your current CV.
-              When you paste a JD, the AI can dip into your bank and surface the <em>most relevant</em> experience for that specific role,
+              When you paste a JD, the AI can dip into your CV Bullet Bank and surface the <em>most relevant</em> experience for that specific role,
               even if it wasn't on your base template. One-time effort; every future application gets smarter.
             </div>
           </div>
@@ -1261,7 +1279,7 @@ _INDEX = r"""<!doctype html>
         <h2 class="pledge-heading">Free. Forever.</h2>
         <p class="pledge-sub">
           This tool will <strong>always</strong> be free for INSEADers. Bring your own API key,
-          build your master bank once, and tailor unlimited CVs to land any role after your MBA.
+          build your CV Bullet Bank once, and tailor unlimited CVs to land any role after your MBA.
         </p>
         <div class="pledge-pills">
           <span class="pledge-pill"><i class="bi bi-infinity"></i>Unlimited generations</span>
@@ -1397,6 +1415,74 @@ document.querySelectorAll('form[action="/signin"], form[action="/signup"]').forE
 <style>
 @keyframes authSpin { to { transform: rotate(360deg); } }
 </style>
+<script>
+// ── Geometric 3D Background Canvas ──
+(function(){
+  const canvas = document.getElementById('geom-bg');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let width, height;
+  let particles = [];
+  function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  class Particle {
+    constructor() {
+      this.x = Math.random() * width;
+      this.y = Math.random() * height;
+      this.vx = (Math.random() - 0.5) * 0.4;
+      this.vy = (Math.random() - 0.5) * 0.4;
+      this.radius = Math.random() * 1.5 + 0.5;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      if (this.x < 0 || this.x > width) this.vx *= -1;
+      if (this.y < 0 || this.y > height) this.vy *= -1;
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(79, 70, 229, 0.4)';
+      ctx.fill();
+    }
+  }
+
+  function init() {
+    particles = [];
+    const num = Math.min(Math.floor((width * height) / 15000), 100);
+    for (let i = 0; i < num; i++) particles.push(new Particle());
+  }
+  init();
+
+  function animate() {
+    ctx.clearRect(0, 0, width, height);
+    for (let i = 0; i < particles.length; i++) {
+      particles[i].update();
+      particles[i].draw();
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 180) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(79, 70, 229, ${0.1 * (1 - dist/180)})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+</script>
 </body>
 </html>"""
 
@@ -1408,24 +1494,24 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
   .dash-greeting { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 2rem; letter-spacing: -.04em; color: var(--navy); margin-bottom: .3rem; line-height: 1.2; }
   .dash-sub { color: var(--muted); font-size: .95rem; }
   .setup-card {
-    background: var(--navy); border-radius: 20px;
+    background: #fff; border-radius: 20px;
     border-left: 4px solid var(--amber); padding: 2rem;
-    box-shadow: 0 8px 32px rgba(15,23,42,0.18), 0 0 0 1px rgba(255,255,255,0.03);
+    box-shadow: 0 8px 32px rgba(15,23,42,0.06), 0 0 0 1px rgba(15,23,42,0.03);
     margin-bottom: 1.75rem;
   }
-  .setup-eyebrow { font-size: .65rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--amber-l); margin-bottom: .6rem; }
-  .setup-heading { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.1rem; color: #fff; margin-bottom: 1.4rem; letter-spacing: -.02em; }
+  .setup-eyebrow { font-size: .65rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); margin-bottom: .6rem; }
+  .setup-heading { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.1rem; color: var(--navy); margin-bottom: 1.4rem; letter-spacing: -.02em; }
   .setup-step { display: flex; align-items: flex-start; gap: .85rem; margin-bottom: 1.1rem; }
   .setup-step:last-child { margin-bottom: 0; }
   .setup-step-num {
     display: inline-flex; align-items: center; justify-content: center;
     width: 28px; height: 28px; border-radius: 50%; font-size: .72rem; font-weight: 800; flex-shrink: 0; margin-top: .1rem;
-    background: linear-gradient(135deg, var(--indigo), var(--violet)); color: #fff; box-shadow: 0 2px 10px rgba(79,70,229,0.4);
+    background: linear-gradient(135deg, var(--indigo), var(--violet)); color: #fff; box-shadow: 0 2px 10px rgba(79,70,229,0.3);
   }
-  .setup-step-num.done { background: linear-gradient(135deg, var(--emerald), #10b981); box-shadow: 0 2px 10px rgba(5,150,105,0.4); }
-  .setup-step-title { font-weight: 700; font-size: .9rem; color: #fff; }
-  .setup-step-title.done { color: rgba(255,255,255,0.4); text-decoration: line-through; }
-  .setup-step-desc { font-size: .78rem; color: rgba(255,255,255,0.38); margin-top: .2rem; line-height: 1.55; }
+  .setup-step-num.done { background: linear-gradient(135deg, var(--emerald), #10b981); box-shadow: 0 2px 10px rgba(5,150,105,0.3); }
+  .setup-step-title { font-weight: 700; font-size: .9rem; color: var(--navy); }
+  .setup-step-title.done { color: var(--muted); text-decoration: line-through; }
+  .setup-step-desc { font-size: .78rem; color: var(--muted); margin-top: .2rem; line-height: 1.55; }
 
   .status-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.75rem; }
   @media (max-width: 640px) { .status-cards { grid-template-columns: 1fr; } }
@@ -1473,31 +1559,31 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
   .generate-sub { color: var(--muted); font-size: .88rem; margin-bottom: 1.4rem; line-height: 1.6; }
 
   /* ── How it works in Dashboard (Dark theme consistent) ── */
-  .dash-how { background: var(--deep); border-radius: 20px; padding: 2.25rem; margin-top: 1.75rem; border: 1px solid rgba(255,255,255,0.05); }
-  .how-heading { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 1.5rem; color: #fff; letter-spacing: -.03em; margin-bottom: 1rem; }
-  .how-sub { font-size: .88rem; color: rgba(255,255,255,0.45); margin-bottom: 2rem; }
+  .dash-how { background: transparent; padding: 2.25rem 0; margin-top: 1.75rem; }
+  .how-heading { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 1.5rem; color: var(--navy); letter-spacing: -.03em; margin-bottom: 1rem; }
+  .how-sub { font-size: .88rem; color: var(--muted); margin-bottom: 2rem; max-width: 600px; }
   .step-card {
-    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); border-radius: var(--r20); padding: 1.75rem;
-    transition: transform .22s;
+    background: #fff; border: 1px solid rgba(15,23,42,0.08); border-radius: var(--r20); padding: 1.75rem;
+    transition: transform .22s, box-shadow .22s; box-shadow: 0 4px 16px rgba(15,23,42,0.04);
   }
-  .step-card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.06); }
+  .step-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(15,23,42,0.08); }
   .step-icon-circle {
     width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
     font-size: 1.2rem; color: #fff; margin-bottom: 1rem;
   }
-  .ic-indigo { background: linear-gradient(135deg, var(--indigo), var(--indigo-l)); box-shadow: 0 6px 20px rgba(79,70,229,0.45); }
-  .ic-violet { background: linear-gradient(135deg, var(--violet), var(--violet-l)); box-shadow: 0 6px 20px rgba(124,58,237,0.45); }
-  .ic-emerald { background: linear-gradient(135deg, var(--emerald), #10b981); box-shadow: 0 6px 20px rgba(5,150,105,0.4); }
-  .step-num { font-size: .6rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: .4rem; }
-  .step-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: .95rem; font-weight: 800; color: #fff; margin-bottom: .4rem; }
-  .step-desc { font-size: .82rem; line-height: 1.6; color: rgba(255,255,255,0.5); }
+  .ic-indigo { background: linear-gradient(135deg, var(--indigo), var(--indigo-l)); box-shadow: 0 6px 20px rgba(79,70,229,0.3); }
+  .ic-violet { background: linear-gradient(135deg, var(--violet), var(--violet-l)); box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
+  .ic-emerald { background: linear-gradient(135deg, var(--emerald), #10b981); box-shadow: 0 6px 20px rgba(5,150,105,0.3); }
+  .step-num { font-size: .6rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .4rem; }
+  .step-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: .95rem; font-weight: 800; color: var(--navy); margin-bottom: .4rem; }
+  .step-desc { font-size: .82rem; line-height: 1.6; color: var(--muted); }
 
   /* ── Bank boost card ── */
   .bank-boost-card {
     display: flex; align-items: center; gap: 1.75rem; margin-top: 1.5rem;
-    background: linear-gradient(135deg, rgba(79,70,229,0.12), rgba(124,58,237,0.08));
-    border: 1px solid rgba(255,255,255,0.10); border-radius: var(--r20); padding: 1.5rem 1.75rem;
-    box-shadow: 0 20px 48px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+    background: #f8fafc;
+    border: 1px solid rgba(15,23,42,0.1); border-radius: var(--r20); padding: 1.5rem 1.75rem;
+    box-shadow: 0 12px 32px rgba(15,23,42,0.05);
   }
   .bank-boost-left { flex: 1; text-align: left; }
   .bank-boost-badge {
@@ -1505,12 +1591,13 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
     color: var(--amber-l, #fbbf24); background: rgba(217,119,6,0.14); border: 1px solid rgba(217,119,6,0.28);
     padding: .25rem .65rem; border-radius: 999px; margin-bottom: .75rem;
   }
-  .bank-boost-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: .5rem; }
-  .bank-boost-desc { font-size: .84rem; line-height: 1.6; color: rgba(255,255,255,0.55); margin: 0; }
+  .bank-boost-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--navy); margin-bottom: .5rem; }
+  .bank-boost-desc { font-size: .84rem; line-height: 1.6; color: var(--muted); margin: 0; }
   .bank-boost-ic {
+    flex-shrink: 0;
     width: 64px; height: 64px; border-radius: 18px; display: flex; align-items: center; justify-content: center;
     font-size: 1.6rem; color: #fff; background: linear-gradient(135deg, var(--indigo), var(--violet));
-    box-shadow: 0 10px 24px rgba(79,70,229,0.4);
+    box-shadow: 0 10px 24px rgba(79,70,229,0.3);
   }
   @media (max-width: 768px) {
     .bank-boost-card { flex-direction: column-reverse; text-align: center; }
@@ -1519,10 +1606,11 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
   }
 </style>
 
+<div class="cc-page">
 <!-- Greeting -->
 <div class="mb-4" style="padding-top:.75rem;">
   <h2 class="dash-greeting">Welcome, {{ name }} &#128075;</h2>
-  <p class="dash-sub">Your master bank is ready — paste a JD below and land your next interview.</p>
+  <p class="dash-sub">Your CV Bullet Bank is ready — paste a JD below and land your next interview.</p>
 </div>
 
 {% if not (has_bank and has_template and has_ai) %}
@@ -1536,10 +1624,10 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
     </div>
     <div>
       <div class="setup-step-title {% if has_ai %}done{% endif %}">
-        {% if has_ai %}Add your API key{% else %}<a href="/settings" style="color:var(--amber-l);text-decoration:none;">Add your Anthropic API key &rarr;</a>{% endif %}
+        {% if has_ai %}Add your API key{% else %}<a href="/settings" style="color:var(--indigo);text-decoration:none;">Add your Anthropic API key &rarr;</a>{% endif %}
       </div>
       <div class="setup-step-desc">
-        Go to <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--amber-l);opacity:.8;">console.anthropic.com</a> &rarr; copy your key &rarr; paste in Settings. ~$0.02 per CV.
+        Go to <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--indigo);opacity:.8;">console.anthropic.com</a> &rarr; copy your key &rarr; paste in Settings. ~$0.02 per CV.
       </div>
     </div>
   </div>
@@ -1550,7 +1638,7 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
     </div>
     <div>
       <div class="setup-step-title {% if has_bank %}done{% endif %}">
-        {% if has_bank %}Build your experience bank{% else %}<a href="/bank/create" style="color:var(--amber-l);text-decoration:none;">Build your experience bank &rarr;</a>{% endif %}
+        {% if has_bank %}CV Bullet Bank ready{% else %}<a href="/bank/create" style="color:var(--indigo);text-decoration:none;">Build your CV Bullet Bank &rarr;</a>{% endif %}
       </div>
       <div class="setup-step-desc">
         Upload your existing CV (.docx/.pdf) or paste your experience — AI extracts every role, bullet, and skill automatically.
@@ -1564,7 +1652,7 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
     </div>
     <div>
       <div class="setup-step-title {% if has_template %}done{% endif %}">
-        {% if has_template %}Upload your CV template{% else %}<a href="/upload-template" style="color:var(--amber-l);text-decoration:none;">Upload your CV template (.docx) &rarr;</a>{% endif %}
+        {% if has_template %}Upload your CV template{% else %}<a href="/upload-template" style="color:var(--indigo);text-decoration:none;">Upload your CV template (.docx) &rarr;</a>{% endif %}
       </div>
       <div class="setup-step-desc">
         Your formatted base CV — the app preserves its exact layout, bullet counts, and sections.
@@ -1580,7 +1668,7 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
     <div class="status-card-top">
       <div class="status-icon si-bank"><i class="bi bi-database-fill"></i></div>
       <div>
-        <div class="status-card-name">Info Bank</div>
+        <div class="status-card-name">CV Bullet Bank</div>
         <div class="status-dot-row">
           <span class="sdot2 {{ 'sdot2-ok' if has_bank else 'sdot2-no' }}"></span>
           <span style="font-size:.72rem;color:var(--muted);">{{ 'Active' if has_bank else 'Not set up' }}</span>
@@ -1633,81 +1721,65 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
   </div>
 </div>
 
-{% if has_bank and has_template and has_ai %}
-<div class="generate-wrap">
-  <div style="height:3px;background:linear-gradient(90deg,var(--indigo),var(--violet),var(--amber),var(--emerald));"></div>
-  <div class="generate-inner">
-    <div class="generate-title">
-      <span style="font-size:1.3rem;">&#10024;</span>Generate your tailored CV
-    </div>
-    <p class="generate-sub">
-      Paste the full job description below — the more detail, the better the tailoring.
-    </p>
-    <form method="post" action="/generate" id="genForm">
-      <div class="mb-3">
-        <textarea name="jd_text" class="form-control" rows="14"
-          style="min-height:280px;font-family:'Inter',sans-serif;font-size:.86rem;border-radius:var(--r12);background:#fafbff;"
-          placeholder="Paste the full job description here — include role title, responsibilities, requirements, and any keywords you spot…" required></textarea>
-      </div>
-      <button class="btn-generate" type="submit" id="genBtn">
-        <span id="genBtnDefault">&#10024; Tailor my CV for this role &rarr;</span>
-        <span id="genBtnLoading" style="display:none;align-items:center;justify-content:center;gap:.6rem;">
-          <span style="display:inline-block;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:ccSpin .7s linear infinite;"></span>
-          Building your tailored CV&hellip;
-        </span>
-      </button>
-    </form>
   </div>
 </div>
 {% endif %}
+</div> <!-- End cc-page -->
 
-<!-- How it works (Educational Footer) -->
-<div class="dash-how text-center">
-  <div class="section-eyebrow mb-3">Recall the workflow</div>
-  <h3 class="how-heading">Building your tailored CV</h3>
-  <p class="how-sub">Reference these steps if you ever get stuck or want to sharpen your tailoring.</p>
+<section class="how-section">
+  <div class="container overflow-hidden">
+    <div class="text-center mb-5">
+      <div class="section-eyebrow mb-3">Recall the workflow</div>
+      <h3 class="how-heading">Building your tailored CV</h3>
+      <p class="how-sub">Reference these steps if you ever get stuck or want to sharpen your tailoring.</p>
+    </div>
 
-  <div class="row g-3">
-    <div class="col-md-4">
-      <div class="step-card">
-        <div class="step-icon-circle ic-indigo"><i class="bi bi-database-fill"></i></div>
-        <div class="step-num">Step 01</div>
-        <div class="step-title">Master Bank</div>
-        <div class="step-desc">Keep your full experience history in your Bank — unstructured and raw.</div>
+    <div class="row g-4 position-relative">
+      <div class="col-md-4 step-connector">
+        <div class="step-card visible">
+          <div class="step-icon-circle ic-indigo"><i class="bi bi-database-fill"></i></div>
+          <div class="step-num">Step 01</div>
+          <div class="step-title">CV Bullet Bank</div>
+          <div class="step-desc">Keep your full experience history in your Bank — unstructured and raw.</div>
+        </div>
+      </div>
+      <div class="col-md-4 step-connector">
+        <div class="step-card visible">
+          <div class="step-icon-circle ic-violet"><i class="bi bi-file-earmark-text-fill"></i></div>
+          <div class="step-num">Step 02</div>
+          <div class="step-title">Paste JD</div>
+          <div class="step-desc">Paste the JD above. AI reads the language and key requirements.</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card visible">
+          <div class="step-icon-circle ic-emerald"><i class="bi bi-download"></i></div>
+          <div class="step-num">Step 03</div>
+          <div class="step-title">Download</div>
+          <div class="step-desc">Get a Word + PDF with bullets rewritten in perfect STAR format.</div>
+        </div>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="step-card">
-        <div class="step-icon-circle ic-violet"><i class="bi bi-file-earmark-text-fill"></i></div>
-        <div class="step-num">Step 02</div>
-        <div class="step-title">Paste JD</div>
-        <div class="step-desc">Paste the JD above. AI reads the language and key requirements.</div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="step-card">
-        <div class="step-icon-circle ic-emerald"><i class="bi bi-download"></i></div>
-        <div class="step-num">Step 03</div>
-        <div class="step-title">Download</div>
-        <div class="step-desc">Get a Word + PDF with bullets rewritten in perfect STAR format.</div>
+
+    <div class="row justify-content-center mt-5">
+      <div class="col-lg-10">
+        <div class="bank-boost-card">
+          <div class="bank-boost-left">
+            <div class="bank-boost-badge"><i class="bi bi-stars"></i>&nbsp;Optional &middot; Highly recommended</div>
+            <div class="bank-boost-title">Want sharper tailoring? Build a CV Bullet Bank.</div>
+            <div class="bank-boost-desc">
+              Collate every role, project, and achievement you've ever had — including the ones that didn't make it onto your current CV.
+              When you paste a JD, the AI can dip into your CV Bullet Bank and surface the <em>most relevant</em> experience for that specific role.
+            </div>
+          </div>
+          <div class="bank-boost-right">
+            <div class="bank-boost-ic"><i class="bi bi-database-fill"></i></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-
-  <div class="bank-boost-card">
-    <div class="bank-boost-left">
-      <div class="bank-boost-badge">⭐️ Optional · Highly Recommended</div>
-      <div class="bank-boost-title">Want sharper tailoring? Build a master bank.</div>
-      <p class="bank-boost-desc">
-        Collate every role, project, and achievement you've ever had — including things that didn't fit on your original CV.
-        When you paste a JD, the AI can dip into your bank and surface the <strong>most relevant</strong> experience for that specific role.
-      </p>
-    </div>
-    <div class="bank-boost-right">
-      <div class="bank-boost-ic"><i class="bi bi-layers-half"></i></div>
-    </div>
-  </div>
-</div>
+</section>
 """).replace("{% block scripts %}{% endblock %}", """
 <script>
 (function() {
@@ -1737,6 +1809,7 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
 # ── Upload template ────────────────────────────────────────────────────────────
 
 _UPLOAD_TPL = _BASE.replace("{% block content %}{% endblock %}", """
+<div class="cc-page">
 <div style="max-width:520px;margin:0 auto;">
   <div class="mb-3">
     <a href="/dashboard" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.82rem;font-weight:600;color:var(--muted);text-decoration:none;padding:.35rem .75rem;border:1.5px solid var(--border);border-radius:var(--r10);background:var(--surface);transition:background .18s,border-color .18s;"
@@ -1790,6 +1863,7 @@ _UPLOAD_TPL = _BASE.replace("{% block content %}{% endblock %}", """
 # ── Settings ───────────────────────────────────────────────────────────────────
 
 _SETTINGS = _BASE.replace("{% block content %}{% endblock %}", """
+<div class="cc-page">
 <div style="max-width:560px;margin:0 auto;">
   <div class="mb-3">
     <a href="/dashboard" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.82rem;font-weight:600;color:var(--muted);text-decoration:none;padding:.35rem .75rem;border:1.5px solid var(--border);border-radius:var(--r10);background:var(--surface);transition:background .18s,border-color .18s;"
@@ -1933,6 +2007,7 @@ updateModelList();
 # ── Bank create / import (shared template, mode differs) ─────────────────────
 
 _BANK_CREATE = _BASE.replace("{% block content %}{% endblock %}", """
+<div class="cc-page">
   <div class="mb-3">
     <a href="/dashboard" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.82rem;font-weight:600;color:var(--muted);text-decoration:none;padding:.35rem .75rem;border:1.5px solid var(--border);border-radius:var(--r10);background:var(--surface);transition:background .18s,border-color .18s;"
        onmouseover="this.style.background='var(--bg)';this.style.borderColor='rgba(15,23,42,.2)'"
@@ -1970,7 +2045,7 @@ _BANK_CREATE = _BASE.replace("{% block content %}{% endblock %}", """
 
     <!-- File upload tab -->
     <div class="cc-tab-pane" id="tab-file">
-      <h6 style="font-weight:700;color:var(--navy);margin-bottom:.4rem;">Upload information to create your master bank</h6>
+      <h6 style="font-weight:700;color:var(--navy);margin-bottom:.4rem;">Upload information to create your CV Bullet Bank</h6>
       <p style="color:var(--muted);font-size:.85rem;line-height:1.6;margin-bottom:1rem;">
         Any format works: a Word doc of notes, a PDF, or a plain text file. Please upload your whole-life professional experience, extra side projects, extra certifications, and any other details not already on your CV that might be helpful to generate and tailor a new CV to a job description (for example, you can upload your 10-page CV if you'd like!).
         AI will read it and extract every role, project, and skill automatically.
@@ -1986,7 +2061,7 @@ _BANK_CREATE = _BASE.replace("{% block content %}{% endblock %}", """
           class="d-none" required onchange="document.getElementById('fileLabel').textContent = this.files[0].name">
         <button class="btn-indig w-100" style="display:block;text-align:center;" {{ 'disabled' if not has_ai }}
           onclick="showLoading('Parsing your file with AI\u2026', 'Extracting roles, bullets, and skills \u2014 ~20\u201330 seconds')">
-          <i class="bi bi-magic me-1"></i>Parse with AI &amp; {{ action_verb }} Bank
+          <i class="bi bi-magic me-1"></i>Parse with AI &amp; {{ action_verb }} CV Bullet Bank
         </button>
       </form>
     </div>
@@ -2025,15 +2100,18 @@ Excel (advanced), Python (pandas, sklearn), SQL, PowerPoint, Tableau
 Certifications: ACCA Part-Qualified, Google Analytics" {{ 'disabled' if not has_ai }} required></textarea>
         <button class="btn-indig w-100" style="display:block;text-align:center;" {{ 'disabled' if not has_ai }}
           onclick="showLoading('Parsing your experience with AI\u2026', 'Extracting roles, bullets, and skills \u2014 ~20\u201330 seconds')">
-          <i class="bi bi-magic me-1"></i>Parse with AI &amp; {{ action_verb }} Bank
+          <i class="bi bi-magic me-1"></i>Parse with AI &amp; {{ action_verb }} CV Bullet Bank
         </button>
       </form>
     </div>
 
 
 
+      </div>
+    </div>
   </div>
 </div>
+</div> <!-- End cc-page -->
 """).replace("{% block scripts %}{% endblock %}", """
 <script>
 // Custom tab switching
@@ -2099,6 +2177,7 @@ if (zone) {
 # ── Bank editor ────────────────────────────────────────────────────────────────
 
 _BANK = _BASE.replace("{% block content %}{% endblock %}", """
+<div class="cc-page">
 <div class="mb-3">
   <a href="/dashboard" style="display:inline-flex;align-items:center;gap:.4rem;font-size:.82rem;font-weight:600;color:var(--muted);text-decoration:none;padding:.35rem .75rem;border:1.5px solid var(--border);border-radius:var(--r10);background:var(--surface);transition:background .18s,border-color .18s;"
      onmouseover="this.style.background='var(--bg)';this.style.borderColor='rgba(15,23,42,.2)'"
@@ -2110,7 +2189,7 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
   <div>
     <h4 style="font-weight:800;font-size:1.4rem;color:var(--navy);margin:0;letter-spacing:-.03em;">
-      <i class="bi bi-database me-2" style="color:var(--indigo);"></i>Master Info Bank
+      <i class="bi bi-database me-2" style="color:var(--indigo);"></i>CV Bullet Bank
     </h4>
     <p style="color:var(--muted);font-size:.82rem;margin:.2rem 0 0;">Your library of experience — the source of every tailored CV</p>
   </div>
@@ -2126,15 +2205,15 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
 {% if not bank %}
 <div class="card p-5 text-center">
   <i class="bi bi-database-x" style="font-size:2.5rem;color:var(--muted);display:block;margin-bottom:.75rem;"></i>
-  <p style="color:var(--muted);margin-bottom:1.25rem;">No info bank yet. Upload your CV or start from scratch.</p>
-  <a href="/bank/create" class="btn-indig" style="display:inline-block;padding:.6rem 1.5rem;border-radius:var(--r10);text-decoration:none;">Set up your Bank</a>
+  <p style="color:var(--muted);margin-bottom:1.25rem;">No CV Bullet Bank yet. Upload your CV or start from scratch.</p>
+  <a href="/bank/create" class="btn-indig" style="display:inline-block;padding:.6rem 1.5rem;border-radius:var(--r10);text-decoration:none;">Set up your CV Bullet Bank</a>
 </div>
 {% else %}
 
 <!-- Replace bank — primary action, top of page -->
 <div class="card mb-3" style="border-left:4px solid var(--indigo)!important;">
   <div class="card-header" style="font-weight:700;color:var(--navy);display:flex;align-items:center;gap:.4rem;">
-    <i class="bi bi-arrow-repeat" style="color:var(--indigo);"></i>Replace master file
+    <i class="bi bi-arrow-repeat" style="color:var(--indigo);"></i>Replace CV Bullet Bank file
     <span style="font-size:.72rem;color:var(--muted);font-weight:400;margin-left:.35rem;">Upload a new file to overwrite everything below</span>
   </div>
   <div class="card-body p-3">
@@ -2145,21 +2224,21 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
     <div class="tab-content">
       <div class="tab-pane fade show active" id="replace-file">
         <form method="post" action="/bank/from-file" enctype="multipart/form-data"
-              data-loading data-loading-title="Replacing your bank…" data-loading-sub="Parsing your file with AI">
+              data-loading data-loading-title="Replacing your CV Bullet Bank…" data-loading-sub="Parsing your file with AI">
           <input type="file" name="cv_file" class="form-control mb-2" style="font-size:.82rem;"
                  accept=".docx,.pdf,.txt,.json" required>
           <div style="font-size:.74rem;color:var(--muted);margin-bottom:.6rem;">Accepts .docx, .pdf, .txt, or .json (round-trip)</div>
           <button class="btn-indig" style="font-size:.82rem;padding:.4rem .9rem;border-radius:var(--r10);"
-                  data-quick-action>Replace master file</button>
+                  data-quick-action>Replace CV Bullet Bank</button>
         </form>
       </div>
       <div class="tab-pane fade" id="replace-text">
         <form method="post" action="/bank/from-text"
-              data-loading data-loading-title="Replacing your bank…" data-loading-sub="Parsing text with AI">
+              data-loading data-loading-title="Replacing your CV Bullet Bank…" data-loading-sub="Parsing text with AI">
           <textarea name="cv_text" class="form-control mb-2" rows="6" required
             style="font-size:.82rem;" placeholder="Paste your full CV / experience text here…"></textarea>
           <button class="btn-indig" style="font-size:.82rem;padding:.4rem .9rem;border-radius:var(--r10);"
-                  data-quick-action>Replace master file</button>
+                  data-quick-action>Replace CV Bullet Bank</button>
         </form>
       </div>
     </div>
@@ -2170,7 +2249,7 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
 <div class="card mb-3">
   <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
     <span style="font-weight:700;color:var(--navy);display:flex;align-items:center;gap:.4rem;">
-      <i class="bi bi-journal-text" style="color:var(--indigo);"></i>Your master bank
+      <i class="bi bi-journal-text" style="color:var(--indigo);"></i>Your CV Bullet Bank
     </span>
     <span style="font-size:.72rem;color:var(--muted);">
       {{ (bank.sections or {})|length }} section(s) &middot;
@@ -2251,12 +2330,14 @@ _BANK = _BASE.replace("{% block content %}{% endblock %}", """
     <i class="bi bi-arrow-left"></i> Dashboard
   </a>
 </div>
+</div> <!-- End cc-page -->
 """)
 
 
 # ── Result / download ─────────────────────────────────────────────────────────
 
 _RESULT = _BASE.replace("{% block content %}{% endblock %}", """
+<div class="cc-page">
 <div style="max-width:500px;margin:0 auto;">
   <div class="card p-4 text-center">
     <!-- Animated success ring -->
@@ -2306,6 +2387,7 @@ _RESULT = _BASE.replace("{% block content %}{% endblock %}", """
     </a>
   </div>
 </div>
+</div> <!-- End cc-page -->
 """)
 
 
@@ -2522,14 +2604,14 @@ def settings_save():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  ROUTES — Master Bank: create & import
+#  ROUTES — CV Bullet Bank: create & import
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _bank_create_context(is_create: bool, has_ai: bool):
     """Shared context dict for the bank create/import template."""
     if is_create:
         return dict(
-            page_title="Build your Master Bank",
+            page_title="Build your CV Bullet Bank",
             page_subtitle="Your library of experience — set it up once, use it forever",
             file_action="/bank/from-file",
             text_action="/bank/from-text",
@@ -2700,7 +2782,7 @@ def bank_from_text():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  ROUTES — Master Bank: editor
+#  ROUTES — CV Bullet Bank: editor
 # ─────────────────────────────────────────────────────────────────────────────
 
 @app.route("/bank")
@@ -2749,10 +2831,10 @@ def bank_download():
         tmp  = Path(tempfile.mktemp(suffix=".json"))
         tmp.write_text(json.dumps(bank, indent=2, ensure_ascii=False))
         return send_file(tmp, as_attachment=True,
-                         download_name="master_info_bank.json",
+                         download_name="cv_info_bank.json",
                          mimetype="application/json")
     except FileNotFoundError:
-        flash("No bank found.", "error")
+        flash("No CV Bullet Bank found.", "error")
         return redirect(url_for("bank_page"))
 
 

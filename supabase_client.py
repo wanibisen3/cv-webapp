@@ -5,7 +5,7 @@ supabase_client.py — Supabase integration for CV Webapp
 Provides helpers for:
   - Auth (sign up / sign in / get user)
   - User profile (name, email, AI settings)
-  - Master info bank CRUD (save, load, patch)
+  - Master bullet bank CRUD (save, load, patch)
   - CV template Storage (upload / download)
 
 Environment variables (set in .env):
@@ -121,10 +121,10 @@ def load_ai_settings(user_id: str) -> dict:
     return raw  # already a dict (Supabase JSONB returns dicts directly)
 
 
-# ─── Master Bank ──────────────────────────────────────────────────────────────
+# ─── CV Bullet Bank ──────────────────────────────────────────────────────────────
 
 def save_master_bank(user_id: str, bank_data: dict) -> dict:
-    """Upsert the full master info bank JSON for a user."""
+    """Upsert the full master bullet bank JSON for a user."""
     client = get_client()
     resp = (
         client.table("master_banks")
@@ -136,7 +136,7 @@ def save_master_bank(user_id: str, bank_data: dict) -> dict:
 
 def load_master_bank(user_id: str) -> dict:
     """
-    Load the user's master info bank.
+    Load the user's master bullet bank.
     Raises FileNotFoundError if no bank uploaded yet.
     """
     client = get_client()
@@ -149,13 +149,13 @@ def load_master_bank(user_id: str) -> dict:
     )
     if not resp.data:
         raise FileNotFoundError(
-            "No master info bank found. Upload or create one first."
+            "No master bullet bank found. Upload or create one first."
         )
     return resp.data["bank_data"]
 
 
 def has_master_bank(user_id: str) -> bool:
-    """Return True if the user has a master bank stored."""
+    """Return True if the user has a CV bullet bank stored."""
     try:
         load_master_bank(user_id)
         return True
@@ -167,14 +167,14 @@ def has_master_bank(user_id: str) -> bool:
 
 def add_bullet(user_id: str, section_key: str, bullet_text: str, tags: list[str] | None = None) -> dict:
     """
-    Append a new bullet to a section in the master bank.
+    Append a new bullet to a section in the CV bullet bank.
     Returns the updated bank.
     """
     import uuid as _uuid
     bank = load_master_bank(user_id)
     section = bank.get("sections", {}).get(section_key)
     if section is None:
-        raise KeyError(f"Section '{section_key}' not found in master bank")
+        raise KeyError(f"Section '{section_key}' not found in CV bullet bank")
     new_bullet = {
         "id":   f"{section_key}_{_uuid.uuid4().hex[:6]}",
         "text": bullet_text.strip(),
@@ -218,7 +218,7 @@ def delete_bullet(user_id: str, section_key: str, bullet_id: str) -> dict:
 
 
 def update_skills(user_id: str, skills_text: str) -> dict:
-    """Update the skills_text field of the master bank."""
+    """Update the skills_text field of the CV bullet bank."""
     bank = load_master_bank(user_id)
     bank["skills_text"] = skills_text.strip()
     save_master_bank(user_id, bank)
@@ -226,7 +226,7 @@ def update_skills(user_id: str, skills_text: str) -> dict:
 
 
 def update_certifications(user_id: str, certifications: list[str]) -> dict:
-    """Update the certifications list of the master bank."""
+    """Update the certifications list of the CV bullet bank."""
     bank = load_master_bank(user_id)
     bank["certifications"] = [c.strip() for c in certifications if c.strip()]
     save_master_bank(user_id, bank)

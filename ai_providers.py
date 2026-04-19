@@ -113,7 +113,7 @@ Set project_overrides to null when no title swaps needed or PROJECT_SLOT_COUNT i
 # ─── CV parsing prompt (bank creation) ───────────────────────────────────────
 
 PARSE_BANK_PROMPT = """\
-Parse the provided CV / experience text into a structured master bank JSON. \
+Parse the provided CV / experience text into a structured CV bullet bank JSON. \
 Extract every job, internship, project, leadership role, and skill — include everything.
 
 ## STAR bullet format — apply when structuring bullets
@@ -411,7 +411,7 @@ def call_ai(
         raise ValueError(f"Provider '{provider}' not implemented")
 
 
-# ─── Public: CV parsing → master bank ───────────────────────────────────────
+# ─── Public: CV parsing → CV bullet bank ───────────────────────────────────────
 
 def parse_cv_to_bank(
     cv_text:  str,
@@ -420,7 +420,7 @@ def parse_cv_to_bank(
     model:    str | None = None,
 ) -> dict:
     """
-    Parse raw CV / experience text (any format) into a structured master bank dict.
+    Parse raw CV / experience text (any format) into a structured CV bullet bank dict.
 
     The input can be a plain-text CV, LinkedIn export, a dump of bullet points,
     personal notes, or any unstructured description of someone's background.
@@ -434,7 +434,7 @@ def parse_cv_to_bank(
     user_msg = (
         "CV / EXPERIENCE TEXT TO PARSE:\n\n"
         f"{cv_text}\n\n"
-        "Extract the full master bank JSON now."
+        "Extract the full CV bullet bank JSON now."
     )
 
     # Parsing produces the full bank — can be large; allow 4096
@@ -466,7 +466,7 @@ def generate_bank_summary(
     api_key:  str,
     model:    str | None = None,
 ) -> str:
-    """Produce a short narrative summary of the individual from their master bank."""
+    """Produce a short narrative summary of the individual from their CV bullet bank."""
     if not api_key:
         raise ValueError("API key is empty. Please add your API key in Settings.")
 
@@ -487,7 +487,7 @@ def generate_bank_summary(
             for s in bank.get("sections", {}).values()
         ],
     }
-    user_msg = "MASTER BANK JSON:\n" + json.dumps(compact, ensure_ascii=False)
+    user_msg = "CV BULLET BANK JSON:\n" + json.dumps(compact, ensure_ascii=False)
 
     def _plain(client_call_result: str) -> str:
         # Providers sometimes still wrap in quotes / fences even though we ask for prose.
