@@ -1473,11 +1473,57 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
     display: flex; align-items: center; gap: .55rem;
   }
   .generate-sub { color: var(--muted); font-size: .88rem; margin-bottom: 1.4rem; line-height: 1.6; }
+
+  /* ── How it works in Dashboard (Dark theme consistent) ── */
+  .dash-how { background: var(--deep); border-radius: 20px; padding: 2.25rem; margin-top: 1.75rem; border: 1px solid rgba(255,255,255,0.05); }
+  .how-heading { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 1.5rem; color: #fff; letter-spacing: -.03em; margin-bottom: 1rem; }
+  .how-sub { font-size: .88rem; color: rgba(255,255,255,0.45); margin-bottom: 2rem; }
+  .step-card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); border-radius: var(--r20); padding: 1.75rem;
+    transition: transform .22s;
+  }
+  .step-card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.06); }
+  .step-icon-circle {
+    width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; color: #fff; margin-bottom: 1rem;
+  }
+  .ic-indigo { background: linear-gradient(135deg, var(--indigo), var(--indigo-l)); box-shadow: 0 6px 20px rgba(79,70,229,0.45); }
+  .ic-violet { background: linear-gradient(135deg, var(--violet), var(--violet-l)); box-shadow: 0 6px 20px rgba(124,58,237,0.45); }
+  .ic-emerald { background: linear-gradient(135deg, var(--emerald), #10b981); box-shadow: 0 6px 20px rgba(5,150,105,0.4); }
+  .step-num { font-size: .6rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: .4rem; }
+  .step-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: .95rem; font-weight: 800; color: #fff; margin-bottom: .4rem; }
+  .step-desc { font-size: .82rem; line-height: 1.6; color: rgba(255,255,255,0.5); }
+
+  /* ── Bank boost card ── */
+  .bank-boost-card {
+    display: flex; align-items: center; gap: 1.75rem; margin-top: 1.5rem;
+    background: linear-gradient(135deg, rgba(79,70,229,0.12), rgba(124,58,237,0.08));
+    border: 1px solid rgba(255,255,255,0.10); border-radius: var(--r20); padding: 1.5rem 1.75rem;
+    box-shadow: 0 20px 48px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .bank-boost-left { flex: 1; text-align: left; }
+  .bank-boost-badge {
+    display: inline-flex; align-items: center; font-size: .62rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--amber-l, #fbbf24); background: rgba(217,119,6,0.14); border: 1px solid rgba(217,119,6,0.28);
+    padding: .25rem .65rem; border-radius: 999px; margin-bottom: .75rem;
+  }
+  .bank-boost-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: .5rem; }
+  .bank-boost-desc { font-size: .84rem; line-height: 1.6; color: rgba(255,255,255,0.55); margin: 0; }
+  .bank-boost-ic {
+    width: 64px; height: 64px; border-radius: 18px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; color: #fff; background: linear-gradient(135deg, var(--indigo), var(--violet));
+    box-shadow: 0 10px 24px rgba(79,70,229,0.4);
+  }
+  @media (max-width: 768px) {
+    .bank-boost-card { flex-direction: column-reverse; text-align: center; }
+    .bank-boost-left { text-align: center; }
+    .bank-boost-badge { margin-left: auto; margin-right: auto; }
+  }
 </style>
 
 <!-- Greeting -->
 <div class="mb-4" style="padding-top:.75rem;">
-  <h2 class="dash-greeting">Welcome back, {{ name }} &#128075;</h2>
+  <h2 class="dash-greeting">Welcome, {{ name }} &#128075;</h2>
   <p class="dash-sub">Your master bank is ready — paste a JD below and land your next interview.</p>
 </div>
 
@@ -1616,6 +1662,54 @@ _DASHBOARD = _BASE.replace("{% block content %}{% endblock %}", """
   </div>
 </div>
 {% endif %}
+
+<!-- How it works (Educational Footer) -->
+<div class="dash-how text-center">
+  <div class="section-eyebrow mb-3">Recall the workflow</div>
+  <h3 class="how-heading">Building your tailored CV</h3>
+  <p class="how-sub">Reference these steps if you ever get stuck or want to sharpen your tailoring.</p>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="step-card">
+        <div class="step-icon-circle ic-indigo"><i class="bi bi-database-fill"></i></div>
+        <div class="step-num">Step 01</div>
+        <div class="step-title">Master Bank</div>
+        <div class="step-desc">Keep your full experience history in your Bank — unstructured and raw.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="step-card">
+        <div class="step-icon-circle ic-violet"><i class="bi bi-file-earmark-text-fill"></i></div>
+        <div class="step-num">Step 02</div>
+        <div class="step-title">Paste JD</div>
+        <div class="step-desc">Paste the JD above. AI reads the language and key requirements.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="step-card">
+        <div class="step-icon-circle ic-emerald"><i class="bi bi-download"></i></div>
+        <div class="step-num">Step 03</div>
+        <div class="step-title">Download</div>
+        <div class="step-desc">Get a Word + PDF with bullets rewritten in perfect STAR format.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bank-boost-card">
+    <div class="bank-boost-left">
+      <div class="bank-boost-badge">⭐️ Optional · Highly Recommended</div>
+      <div class="bank-boost-title">Want sharper tailoring? Build a master bank.</div>
+      <p class="bank-boost-desc">
+        Collate every role, project, and achievement you've ever had — including things that didn't fit on your original CV.
+        When you paste a JD, the AI can dip into your bank and surface the <strong>most relevant</strong> experience for that specific role.
+      </p>
+    </div>
+    <div class="bank-boost-right">
+      <div class="bank-boost-ic"><i class="bi bi-layers-half"></i></div>
+    </div>
+  </div>
+</div>
 """).replace("{% block scripts %}{% endblock %}", """
 <script>
 (function() {
