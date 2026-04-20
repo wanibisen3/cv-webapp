@@ -38,33 +38,37 @@ MAX_BULLET = 215   # fallback — overridden by format_rules extracted from the 
 # Education, skills, and all structural headings are in here so they are NEVER
 # passed to the AI for bullet generation — they stay exactly as in the template.
 _SECTION_RESETS = frozenset({
-    # Experience headings
+    # Experience headings — pure containers: individual company rows come after
     "experience", "work experience", "professional experience",
     "relevant experience", "internship experience",
-    # Education headings
+    # Education headings — pure containers: institution rows come after
     "education", "academic background", "academic qualifications",
     "educational background", "academic history",
-    # Project headings
+    # Project headings — pure containers: project rows come after
     "side project", "side projects", "projects", "personal projects",
     "academic projects", "selected projects",
-    # Skills headings
+    # Skills headings — filled server-side from skills_text, never as bullets
     "skills", "skills & additional information",
     "skills &amp; additional information",
     "core competencies", "technical skills", "key skills",
     "tools & technologies",
-    # Certifications
+    # Certifications — special-cased via _CERTIFICATIONS_HEADINGS (handled before
+    # _is_section_reset); kept here for robustness when no dedicated cert key path.
     "certifications", "certificates", "licenses & certifications",
     "professional certifications",
-    # Profile / summary
+    # Profile / summary — not bullet sections
     "summary", "profile", "professional summary", "executive summary",
     "career summary", "objective", "career objective",
-    # Other structural headings
-    "achievements", "accomplishments", "awards", "honors & awards",
-    "publications", "research", "presentations",
-    "languages", "extracurricular", "extracurricular activities",
-    "leadership", "leadership experience",
-    "volunteer", "volunteering", "community involvement",
+    # Non-bullet trailing blocks
     "interests", "hobbies", "references",
+    # NOTE: "awards", "achievements", "publications", "research",
+    # "presentations", "languages", "leadership", "leadership experience",
+    # "volunteer", "volunteering", "community involvement", "extracurricular",
+    # "extracurricular activities", "honors & awards" were intentionally REMOVED
+    # from this set. Those are typically SELF-CONTAINED bullet sections (the
+    # heading *is* the section) and should be captured as cur_title so their
+    # bullets are counted / tailored, not discarded. They remain matchable as
+    # anchors via `_build_anchors` (humanised section_key / template_anchor).
 })
 
 
@@ -543,6 +547,129 @@ def discover_template_sections(template_path: Path) -> dict:
     return slot_counts
 
 
+def extract_bank_from_template(template_path: Path) -> dict:
+    """
+    Build a minimal master_bank by reading the template DOCX itself — used
+    as a FALLBACK when the user has not uploaded any CV bullet bank text.
+
+    Strategy:
+      - Walk body paragraphs AND tables in order.
+      - Each non-bullet heading that passes the title-shape filter opens a
+        new section, with `template_anchor` = the exact heading text so
+        `_build_anchors` re-registers it exactly as in the template.
+      - Every subsequent bullet paragraph is captured as a bank bullet under
+        that section.
+      - Dedicated Certifications bullets are collected into top-level
+        `certifications: []`.
+      - Tables are treated like titles when they contain company/role-shaped
+        text, so Experience rows become sections anchored on the full row
+        text (works for single and multi-role templates alike).
+
+    The returned bank is deliberately terse — it mirrors the template's
+    existing content so the AI can tailor each bullet to the JD while the
+    engine fills the same slot counts the template defines.
+    """
+    with zipfile.ZipFile(template_path) as z:
+        xml = z.read("word/document.xml")
+    tree = etree.fromstring(xml)
+    body = tree.find(f"{{{WNS}}}body")
+    if body is None:
+        return {"sections": {}, "certifications": [], "skills_text": ""}
+
+    sections: dict[str, dict] = {}
+    certifications: list[str] = []
+    cur_key: str | None = None
+    used_keys: set[str] = set()
+
+    def _slug(txt: str) -> str:
+        s = re.sub(r"[^a-z0-9]+", "_", txt.lower()).strip("_")
+        return (s or "section")[:40]
+
+    def _open_section(heading: str) -> str:
+        base = _slug(heading)
+        key  = base
+        i = 2
+        while key in used_keys:
+            key = f"{base}_{i}"; i += 1
+        used_keys.add(key)
+        sections[key] = {
+            "company":        "",
+            "role":           "",
+            "project_name":   "",
+            "date":           "",
+            "template_anchor": heading,
+            "bullet_slots":   0,
+            "bullets":        [],
+        }
+        return key
+
+    for child in body:
+        tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+
+        if tag == "tbl":
+            full = _table_text(child).strip()
+            if not full:
+                continue
+            tt_lower = full.lower()[:120]
+            if _is_certifications_heading(tt_lower):
+                cur_key = "__certifications_collect__"
+                continue
+            if _is_section_reset(tt_lower):
+                cur_key = None
+                continue
+            first = (_first_significant_text(child) or full[:80]).strip()
+            if first and len(first) <= 120:
+                cur_key = _open_section(first)
+            continue
+
+        if tag != "p":
+            continue
+
+        pt = (_para_text(child) or "").strip()
+        if not pt:
+            continue
+        pt_lower = pt.lower()
+
+        is_bullet = child.find(f".//{{{WNS}}}numPr") is not None
+        if not is_bullet and (pt.startswith("•") or pt.startswith("–") or pt.startswith("-") or pt.startswith("*")):
+            is_bullet = True
+
+        if is_bullet:
+            if cur_key == "__certifications_collect__":
+                cleaned = re.sub(r"^[•\-\*\–\s]+", "", pt).strip()
+                if cleaned:
+                    certifications.append(cleaned)
+            elif cur_key and cur_key in sections:
+                sections[cur_key]["bullets"].append({
+                    "id": f"{cur_key}_{len(sections[cur_key]['bullets']) + 1}",
+                    "text": re.sub(r"^[•\-\*\–\s]+", "", pt).strip(),
+                    "tags": [],
+                })
+                sections[cur_key]["bullet_slots"] = len(sections[cur_key]["bullets"])
+            continue
+
+        # Non-bullet paragraph
+        if _is_certifications_heading(pt_lower):
+            cur_key = "__certifications_collect__"
+            continue
+        if _is_section_reset(pt_lower):
+            cur_key = None
+            continue
+
+        if len(pt) > 3 and len(pt) <= 120 and not re.fullmatch(r"[\d\s\u2013\-\–\/\.\(\),\|]+", pt):
+            cur_key = _open_section(pt)
+
+    # Drop empty sections (headings that had no bullets beneath them)
+    sections = {k: v for k, v in sections.items() if v["bullets"]}
+
+    return {
+        "sections":       sections,
+        "certifications": certifications,
+        "skills_text":    "",
+        "skills_header":  "Skills",
+    }
+
+
 def map_template_slots_from_raw(raw_slots: dict, master_bank: dict) -> dict:
     """
     Map a raw_slots dict (title → bullet_count, as returned by
@@ -840,6 +967,19 @@ def _build_anchors(master_bank: dict) -> list[tuple[str, str]]:
                     fallback.setdefault(role, key)
         elif project:
             primary.setdefault(project, key)
+        else:
+            # Custom section with no company / project / role (e.g. Awards,
+            # Publications, Languages, Leadership, Volunteer, Research). Use
+            # the humanised section_key as an anchor so it can match the
+            # template heading text. This is what makes generic custom-section
+            # support work.
+            humanised = key.replace("_", " ").strip()
+            if humanised:
+                # Also try a title-cased variant and a plural/singular variant
+                fallback.setdefault(humanised, key)
+                # Common plural if bank key is singular (award → awards)
+                if not humanised.endswith("s"):
+                    fallback.setdefault(humanised + "s", key)
 
     # Merge fallbacks only where they don't clash with a primary anchor
     for role, key in fallback.items():

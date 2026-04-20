@@ -173,9 +173,9 @@ orchestrating 360° campaign and hitting 8% category share in 6 months — 30% a
    or paraphrase bullets from the other role at the same company, and (c)
    surface the promotion arc (increasing scope / team / $ / complexity).
 9. Projects — read PROJECT_SLOT_COUNT from the user message:
-   - 0 project slots → set project_overrides to null; do not generate any project bullets.
-   - 1+ project slots → for each slot, pick the single most JD-relevant project from all \
-is_project=true sections; score by domain match, skills overlap, JD focus areas; vary per JD.
+   - 0 project slots → set project_overrides to null; no project bullets.
+   - 1+ project slots → for each slot, pick the single most JD-relevant project from BANK \
+sections tagged `p:1`; score by domain match, skills overlap, JD focus areas; vary per JD.
    - If a slot currently shows a different project name than your pick, add it to project_overrides.
 10. Skills: order JD-relevant categories first; use JD's exact skill names; always end with "Certifications:" \
    (if none, write "Certifications: None listed"). STRICT: total lines ≤ MAX_SKILL_LINES (one line per \
@@ -183,18 +183,22 @@ category, separated by \\n); each line ≤ MAX_SKILL_LINE_CHARS. Collapse/drop l
 11. If TEMPLATE_SLOTS contains the reserved key `__certifications__`, DO NOT \
     write bullets for it — the engine fills that block server-side from the \
     candidate's certifications list. Just omit the key from your `sections` output.
-12. Every section type is valid — experience, research, leadership, volunteer, consulting, anything; \
-treat them equally; pick the most JD-relevant bullets regardless of section type.
+12. Any TEMPLATE_SLOTS key is valid — experience, research, leadership, volunteer, awards, \
+publications, languages, presentations, patents, memberships, media, speaking, extracurriculars, \
+community involvement, or any custom heading. Fill every slot. For non-experience custom \
+sections where the bank's facts are inherently terse (a language line, a publication \
+citation, an award + issuer + year), a concise factual format is acceptable in place of \
+full STAR. If direct bank material is thin, lean on the closest adjacent content (e.g. \
+club presidency facts buried in an education section for a "Leadership" slot).
 13. Sections NOT in TEMPLATE_SLOTS (education, contact, other fixed content) must not be touched.
 14. NEVER invent facts, numbers, employers, or experiences absent from the candidate's bank.
 15. Return ONLY valid JSON — no markdown fences, no prose.
 
 ## Character-count discipline
-Count characters before writing. If a draft exceeds MAX_BULLET_CHARS, shorten \
-the Result clause first, then the Body — never sacrifice the SubHeading or Verb. \
-Apply the line-fill rule (Step 3) AFTER length check: a bullet that is 170 chars \
-on a 115-char/line template would wrap to 1.48 lines (55 chars on line 2) — that's \
-a widow. Either compress to ≤ IDEAL_1LINE_MAX or extend into the IDEAL_2LINE_RANGE.
+If a draft exceeds MAX_BULLET_CHARS, shorten the Result first, then the Body — \
+never sacrifice the SubHeading or Verb. Then apply Step 3: compress to ≤ \
+IDEAL_1LINE_MAX, or extend into IDEAL_2LINE_RANGE. A bullet wrapping to 1.x \
+lines (widow on line 2) is a defect.
 
 ## Output JSON (exact schema)
 {"jd_analysis":{"company":"","role":""},"sections":{"<key>":["STAR bullet 1","STAR bullet 2"]},"skills_text":"Category: skill · skill\nCertifications: cert","project_overrides":{"<key>":{"old_name":"","new_name":"","new_subtitle":null,"new_date":"YYYY - Present"}} }
@@ -204,86 +208,75 @@ Set project_overrides to null when no title swaps are needed or PROJECT_SLOT_COU
 # ─── CV parsing prompt (bank creation) ───────────────────────────────────────
 
 PARSE_BANK_PROMPT = """\
-Parse the provided CV / experience text into a structured CV bullet bank JSON. \
-Extract every job, internship, project, leadership role, and skill — include everything.
+Parse the CV / experience text into a structured bullet-bank JSON. Extract \
+every job, internship, project, leadership role, custom section, and skill — \
+include everything; never invent.
 
-## STAR bullet format — apply when structuring bullets
-SubHeading: [Strong past-tense verb] [what you did + context], [result/impact]
+## STAR bullet format
+"SubHeading: [Strong past-tense verb] [action + context], [result/impact]"
 - SubHeading: 2–4 word bold theme
-- Verb: powerful past-tense action word
-- NEVER invent metrics or facts not present in the source text
-- If no metric: use directional outcome ("enabling X", "driving Y adoption", "reducing Z")
-- Keep bullets concise: 150–220 characters is typical; match the density of the original text
+- If no metric in source: use a directional outcome ("enabling X", "driving Y")
+- Length: 150–220 chars typical; match the density of the source
 
-Restructure example:
-  Source: "helped with market analysis for consulting client"
-  → "Market Analysis: Led market sizing and competitive benchmarking for FMCG client, \
+Example — Source: "helped with market analysis for consulting client" → \
+"Market Analysis: Led market sizing and competitive benchmarking for FMCG client, \
 informing go-to-market strategy across 5 SEA markets"
 
-## Strict JSON output — no markdown, no comments, no extra keys
+## Output JSON — strict, no markdown, no comments, no extra keys
 {
   "sections": {
     "<snake_key>": {
-      "company":          "Name",
-      "role":             "Title",
-      "project_name":     "Name",
-      "date":             "Mon YYYY \u2013 Mon YYYY",
-      "template_anchor":  "same as company or project_name",
-      "bullet_slots":     4,
-      "bullets": [{"id":"key_1","text":"SubHeading: verb + context, result","tags":[]}]
+      "company":"","role":"","project_name":"",
+      "date":"Mon YYYY \u2013 Mon YYYY",
+      "template_anchor":"Company or project_name or exact heading text",
+      "bullet_slots":4,
+      "bullets":[{"id":"key_1","text":"SubHeading: …","tags":[]}]
     }
   },
-  "education": [
-    {"institution":"","degree":"","date":"","gpa":"","notes":""}
-  ],
-  "certifications": [],
-  "skills_text": "Category: skill \u00b7 skill\nCertifications: cert1 \u00b7 cert2",
-  "skills_header": "Skills & Additional Information",
-  "format_rules": {
-    "max_bullet_chars": 215,
-    "bullet_format": "SubHeading: [verb] [action+context], [result]"
-  }
+  "education":[{"institution":"","degree":"","date":"","gpa":"","notes":""}],
+  "certifications":[],
+  "skills_text":"Category: skill \u00b7 skill\nCertifications: cert \u00b7 cert",
+  "skills_header":"Skills & Additional Information",
+  "format_rules":{"max_bullet_chars":215,"bullet_format":"SubHeading: [verb] [action+context], [result]"}
 }
 
-Section classification — use these rules for ANY CV background:
-- Use "company" + "role" for anything where the person held a position at an organisation:
-    jobs, internships, research positions, teaching/tutoring roles, volunteer roles at an NGO,
-    leadership positions (e.g. club president at a university), part-time work, freelance engagements
-- Use "project_name" for standalone work not tied to one organisation:
-    personal/side projects, case competitions, academic projects, publications, open-source contributions,
-    independent research, hackathons, self-built tools, extracurricular activities without a formal role
-- When in doubt: if there's an organisation and a title → use company+role; otherwise → use project_name
-- section_key: short snake_case, e.g. "hbs_research", "ngo_volunteer", "nlp_proj", "hult_case_comp"
-- bullet_slots = number of bullets produced for that section (1–5; 3–4 is typical for most sections)
-- Extract EVERYTHING in the text — do not drop anything
-- If text is very sparse or vague, still extract what is there; do not pad with invented content
+## Section classification (applies to any CV)
+- company+role: held a position at an org — jobs, internships, research posts, \
+  teaching, volunteer roles at an NGO, leadership positions (e.g. club president), \
+  part-time, freelance.
+- project_name: standalone work — personal/side projects, case comps, academic \
+  projects, publications, open-source, independent research, hackathons, tools.
+- If unclear: organisation+title → company+role; otherwise → project_name.
+- section_key: snake_case (e.g. "hbs_research", "ngo_volunteer", "nlp_proj").
+- bullet_slots = number of bullets you produced (1–5; 3–4 typical).
+- Extract everything; never pad sparse text with invented content.
 
-## Multiple roles at the SAME company — create SEPARATE sections
-If the CV shows a candidate progressed through multiple roles at one employer
-(e.g. "Goldman Sachs: Analyst 2018-20, Associate 2020-22, VP 2022-24"),
-emit ONE section per role. Each section gets:
-  - The same `company` value
-  - A DISTINCT `role` value (the specific title)
-  - A DISTINCT `section_key`, combining company slug + role slug + year if helpful
-    (e.g. "goldman_analyst", "goldman_associate_2020", "goldman_vp")
-  - A `template_anchor` set to "<Company> <Role>" or "<Company> - <Role>"
-    (use the ordering the candidate's CV actually displays; this lets the
-    DOCX engine match each role-block to its own bullets without collision).
-  - Bullets specific to THAT role's scope — do not duplicate bullets across
-    roles at the same company.
-Example section_key set for a Goldman alum: "goldman_analyst", "goldman_associate", "goldman_vp".
+## Multiple roles at the SAME company — SEPARATE sections per role
+If the candidate progressed through multiple roles at one employer \
+(e.g. Goldman: Analyst → Associate → VP), emit one section per role:
+  - Same `company`; distinct `role`; distinct `section_key` (e.g. "goldman_analyst", \
+    "goldman_associate", "goldman_vp").
+  - `template_anchor` = "<Company> <Role>" or "<Company> - <Role>" using the \
+    ordering the CV actually displays (so the DOCX engine can match without collision).
+  - Bullets specific to each role; no duplicates across roles.
 
-## Multiple jobs at DIFFERENT companies — standard case
-Each employer gets its own section with a distinct section_key. Same rules above.
+## Custom / non-standard sections — cater to every CV structure
+CVs may contain Awards, Honors, Publications, Research, Presentations, Patents, \
+Languages, Leadership, Volunteer Work, Community Involvement, Extracurriculars, \
+Memberships, Affiliations, Media, Speaking, Teaching, Mentorship, or any other \
+heading with its own bullet list. For EACH such block:
+  - Emit a section with snake_case key matching the heading (e.g. "awards", \
+    "publications", "languages", "leadership", "volunteer", "patents").
+  - `template_anchor` = the EXACT heading text as in the CV ("Awards", \
+    "Honors & Awards", "Selected Publications", "Leadership Experience", …).
+  - Leave company/role/project_name empty — the anchor alone routes bullets.
+  - STAR-form where reasonable; never fabricate metrics.
 
-## Dedicated Certifications block with bulleted items
-If the source CV has a "Certifications" heading with bullet items listing
-credentials (e.g. "• AWS Solutions Architect Associate — 2023"), extract each
-credential into the top-level `certifications: []` array (one string per
-credential, include the issuer and year if present). Do NOT create a "section"
-for certifications — the engine renders them from the certifications array.
-Also include them in the final line of `skills_text` ("Certifications: …")
-for templates that keep certifications inside the Skills paragraph.
+## Dedicated Certifications block
+If a "Certifications" heading has bullet items (e.g. "AWS Solutions Architect — 2023"), \
+put each into the top-level `certifications: []` (include issuer/year when present). \
+Do NOT create a section for certifications. Also append them to the last line of \
+`skills_text` ("Certifications: …") for templates that inline certs in Skills.
 
 Return only valid JSON"""
 
@@ -339,21 +332,27 @@ def _build_user_message(jd_text: str, master_bank: dict,
     # Build filtered section summary:
     #   - All project sections (AI must score ALL to pick best per slot)
     #   - Only experience sections whose key is in the template (others irrelevant)
+    # Token-efficiency: drop empty fields; only emit `role` when non-empty;
+    # only tag projects (omit the flag for experience — saves ~15 tokens/section).
     filtered: dict = {}
     for key, sec in sections.items():
         is_project = bool(sec.get("project_name"))
         if is_project or template_keys is None or key in template_keys:
-            filtered[key] = {
-                "name":       sec.get("company") or sec.get("project_name", key),
-                "role":       sec.get("role", ""),
-                "is_project": is_project,
-                "bullets":    [b["text"][:200] for b in sec.get("bullets", [])],
+            entry = {
+                "n": sec.get("company") or sec.get("project_name", key),
+                "b": [b["text"][:180] for b in sec.get("bullets", [])],
             }
+            role = sec.get("role", "")
+            if role:
+                entry["r"] = role
+            if is_project:
+                entry["p"] = 1
+            filtered[key] = entry
 
-    bank_payload = {
-        "certifications": master_bank.get("certifications", []),
-        "sections": filtered,
-    }
+    bank_payload: dict = {"sections": filtered}
+    certs = master_bank.get("certifications", [])
+    if certs:
+        bank_payload["certs"] = certs[:12]   # skills line + cert slot; 12 is ample
 
     # ── Template slot info ────────────────────────────────────────────────────
     slots_note = ""
@@ -365,14 +364,14 @@ def _build_user_message(jd_text: str, master_bank: dict,
 
         slots_note = (
             f"\nPROJECT_SLOT_COUNT:{project_slot_count}"
-            f"\nTEMPLATE_SLOTS_EXPERIENCE (fill exactly):{json.dumps(exp_slots)}"
+            f"\nEXP_SLOTS (fill exactly):{json.dumps(exp_slots)}"
         )
         if proj_slots:
-            slots_note += f"\nTEMPLATE_SLOTS_PROJECTS (fill exactly; pick most JD-relevant project per slot):{json.dumps(proj_slots)}"
+            slots_note += f"\nPROJ_SLOTS (fill exactly; pick most JD-relevant project per slot):{json.dumps(proj_slots)}"
         else:
-            slots_note += "\nNo project slots in this template — set project_overrides to null"
+            slots_note += "\nNo project slots — project_overrides must be null"
 
-        # Current project name in each project slot (needed for project_overrides.old_name)
+        # Current project name in each project slot (for project_overrides.old_name)
         current_projs = {
             k: sections[k]["project_name"]
             for k in project_slot_keys
@@ -380,13 +379,14 @@ def _build_user_message(jd_text: str, master_bank: dict,
         }
         if current_projs:
             proj_names_note = (
-                f"\nCURRENT_PROJECT_SLOT_NAMES (use as old_name in project_overrides):"
+                f"\nCUR_PROJ_NAMES (use as old_name in project_overrides):"
                 f"{json.dumps(current_projs)}"
             )
 
     return (
         f"JD:\n{jd_text}\n\n"
-        f"BANK:{json.dumps(bank_payload)}"
+        f"BANK (schema: n=name, r=role, b=bullets, p=project-flag, certs=credentials):"
+        f"{json.dumps(bank_payload)}"
         f"{slots_note}"
         f"{proj_names_note}"
         f"\nMAX_BULLET_CHARS:{max_bullet_chars}  (absolute hard cap — never exceed)"
@@ -609,21 +609,24 @@ def generate_bank_summary(
 
     provider, effective_model = _resolve_provider_model(provider, api_key, model)
 
-    # Compact bank payload — only the fields that carry signal
-    compact = {
-        "certifications": bank.get("certifications", []),
-        "skills_text":    bank.get("skills_text", "")[:1200],
-        "sections": [
-            {
-                "company":      s.get("company", ""),
-                "role":         s.get("role", ""),
-                "project_name": s.get("project_name", ""),
-                "date":         s.get("date", ""),
-                "bullets":      [b.get("text", "")[:180] for b in s.get("bullets", [])[:4]],
-            }
-            for s in bank.get("sections", {}).values()
-        ],
-    }
+    # Compact bank payload — drop empty fields, cap length.
+    def _sec(s: dict) -> dict:
+        out: dict = {}
+        for src, dst in (("company", "c"), ("role", "r"),
+                         ("project_name", "p"), ("date", "d")):
+            v = s.get(src, "")
+            if v:
+                out[dst] = v
+        out["b"] = [b.get("text", "")[:160] for b in s.get("bullets", [])[:4]]
+        return out
+
+    compact: dict = {"sections": [_sec(s) for s in bank.get("sections", {}).values()]}
+    certs = bank.get("certifications", [])
+    if certs:
+        compact["certifications"] = certs
+    skills = (bank.get("skills_text", "") or "")[:1000]
+    if skills:
+        compact["skills_text"] = skills
     user_msg = "CV BULLET BANK JSON:\n" + json.dumps(compact, ensure_ascii=False)
 
     def _plain(client_call_result: str) -> str:
