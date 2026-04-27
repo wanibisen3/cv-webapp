@@ -427,6 +427,86 @@ def run() -> int:
     else:
         _ok(f"comma-single skills layout detected: {skills3.skill_layout.value}")
 
+    # ── Fixture 4: experience block wrapped in a single <w:tbl> ─────────────
+    #   Some templates put the entire entity (company row + bullets) inside
+    #   one table for layout purposes. The classifier must flatten the inner
+    #   paragraphs so bullets remain BULLETs rather than being collapsed into
+    #   a single META.
+    print()
+    print("─" * 40)
+    print("Fixture 4: experience block inside <w:tbl>")
+    print("─" * 40)
+
+    def _tbl(inner_paragraphs_xml: str) -> str:
+        # Single-cell single-row table containing the inner paragraphs.
+        return (
+            "<w:tbl>"
+              "<w:tblPr/><w:tblGrid><w:gridCol w:w=\"9000\"/></w:tblGrid>"
+              "<w:tr><w:tc>"
+                "<w:tcPr><w:tcW w:w=\"9000\" w:type=\"dxa\"/></w:tcPr>"
+                f"{inner_paragraphs_xml}"
+              "</w:tc></w:tr>"
+            "</w:tbl>"
+        )
+
+    body = []
+    body.append(_p("Jane Smith",         bold=True, size_pt=16))
+    body.append(_p("jane@x.com",         size_pt=9))
+    body.append(_p("EXPERIENCE",         bold=True, size_pt=12, caps=True))
+    # Whole Acme block lives inside one table.
+    inner = (
+        _p("Acme Corp — London", bold=True, size_pt=10)
+        + _p("Director | 2020 – 2024", size_pt=9)
+        + _p("Strategic Vision: Drove 30% revenue uplift across EMEA.",
+             is_bullet=True,
+             runs=[("Strategic Vision:", True),
+                   (" Drove 30% revenue uplift across EMEA.", False)])
+        + _p("Team Leadership: Managed cross-functional team of 12.",
+             is_bullet=True,
+             runs=[("Team Leadership:", True),
+                   (" Managed cross-functional team of 12.", False)])
+    )
+    body.append(_tbl(inner))
+    # Plus a non-table entity to confirm sequencing still works.
+    body.append(_p("Beta Inc — Paris", bold=True, size_pt=10))
+    body.append(_p("Lead | 2018 – 2020", size_pt=9))
+    body.append(_p("Shipped flagship product to 5 markets.", is_bullet=True))
+
+    with tempfile.TemporaryDirectory() as td:
+        path = _write_docx(Path(td), "".join(body))
+        p4 = build_profile(path)
+
+    print(summarise_profile(p4))
+    exp4 = next(
+        (g for g in p4.groups
+         if g.kind is GroupKind.ENTITY_LIST and g.label == "EXPERIENCE"),
+        None,
+    )
+    if not exp4:
+        failures += 1; _fail("EXPERIENCE group missing in fixture 4")
+    else:
+        (_ok if len(exp4.items) == 2 else _fail)(
+            f"items in table-based experience = {len(exp4.items)} (expected 2)"
+        )
+        if len(exp4.items) != 2:
+            failures += 1
+        else:
+            acme = exp4.items[0]
+            (_ok if len(acme.bullet_indices) == 2 else _fail)(
+                f"Acme bullets = {len(acme.bullet_indices)} (expected 2)"
+            )
+            if len(acme.bullet_indices) != 2: failures += 1
+            (_ok if acme.bullet_has_subhead == [True, True] else _fail)(
+                f"Acme subheads = {acme.bullet_has_subhead}"
+            )
+            if acme.bullet_has_subhead != [True, True]: failures += 1
+
+            beta = exp4.items[1]
+            (_ok if len(beta.bullet_indices) == 1 else _fail)(
+                f"Beta (non-table) bullets = {len(beta.bullet_indices)}"
+            )
+            if len(beta.bullet_indices) != 1: failures += 1
+
     print()
     print("=" * 40)
     if failures == 0:

@@ -521,19 +521,34 @@ def classify_elements(template_path: Path) -> list[Element]:
     prev_prev_kind: Optional[ElementKind] = None
 
     idx = 0
-    for child in body:
-        tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
-        if tag == "p":
-            el = _classify_paragraph(idx, child, body_font_name, body_size_pt, prev_kind, prev_prev_kind)
-        elif tag == "tbl":
-            el = _classify_table(idx, child, body_font_name, body_size_pt)
-        else:
-            idx += 1
-            continue
+
+    def _emit(el: Element):
+        nonlocal prev_kind, prev_prev_kind, idx
         elements.append(el)
         prev_prev_kind = prev_kind
         prev_kind = el.kind if el.kind is not ElementKind.SPACER else prev_kind
         idx += 1
+
+    for child in body:
+        tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+        if tag == "p":
+            _emit(_classify_paragraph(idx, child, body_font_name, body_size_pt, prev_kind, prev_prev_kind))
+        elif tag == "tbl":
+            # Tables in CV templates serve two distinct purposes:
+            #   (a) layout helper for a single row (e.g. "Company  …  Date" with
+            #       2 columns of 1 paragraph each) — keep as a single META.
+            #   (b) container for an entire experience/section block, with
+            #       company rows + descriptions + bullets as inner paragraphs —
+            #       flatten so the classifier sees each inner paragraph.
+            inner_paras  = list(child.iter(f"{{{WNS}}}p"))
+            text_paras   = [p for p in inner_paras if _para_text(p).strip()]
+            has_bullets  = any(_has_numpr(p) for p in text_paras)
+            if has_bullets or len(text_paras) > 2:
+                for p in inner_paras:
+                    _emit(_classify_paragraph(idx, p, body_font_name, body_size_pt, prev_kind, prev_prev_kind))
+            else:
+                _emit(_classify_table(idx, child, body_font_name, body_size_pt))
+        # else: skip unrelated children (sectPr, bookmarks, etc.)
 
     return elements
 
