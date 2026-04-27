@@ -503,48 +503,55 @@ def fix_widow_line(text: str, chars_per_line: int,
 
 def discover_template_sections(template_path: Path) -> dict:
     """
-    Walk the template DOCX and return {section_title_or_synthetic_key: bullet_count}.
+    Walk the template DOCX via the structural parser and return
+    {section_title_or_synthetic_key: bullet_count}.
 
-    Handles three structural patterns the engine must support:
-      • Standard section: a non-bullet title paragraph ("Acme Corp — Analyst")
-        followed by bullet paragraphs. Title becomes the dict key.
-      • Dedicated Certifications section: a "Certifications" heading followed
-        by bullet paragraphs. Slots are routed under CERTIFICATIONS_KEY so
-        generate() can fill them from the user's cert list (AI never writes here).
-      • Missing sections (e.g. no Projects block, no Leadership): simply
-        absent from the returned dict — downstream code only fills what's present.
+    Built atop template_profile.build_profile() so it works for any user's
+    template — no English-name pattern matching:
+
+      • ENTITY_LIST items   → key = item.label (META text), value = bullet count
+      • SIMPLE_LIST groups  → key = group.label (heading), value = bullet count
+        Exception: dedicated Certifications headings route to CERTIFICATIONS_KEY
+        so generate() fills them from the user's cert list (AI never writes here).
+      • SKILLS / PROSE / CONTACT → not bullet sections; absent from the result.
+
+    Sections with zero bullets are absent.
     """
-    with zipfile.ZipFile(template_path) as z:
-        xml = z.read("word/document.xml")
-    tree = etree.fromstring(xml)
+    from template_profile import build_profile, GroupKind
 
-    slot_counts: dict[str, int] = {}
-    cur_title: str | None = None
+    profile = build_profile(template_path)
+    slot_counts: dict = {}
 
-    for child in tree.iter(f"{{{WNS}}}p"):
-        pt = (_para_text(child) or "").strip()
-        if not pt:
+    def _add(key: str, n: int):
+        if not key or n <= 0:
+            return
+        slot_counts[key] = slot_counts.get(key, 0) + n
+
+    for g in profile.groups:
+        if g.kind in (GroupKind.CONTACT, GroupKind.PROSE, GroupKind.SKILLS):
             continue
 
-        pt_lower = pt.lower()
+        is_cert = _is_certifications_heading((g.label or "").lower())
 
-        # Dedicated Certifications heading → route following bullets to synthetic key
-        if _is_certifications_heading(pt_lower):
-            cur_title = CERTIFICATIONS_KEY
+        if g.kind is GroupKind.SIMPLE_LIST:
+            if is_cert:
+                _add(CERTIFICATIONS_KEY, len(g.bullet_indices))
+            else:
+                _add(g.label, len(g.bullet_indices))
             continue
 
-        if _is_section_reset(pt_lower):
-            cur_title = None
+        if g.kind is GroupKind.ENTITY_LIST:
+            if is_cert:
+                # Rare: certifications structured as entities — flatten bullets.
+                total = sum(len(it.bullet_indices) for it in g.items)
+                _add(CERTIFICATIONS_KEY, total)
+            else:
+                for item in g.items:
+                    _add(item.label, len(item.bullet_indices))
             continue
-
-        if child.find(f".//{{{WNS}}}numPr") is not None:
-            if cur_title:
-                slot_counts[cur_title] = slot_counts.get(cur_title, 0) + 1
-        else:
-            if len(pt) > 3 and len(pt) <= 80 and not re.fullmatch(r"[\d\s\u2013\-\–\/\.\(\),\|]+", pt):
-                cur_title = pt
 
     return slot_counts
+
 
 
 def extract_bank_from_template(template_path: Path) -> dict:
@@ -740,43 +747,23 @@ def map_template_slots_from_raw(raw_slots: dict, master_bank: dict) -> dict:
 
 def read_template_slots(template_path: Path,
                         master_bank: dict | None = None) -> dict:
-    """"""
+    """
+    Map the template's bullet slots to master-bank section keys.
+
+    Without a master_bank, returns the raw {anchor_text: bullet_count} dict
+    from discover_template_sections (anchor text doubles as the section key).
+
+    With a master_bank, anchor texts are matched against master_bank section
+    anchors via `_build_anchors` and slot counts are aggregated under the
+    matching section_key. CERTIFICATIONS_KEY passes through untouched.
+    Anchors that fail to match any master-bank section are dropped (the
+    section is preserved as-is in the rendered CV via no-bank fallback paths).
+    """
     if not master_bank:
         return discover_template_sections(template_path)
 
-    all_anchors = _build_anchors(master_bank)
-
-    slot_counts: dict[str, int] = {}
-    cur_section: str | None     = None
-
-    with zipfile.ZipFile(template_path) as z:
-        xml = z.read("word/document.xml")
-    tree = etree.fromstring(xml)
-
-    for child in tree.iter(f"{{{WNS}}}p"):
-        pt = (_para_text(child) or "").strip()
-        if not pt:
-            continue
-
-        if child.find(f".//{{{WNS}}}numPr") is not None:
-            if cur_section:
-                slot_counts[cur_section] = slot_counts.get(cur_section, 0) + 1
-            continue
-
-        pt_lower = pt.lower()
-        if _is_certifications_heading(pt_lower):
-            cur_section = CERTIFICATIONS_KEY
-            continue
-        if _is_section_reset(pt_lower):
-            cur_section = None
-            continue
-
-        for anchor, key in all_anchors:
-            if anchor.lower() in pt_lower:
-                cur_section = key
-                break
-
-    return slot_counts
+    raw = discover_template_sections(template_path)
+    return map_template_slots_from_raw(raw, master_bank)
 
 
 # ─── Side project date alignment helpers ─────────────────────────────────────
