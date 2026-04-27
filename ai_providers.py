@@ -172,6 +172,23 @@ orchestrating 360° campaign and hitting 8% category share in 6 months — 30% a
    should be more strategic / senior than the Analyst bullets), (b) NOT repeat
    or paraphrase bullets from the other role at the same company, and (c)
    surface the promotion arc (increasing scope / team / $ / complexity).
+8. **Per-section format hints**: a bank section may carry two extra fields
+   that encode template-specific structure — respect them or the rendered
+   CV becomes visually inconsistent.
+   - `s` (bullet subhead pattern):
+       missing/omitted → DEFAULT: every output bullet uses **SubHeading: …** (Step 2).
+       `"none"` → the template uses PLAIN bullets in that section. Output
+         every bullet as plain prose; no leading "Theme: " and no bold
+         subheading. Verb-first sentence form is fine.
+       `"110…"` → MIXED pattern, matched position-by-position: the i-th
+         output bullet's format mirrors the i-th digit (1 = bold SubHeading,
+         0 = plain). If TEMPLATE_SLOTS for this section exceeds the digit
+         count, use the MAJORITY value for the trailing slots (ties → SubHeading).
+   - `d` (description): a fixed company tagline / italic blurb the template
+     prints between the META row and the bullets ("Industry leader in data
+     movement and real-time analytics …"). The renderer preserves it
+     verbatim. DO NOT consume a bullet slot for it, echo it inside any
+     bullet, or mention it in your output. It is informational.
 9. Projects — read PROJECT_SLOT_COUNT from the user message:
    - 0 project slots → set project_overrides to null; no project bullets.
    - 1+ project slots → for each slot, pick the single most JD-relevant project from BANK \
@@ -334,12 +351,28 @@ def _build_user_message(jd_text: str, master_bank: dict,
     #   - Only experience sections whose key is in the template (others irrelevant)
     # Token-efficiency: drop empty fields; only emit `role` when non-empty;
     # only tag projects (omit the flag for experience — saves ~15 tokens/section).
+    def _compress_subhead_pattern(pattern: list) -> str | None:
+        """
+        Encode bullet_has_subhead [bool] into a compact string the AI can read:
+          - None / empty → None (omit field)
+          - all True     → None (matches the prompt's default; saves tokens)
+          - all False    → "none"
+          - mixed        → binary digit string (e.g. "110" for [T, T, F])
+        """
+        if not pattern:
+            return None
+        if all(pattern):
+            return None
+        if not any(pattern):
+            return "none"
+        return "".join("1" if x else "0" for x in pattern)
+
     filtered: dict = {}
     for key, sec in sections.items():
         is_project = bool(sec.get("project_name"))
         if is_project or template_keys is None or key in template_keys:
             entry = {
-                "n": sec.get("company") or sec.get("project_name", key),
+                "n": sec.get("company") or sec.get("project_name") or sec.get("template_anchor") or key,
                 "b": [b["text"][:180] for b in sec.get("bullets", [])],
             }
             role = sec.get("role", "")
@@ -347,6 +380,14 @@ def _build_user_message(jd_text: str, master_bank: dict,
                 entry["r"] = role
             if is_project:
                 entry["p"] = 1
+            # Per-section format hints (Phase 3): only sent when they deviate
+            # from the default — keeps payload lean for typical templates.
+            sub = _compress_subhead_pattern(sec.get("bullet_has_subhead") or [])
+            if sub is not None:
+                entry["s"] = sub
+            desc = (sec.get("description_text") or "").strip()
+            if desc:
+                entry["d"] = desc[:240]
             filtered[key] = entry
 
     bank_payload: dict = {"sections": filtered}
@@ -385,7 +426,11 @@ def _build_user_message(jd_text: str, master_bank: dict,
 
     return (
         f"JD:\n{jd_text}\n\n"
-        f"BANK (schema: n=name, r=role, b=bullets, p=project-flag, certs=credentials):"
+        f"BANK (schema: n=name, r=role, b=bullets, p=project-flag, "
+        f"s=subhead-pattern (omitted=all bullets get SubHeading; \"none\"=plain prose only; "
+        f"\"110\"=binary mask, 1=SubHeading, 0=plain), "
+        f"d=description (verbatim company tagline preserved by renderer; do NOT consume a slot for it), "
+        f"certs=credentials):"
         f"{json.dumps(bank_payload)}"
         f"{slots_note}"
         f"{proj_names_note}"
