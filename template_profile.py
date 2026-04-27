@@ -858,6 +858,10 @@ def build_profile(template_path: Path) -> TemplateProfile:
                     t = elements[only_content_idx[0]].text
                     if t.count(",") >= 3 and len(t) <= 400:
                         kind = GroupKind.SKILLS
+        # Bulleted skills: a SIMPLE_LIST under a Skills/Competencies heading
+        # is really a skills section rendered as bullets, not a generic list.
+        elif kind is GroupKind.SIMPLE_LIST and _heading_hints_skills(label):
+            kind = GroupKind.SKILLS
 
         g = Group(
             label       = label,

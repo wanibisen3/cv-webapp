@@ -413,6 +413,22 @@ def extract_template_format_rules(template_path: Path) -> dict:
     ideal_2line_min  = chars_per_line + 30            # enough to clearly need 2 lines
     ideal_2line_max  = min(max_bullet_chars, int(chars_per_line * 1.88))
 
+    # ── Skills layout (Phase 4b) ──────────────────────────────────────────────
+    # Detected from the SKILLS group via the structural parser. Falls back to
+    # "unknown" if the parser can't see a skills section (older templates with
+    # idiosyncratic headings still render via the legacy line-per-line code
+    # path in modify_docx).
+    skills_layout = "unknown"
+    try:
+        from template_profile import build_profile, GroupKind
+        _profile = build_profile(template_path)
+        for _g in _profile.groups:
+            if _g.kind is GroupKind.SKILLS:
+                skills_layout = _g.skill_layout.value
+                break
+    except Exception:
+        pass
+
     return {
         "max_bullet_chars":     max_bullet_chars,
         "max_skill_lines":      max_skill_lines,
@@ -425,6 +441,7 @@ def extract_template_format_rules(template_path: Path) -> dict:
         "ideal_1line_max":      ideal_1line_max,
         "ideal_2line_min":      ideal_2line_min,
         "ideal_2line_max":      ideal_2line_max,
+        "skills_layout":        skills_layout,
     }
 
 
@@ -1292,63 +1309,106 @@ def modify_docx(
     # ── Update skills paragraph ───────────────────────────────────────────────
     if skills_text:
         lines = [ln.strip() for ln in skills_text.split("\n") if ln.strip()]
-        
+        skills_layout = str(fmt.get("skills_layout", "unknown")).lower()
+
         # 1. Locate the skills header and all paragraphs belonging to the skills block
         found_header_idx = -1
         block_para_idxs = []
         body_children = list(body)
-        
+
         for i, child in enumerate(body_children):
             if child.tag != f"{{{WNS}}}p": continue
             pt = (_para_text(child) or "").strip()
             if not pt: continue
-            
+
             if skills_header in pt.lower():
                 found_header_idx = i
                 # Collect all following paragraphs until the next section reset
                 for j in range(i + 1, len(body_children)):
                     next_child = body_children[j]
-                    if next_child.tag != f"{{{WNS}}}p": 
+                    if next_child.tag != f"{{{WNS}}}p":
                         # If it's a table, it might be the start of a new section (company/project)
                         if next_child.tag == f"{{{WNS}}}tbl":
                             break
-                        continue 
+                        continue
                     next_pt = (_para_text(next_child) or "").strip()
                     if not next_pt: continue
-                    
+
                     next_pt_lower = next_pt.lower()
-                    if (next_pt_lower in _SECTION_RESETS or 
+                    if (next_pt_lower in _SECTION_RESETS or
                         next_pt_lower.rstrip("s") in _SECTION_RESETS):
                         break
-                    
+
                     block_para_idxs.append(j)
                 break
-        
-        # 2. Replace the first slot and remove the rest
+
+        # 2. Render skills into the first slot, branching on the template's
+        #    detected layout (Phase 4b) so single-line / line-per-item /
+        #    categorised / bulleted templates each render in their native style.
         if found_header_idx != -1 and block_para_idxs:
-            first_slot_idx = block_para_idxs[0]
+            first_slot_idx  = block_para_idxs[0]
             first_slot_para = body_children[first_slot_idx]
-            
-            # Clear first slot and inject
+
+            # Clear first slot
             for r in first_slot_para.findall(f"{{{WNS}}}r"):
                 first_slot_para.remove(r)
-            for i, line in enumerate(lines):
-                add_br = (i > 0)
-                if ":" in line:
-                    ci = line.index(":")
-                    _add_skill_run(first_slot_para, line[: ci + 1], bold=True,  add_br=add_br,
-                                   font_name=skill_font, font_size_half_pt=skill_font_half_pt)
-                    _add_skill_run(first_slot_para, line[ci + 1:],  bold=False, add_br=False,
-                                   font_name=skill_font, font_size_half_pt=skill_font_half_pt)
-                else:
-                    _add_skill_run(first_slot_para, line, add_br=add_br,
-                                   font_name=skill_font, font_size_half_pt=skill_font_half_pt)
-            
+
+            def _emit_run(text, bold, add_br):
+                _add_skill_run(
+                    first_slot_para, text, bold=bold, add_br=add_br,
+                    font_name=skill_font, font_size_half_pt=skill_font_half_pt,
+                )
+
+            if skills_layout == "comma_single":
+                # Flatten all lines into a single comma-separated paragraph.
+                flat = ", ".join(lines)
+                _emit_run(flat, bold=False, add_br=False)
+
+            elif skills_layout == "bulleted":
+                # Render the FIRST line into the first paragraph (which already
+                # carries the template\u2019s bullet numPr); the rest as cloned
+                # bullet paragraphs inserted directly after it.
+                if lines:
+                    first_line = lines[0]
+                    if ":" in first_line:
+                        ci = first_line.index(":")
+                        _emit_run(first_line[: ci + 1], bold=True,  add_br=False)
+                        _emit_run(first_line[ci + 1:],  bold=False, add_br=False)
+                    else:
+                        _emit_run(first_line, bold=False, add_br=False)
+
+                    # Clone the first paragraph for each remaining skill so
+                    # numPr / indentation / font carry over naturally.
+                    body_index = list(body).index(first_slot_para)
+                    for extra in lines[1:]:
+                        clone = _clone_bullet(
+                            first_slot_para, extra,
+                            force_subhead=(":" in extra),
+                        )
+                        body.insert(body_index + 1, clone)
+                        body_index += 1
+
+            else:
+                # Default: line-per-item with bold "Category:" prefix when
+                # present. Covers LINE_PER_ITEM, CATEGORISED, and UNKNOWN.
+                for i, line in enumerate(lines):
+                    add_br = (i > 0)
+                    if ":" in line:
+                        ci = line.index(":")
+                        _emit_run(line[: ci + 1], bold=True,  add_br=add_br)
+                        _emit_run(line[ci + 1:],  bold=False, add_br=False)
+                    else:
+                        _emit_run(line, bold=False, add_br=add_br)
+
             # Remove all other leftover paragraphs in the skills block
             for leftover_idx in block_para_idxs[1:]:
                 body.remove(body_children[leftover_idx])
-            
-            print(f"  ✏️  skills updated (cleared {len(block_para_idxs)} template paragraphs)")
+
+            print(
+                f"  \u270f\ufe0f  skills updated "
+                f"(layout={skills_layout}, "
+                f"cleared {len(block_para_idxs)} template paragraphs)"
+            )
 
     # ── Write DOCX ────────────────────────────────────────────────────────────
     new_xml = etree.tostring(tree, xml_declaration=True, encoding="UTF-8", standalone=True)

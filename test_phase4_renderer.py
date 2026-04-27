@@ -198,12 +198,111 @@ def test_modify_docx_threads_pattern(errs: list):
             _ok("bullet 3: 'Spurious Theme' prefix stripped to plain prose")
 
 
+def _count_paragraphs_with_text(tree, text_substr: str) -> int:
+    n = 0
+    for p in tree.iter(f"{{{WNS}}}p"):
+        txt = "".join(t.text or "" for t in p.iter(f"{{{WNS}}}t"))
+        if text_substr in txt:
+            n += 1
+    return n
+
+
+def test_skills_layout_branches(errs: list):
+    """
+    Build three minimal templates whose SKILLS layout differs, run them
+    through extract_template_format_rules + modify_docx, and assert the
+    rendered DOCX uses the right layout shape.
+    """
+    print("• modify_docx branches on detected skills_layout")
+    from test_template_profile import _p, _build_docx_xml, WNS as _W
+
+    def _build_template(skills_paragraphs_xml: str) -> str:
+        body = []
+        body.append(_p("Jane Smith",  bold=True, size_pt=16))
+        body.append(_p("jane@x.com",  size_pt=9))
+        body.append(_p("EXPERIENCE",  bold=True, size_pt=12, caps=True))
+        body.append(_p("Acme — London",       bold=True, size_pt=10))
+        body.append(_p("Manager | 2020–2024", size_pt=9))
+        body.append(_p("Bullet placeholder.", is_bullet=True))
+        body.append(_p("SKILLS",      bold=True, size_pt=12, caps=True))
+        body.append(skills_paragraphs_xml)
+        return "".join(body)
+
+    cases = [
+        # (label, template skills XML, AI-supplied skills_text, expected layout,
+        #  predicate(tree) -> bool)
+        (
+            "comma_single",
+            _p("Strategy, P&L, M&A, Leadership, Python"),
+            "Strategy\nP&L Management\nM&A\nLeadership\nPython",
+            "comma_single",
+            lambda tree: _count_paragraphs_with_text(tree, "Strategy, P&L Management, M&A") == 1,
+        ),
+        (
+            "line_per_item",
+            _p("Strategy, P&L management, M&A") + _p("Python, SQL"),
+            "Strategy, P&L management\nPython, SQL\nLeadership",
+            "line_per_item",
+            # 3 lines collapsed into 1 paragraph via soft-breaks
+            lambda tree: _count_paragraphs_with_text(tree, "Strategy") == 1
+                         and _count_paragraphs_with_text(tree, "Leadership") == 1,
+        ),
+        (
+            "bulleted",
+            _p("Strategy", is_bullet=True) + _p("P&L", is_bullet=True),
+            "Strategy\nP&L\nLeadership",
+            "bulleted",
+            # one paragraph per skill (so 3 distinct paragraphs)
+            lambda tree: _count_paragraphs_with_text(tree, "Strategy") == 1
+                         and _count_paragraphs_with_text(tree, "P&L") == 1
+                         and _count_paragraphs_with_text(tree, "Leadership") == 1,
+        ),
+    ]
+
+    for label, skills_xml, ai_text, expected_layout, predicate in cases:
+        with tempfile.TemporaryDirectory() as td:
+            path = _write_docx(Path(td), _build_template(skills_xml))
+
+            fmt = cv_engine.extract_template_format_rules(path)
+            if fmt.get("skills_layout") != expected_layout:
+                _fail(
+                    f"[{label}] format_rules.skills_layout="
+                    f"{fmt.get('skills_layout')!r} (expected {expected_layout!r})",
+                    errs,
+                )
+                continue
+            else:
+                _ok(f"[{label}] detected skills_layout={expected_layout}")
+
+            bank = cv_engine.extract_bank_from_template(path)
+            bank["format_rules"] = fmt   # modify_docx reads layout from here
+
+            out = Path(td) / "out.docx"
+            cv_engine.modify_docx(
+                sections      = {},     # only updating skills
+                skills_text   = ai_text,
+                template_path = path,
+                output_path   = out,
+                master_bank   = bank,
+            )
+
+            with zipfile.ZipFile(out) as z:
+                xml = z.read("word/document.xml")
+            tree = etree.fromstring(xml)
+            if predicate(tree):
+                _ok(f"[{label}] rendered output matches expected layout")
+            else:
+                _fail(f"[{label}] rendered output does NOT match {expected_layout}", errs)
+
+
 def run() -> int:
     errs: list = []
     print("=== Phase 4 renderer test ===")
     test_clone_bullet_force_flags(errs)
     print()
     test_modify_docx_threads_pattern(errs)
+    print()
+    test_skills_layout_branches(errs)
     print()
     print("=" * 40)
     if not errs:
