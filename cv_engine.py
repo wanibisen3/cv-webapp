@@ -552,121 +552,160 @@ def extract_bank_from_template(template_path: Path) -> dict:
     Build a minimal master_bank by reading the template DOCX itself — used
     as a FALLBACK when the user has not uploaded any CV bullet bank text.
 
-    Strategy:
-      - Walk body paragraphs AND tables in order.
-      - Each non-bullet heading that passes the title-shape filter opens a
-        new section, with `template_anchor` = the exact heading text so
-        `_build_anchors` re-registers it exactly as in the template.
-      - Every subsequent bullet paragraph is captured as a bank bullet under
-        that section.
-      - Dedicated Certifications bullets are collected into top-level
-        `certifications: []`.
-      - Tables are treated like titles when they contain company/role-shaped
-        text, so Experience rows become sections anchored on the full row
-        text (works for single and multi-role templates alike).
+    Implementation: delegates to the structural parser in
+    `template_profile.build_profile()` so section discovery is driven by
+    visual layout (headings, metas, descriptions, bullet runs) rather than
+    pattern-matching English section names. This makes the parser robust
+    to arbitrary section inventories — Side Projects, Patents, Board
+    Positions, Selected Media, etc. — without code changes.
 
-    The returned bank is deliberately terse — it mirrors the template's
-    existing content so the AI can tailor each bullet to the JD while the
-    engine fills the same slot counts the template defines.
+    Output shape (preserved from previous implementation, with two new
+    optional fields used by Phase 3/4):
+      {
+        "sections": {
+          <section_key>: {
+            "company", "role", "project_name", "date":  ""        (legacy)
+            "template_anchor":      <META text or heading label>,
+            "description_text":     <company tagline / italic line>,
+            "bullet_slots":         int,
+            "bullets":              [{"id", "text", "tags": []}, ...],
+            "bullet_has_subhead":   [bool, ...]   parallel to bullets
+          },
+          ...
+        },
+        "certifications": [str, ...],
+        "skills_text":    str,        (newline-joined, empty if no SKILLS group)
+        "skills_header":  str,        (literal heading from the template)
+      }
+
+    A single ENTITY_LIST item ("one job") becomes ONE section. SIMPLE_LIST
+    groups (Awards, Patents, Media) become ONE section per group. SKILLS
+    groups feed `skills_text` + `skills_header`. Dedicated Certifications
+    headings still route bullets to top-level `certifications` so the
+    existing CERTIFICATIONS_KEY plumbing keeps working.
     """
-    with zipfile.ZipFile(template_path) as z:
-        xml = z.read("word/document.xml")
-    tree = etree.fromstring(xml)
-    body = tree.find(f"{{{WNS}}}body")
-    if body is None:
-        return {"sections": {}, "certifications": [], "skills_text": ""}
+    from template_profile import build_profile, GroupKind
 
-    sections: dict[str, dict] = {}
-    certifications: list[str] = []
-    cur_key: str | None = None
-    used_keys: set[str] = set()
+    profile = build_profile(template_path)
+
+    sections:       dict = {}
+    certifications: list = []
+    skills_text:    str  = ""
+    skills_header:  str  = "Skills"
+
+    used_keys: set = set()
 
     def _slug(txt: str) -> str:
         s = re.sub(r"[^a-z0-9]+", "_", txt.lower()).strip("_")
         return (s or "section")[:40]
 
-    def _open_section(heading: str) -> str:
-        base = _slug(heading)
-        key  = base
-        i = 2
+    def _unique(base: str) -> str:
+        key = base
+        i   = 2
         while key in used_keys:
             key = f"{base}_{i}"; i += 1
         used_keys.add(key)
-        sections[key] = {
-            "company":        "",
-            "role":           "",
-            "project_name":   "",
-            "date":           "",
-            "template_anchor": heading,
-            "bullet_slots":   0,
-            "bullets":        [],
-        }
         return key
 
-    for child in body:
-        tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+    def _bullet_text_at(idx: int) -> str:
+        return profile.elements[idx].text.strip()
 
-        if tag == "tbl":
-            full = _table_text(child).strip()
-            if not full:
-                continue
-            tt_lower = full.lower()[:120]
-            if _is_certifications_heading(tt_lower):
-                cur_key = "__certifications_collect__"
-                continue
-            if _is_section_reset(tt_lower):
-                cur_key = None
-                continue
-            first = (_first_significant_text(child) or full[:80]).strip()
-            if first and len(first) <= 120:
-                cur_key = _open_section(first)
+    def _new_section(anchor: str, description: str = "",
+                     subheads = None) -> dict:
+        return {
+            "company":             "",
+            "role":                "",
+            "project_name":        "",
+            "date":                "",
+            "template_anchor":     anchor,
+            "description_text":    description,
+            "bullet_slots":        0,
+            "bullets":             [],
+            "bullet_has_subhead":  list(subheads or []),
+        }
+
+    for g in profile.groups:
+        if g.kind is GroupKind.CONTACT or g.kind is GroupKind.PROSE:
+            # Contact + summary/profile blocks are preserved verbatim by the
+            # renderer, never sent to the AI as bullet candidates.
             continue
 
-        if tag != "p":
+        if g.kind is GroupKind.SKILLS:
+            skills_header = g.label or skills_header
+            parts = []
+            for i in g.content_indices:
+                t = profile.elements[i].text.strip()
+                if t:
+                    parts.append(t)
+            # Newline-join works for line_per_item AND single-line (which has
+            # only one part anyway, so no spurious newlines).
+            skills_text = "\n".join(parts)
             continue
 
-        pt = (_para_text(child) or "").strip()
-        if not pt:
-            continue
-        pt_lower = pt.lower()
-
-        is_bullet = child.find(f".//{{{WNS}}}numPr") is not None
-        if not is_bullet and (pt.startswith("•") or pt.startswith("–") or pt.startswith("-") or pt.startswith("*")):
-            is_bullet = True
-
-        if is_bullet:
-            if cur_key == "__certifications_collect__":
-                cleaned = re.sub(r"^[•\-\*\–\s]+", "", pt).strip()
+        # Certifications: dedicated heading routes bullets to top-level list.
+        if _is_certifications_heading((g.label or "").lower()):
+            bullet_indices = (
+                g.bullet_indices if g.kind is GroupKind.SIMPLE_LIST
+                else [i for it in g.items for i in it.bullet_indices]
+            )
+            for i in bullet_indices:
+                cleaned = re.sub(r"^[•\-\*–\s]+", "", _bullet_text_at(i)).strip()
                 if cleaned:
                     certifications.append(cleaned)
-            elif cur_key and cur_key in sections:
-                sections[cur_key]["bullets"].append({
-                    "id": f"{cur_key}_{len(sections[cur_key]['bullets']) + 1}",
-                    "text": re.sub(r"^[•\-\*\–\s]+", "", pt).strip(),
-                    "tags": [],
-                })
-                sections[cur_key]["bullet_slots"] = len(sections[cur_key]["bullets"])
             continue
 
-        # Non-bullet paragraph
-        if _is_certifications_heading(pt_lower):
-            cur_key = "__certifications_collect__"
-            continue
-        if _is_section_reset(pt_lower):
-            cur_key = None
+        if g.kind is GroupKind.SIMPLE_LIST:
+            anchor = g.label
+            key    = _unique(_slug(anchor))
+            sec    = _new_section(anchor, subheads=g.bullet_has_subhead)
+            for n, i in enumerate(g.bullet_indices, start=1):
+                txt = re.sub(r"^[•\-\*–\s]+", "", _bullet_text_at(i)).strip()
+                if txt:
+                    sec["bullets"].append({
+                        "id":   f"{key}_{n}",
+                        "text": txt,
+                        "tags": [],
+                    })
+            sec["bullet_slots"] = len(sec["bullets"])
+            if sec["bullets"]:
+                sections[key] = sec
             continue
 
-        if len(pt) > 3 and len(pt) <= 120 and not re.fullmatch(r"[\d\s\u2013\-\–\/\.\(\),\|]+", pt):
-            cur_key = _open_section(pt)
+        if g.kind is GroupKind.ENTITY_LIST:
+            for item in g.items:
+                anchor = item.label
+                key    = _unique(_slug(anchor))
 
-    # Drop empty sections (headings that had no bullets beneath them)
-    sections = {k: v for k, v in sections.items() if v["bullets"]}
+                desc_parts = [
+                    profile.elements[i].text.strip()
+                    for i in item.description_indices
+                    if profile.elements[i].text.strip()
+                ]
+                description = " ".join(desc_parts).strip()
+
+                sec = _new_section(
+                    anchor,
+                    description=description,
+                    subheads=item.bullet_has_subhead,
+                )
+                for n, i in enumerate(item.bullet_indices, start=1):
+                    txt = re.sub(r"^[•\-\*–\s]+", "", _bullet_text_at(i)).strip()
+                    if txt:
+                        sec["bullets"].append({
+                            "id":   f"{key}_{n}",
+                            "text": txt,
+                            "tags": [],
+                        })
+                sec["bullet_slots"] = len(sec["bullets"])
+                if sec["bullets"]:
+                    sections[key] = sec
+            continue
 
     return {
         "sections":       sections,
         "certifications": certifications,
-        "skills_text":    "",
-        "skills_header":  "Skills",
+        "skills_text":    skills_text,
+        "skills_header":  skills_header,
     }
 
 
