@@ -156,17 +156,55 @@ def _first_significant_text(tbl) -> str:
     return ""
 
 
-def _clone_bullet(template_para, text: str):
-    """Clone a bullet paragraph with a bold SubHeading (text before ':') + regular body."""
+def _clone_bullet(template_para, text: str, force_subhead: "bool | None" = None):
+    """
+    Clone a bullet paragraph with formatting that mirrors the template's slot.
+
+    Args:
+        template_para:  the source <w:p> to clone (preserves numPr, indent, font).
+        text:           the AI-generated bullet content. May or may not contain
+                        a leading "SubHeading: …" prefix.
+        force_subhead:  per-slot format hint, threaded from the bank's
+                        `bullet_has_subhead` array:
+            None  → legacy heuristic: bold everything before the first ':' if
+                    a colon is present (default behaviour).
+            True  → require bold subhead. If `text` lacks a ':', the whole
+                    line is rendered plain (we do not invent a fake heading).
+            False → render the whole line plain. Even if the AI returned
+                    "Theme: foo", we strip the colon-prefix so the rendered
+                    bullet matches the template's plain-bullet style.
+                    This is what fixes the reported "some are bold titles
+                    some are not" inconsistency.
+    """
     para = deepcopy(template_para)
     for tag in ("r", "ins"):
         for el in para.findall(f"{{{WNS}}}{tag}"):
             para.remove(el)
 
-    subhead, body = ("", text)
-    if ":" in text:
-        i = text.index(":")
-        subhead, body = text[: i + 1], text[i + 1 :]
+    # Resolve subhead/body split based on force_subhead.
+    has_colon  = ":" in text
+    if force_subhead is False:
+        # Plain mode: drop any "Theme: " prefix the AI may have prepended so
+        # the rendered bullet visually matches the template's plain slot.
+        if has_colon:
+            i = text.index(":")
+            head_candidate = text[:i].strip()
+            # Only treat the prefix as a stripped subhead when it's short and
+            # word-like (e.g. "Strategic Vision" — 1–4 words). Otherwise the
+            # colon belongs to body prose ("ratio: 4:1") and should be kept.
+            if 0 < len(head_candidate.split()) <= 4 and len(head_candidate) <= 60:
+                body = text[i + 1:].lstrip()
+            else:
+                body = text
+        else:
+            body = text
+        subhead = ""
+    else:
+        subhead, body = ("", text)
+        want_bold = (force_subhead is True) or (force_subhead is None and has_colon)
+        if want_bold and has_colon:
+            i = text.index(":")
+            subhead, body = text[: i + 1], text[i + 1 :]
 
     pPr      = para.find(f"{{{WNS}}}pPr")
     base_rPr = pPr.find(f"{{{WNS}}}rPr") if pPr is not None else None
@@ -1186,8 +1224,30 @@ def modify_docx(
                   f"template has {len(existing_idxs)} slots — trimming")
             new_bullets = new_bullets[:len(existing_idxs)]
 
-        template_para  = body_paras[existing_idxs[0]]
-        new_paras      = [_clone_bullet(template_para, b) for b in new_bullets]
+        template_para = body_paras[existing_idxs[0]]
+
+        # Per-slot subhead flags (Phase 4): the renderer respects the bank's
+        # bullet_has_subhead pattern position-by-position. Slots beyond the
+        # pattern fall back to the majority value (ties → True) so the visual
+        # style stays consistent when the AI fills more bullets than the bank
+        # had on file.
+        bank_sec = (master_bank or {}).get("sections", {}).get(section_key, {}) \
+            if isinstance(master_bank, dict) else {}
+        sub_pattern = list(bank_sec.get("bullet_has_subhead") or [])
+        if sub_pattern:
+            true_count  = sum(1 for x in sub_pattern if x)
+            majority    = true_count >= (len(sub_pattern) - true_count)
+            def _flag_for(i: int) -> "bool | None":
+                return sub_pattern[i] if i < len(sub_pattern) else majority
+        else:
+            # No pattern recorded → preserve legacy heuristic (None = colon-bold).
+            def _flag_for(i: int) -> "bool | None":
+                return None
+
+        new_paras      = [
+            _clone_bullet(template_para, b, force_subhead=_flag_for(i))
+            for i, b in enumerate(new_bullets)
+        ]
         existing_paras = [body_paras[i] for i in existing_idxs]
         n_e, n_n       = len(existing_paras), len(new_paras)
 
