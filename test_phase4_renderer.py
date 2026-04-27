@@ -295,6 +295,87 @@ def test_skills_layout_branches(errs: list):
                 _fail(f"[{label}] rendered output does NOT match {expected_layout}", errs)
 
 
+def test_description_preserved(errs: list):
+    """
+    Phase 4c verification: when a section has a description paragraph
+    between its META row and its bullets (e.g. Fivetran's "Industry leader
+    in data movement…"), modify_docx must:
+      1. leave that paragraph in the body XML (not delete it)
+      2. keep it positioned BETWEEN the META and the first bullet
+         (not push it to after the bullets — the user's reported bug)
+    """
+    print("• modify_docx preserves description paragraph position")
+    with tempfile.TemporaryDirectory() as td:
+        path = _write_docx(Path(td), _fixture_full_cv())
+        bank = cv_engine.extract_bank_from_template(path)
+        fmt  = cv_engine.extract_template_format_rules(path)
+        bank["format_rules"] = fmt
+
+        fv_key = next(
+            k for k, sec in bank["sections"].items()
+            if sec["template_anchor"].startswith("Fivetran")
+        )
+
+        sections = {
+            fv_key: [
+                "Strategic Vision: Bullet one tailored.",
+                "Operational Excellence: Bullet two tailored.",
+                "Plain bullet three with no subhead.",
+            ],
+        }
+        out = Path(td) / "out.docx"
+        cv_engine.modify_docx(
+            sections      = sections,
+            skills_text   = "",
+            template_path = path,
+            output_path   = out,
+            master_bank   = bank,
+        )
+
+        # Read back; collect paragraphs in document order.
+        with zipfile.ZipFile(out) as z:
+            xml = z.read("word/document.xml")
+        tree = etree.fromstring(xml)
+        body = tree.find(f"{{{WNS}}}body")
+        ordered = [
+            (i, _para_text(p))
+            for i, p in enumerate(body)
+            if p.tag == f"{{{WNS}}}p"
+        ]
+
+        DESC = "Industry leader in data movement"
+        META = "Fivetran — Bangalore, India"
+        first_bullet = "Strategic Vision"
+
+        meta_pos = next((i for i, t in ordered if META in t), None)
+        desc_pos = next((i for i, t in ordered if DESC in t), None)
+        b1_pos   = next((i for i, t in ordered if first_bullet in t), None)
+
+        if desc_pos is None:
+            _fail("description paragraph was deleted from output", errs)
+            return
+        _ok("description paragraph survived the render")
+
+        if meta_pos is None or b1_pos is None:
+            _fail(
+                f"could not locate meta/first-bullet (meta={meta_pos}, b1={b1_pos})",
+                errs,
+            )
+            return
+
+        if meta_pos < desc_pos < b1_pos:
+            _ok(
+                f"description sits between META (pos {meta_pos}) and first "
+                f"bullet (pos {b1_pos}) — correct"
+            )
+        else:
+            _fail(
+                f"description position wrong: META={meta_pos} DESC={desc_pos} "
+                f"BULLET1={b1_pos} (expected META < DESC < BULLET1)",
+                errs,
+            )
+
+
 def run() -> int:
     errs: list = []
     print("=== Phase 4 renderer test ===")
@@ -303,6 +384,8 @@ def run() -> int:
     test_modify_docx_threads_pattern(errs)
     print()
     test_skills_layout_branches(errs)
+    print()
+    test_description_preserved(errs)
     print()
     print("=" * 40)
     if not errs:
